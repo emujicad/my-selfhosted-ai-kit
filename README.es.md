@@ -695,4 +695,4 @@ A continuación se muestran ejemplos visuales de combinaciones de perfiles para 
 ---
 
 **¿Quieres crear tus propios diagramas o modificar los existentes?**
-Consulta el archivo [`DIAGRAMS_INSTRUCTIONS.es.md`](DIAGRAMS_INSTRUCTIONS.es.md) para aprender cómo generar los PNG a partir de los archivos `.mmd` usando Mermaid CLI.
+Consulta el archivo [`DIAGRAMS_INSTRUCTIONS.es.md`](DIAGRAMS_INSTRUCTIONS.es.md) para aprender cómo generar los PNG a partir de los archivos `.mmd` usando Mermaid CLI. 

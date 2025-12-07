@@ -165,6 +165,25 @@ environment:
   - GF_AUTH_DISABLE_LOGIN_FORM=true
 ```
 
+**⚠️ IMPORTANTE - Configuración del Cliente en Keycloak:**
+
+**Nota sobre la documentación oficial de Grafana:**
+La [documentación oficial de Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-access/configure-authentication/keycloak/) recomienda que `roles` esté en **"Default Client Scopes"** para permitir el mapeo de roles usando `role_attribute_path`. Sin embargo, en nuestro caso específico, esta configuración causó el error "cannot remove last organization admin" porque el usuario `admin` en Keycloak tiene realm roles que Grafana intentó sincronizar.
+
+**Nuestra configuración (solución específica para nuestro caso):**
+- **`fullScopeAllowed` debe estar en `false`** (NO en `true`)
+- El scope `roles` debe estar en **"Optional"** (NO en "Default")
+- Esto evita que Keycloak devuelva roles automáticamente
+- Grafana no recibirá roles y no intentará sincronizarlos
+- Esto previene el error "cannot remove last organization admin"
+- Combinado con `SKIP_ORG_ROLE_SYNC=true` en Grafana, proporciona una capa adicional de protección
+
+**Si quieres seguir la documentación oficial de Grafana:**
+- Deja `roles` en **"Default Client Scopes"**
+- Configura `role_attribute_path` en Grafana para mapear roles
+- NO uses `SKIP_ORG_ROLE_SYNC=true`
+- Asegúrate de que los usuarios en Keycloak tengan roles específicos (`admin`, `editor`, `viewer`) asignados correctamente
+
 **Explicación de URLs:**
 - `AUTH_URL` usa `localhost:8080` porque el navegador necesita acceder
 - `TOKEN_URL` usa `keycloak:8080` porque Grafana lo llama desde el contenedor
@@ -176,6 +195,7 @@ environment:
 - Client authentication: On (confidential)
 - Standard flow: Enabled
 - Direct access grants: NO necesario (Grafana usa Standard flow)
+- **`fullScopeAllowed`: `false`** (CRÍTICO - previene envío automático de roles)
 - Valid redirect URIs: `http://localhost:3001/login/generic_oauth`
 - Web origins: `http://localhost:3001`
 
@@ -200,7 +220,19 @@ environment:
    - **Direct access grants**: ⬜ NO necesario
    - **Valid redirect URIs**: `http://localhost:3001/login/generic_oauth`
    - **Web origins**: `http://localhost:3001`
+   - ⚠️ **CRÍTICO**: En **Settings**, asegúrate de que **`fullScopeAllowed`** esté en **`false`**
+   - **Valid redirect URIs**: `http://localhost:3001/login/generic_oauth`
+   - **Web origins**: `http://localhost:3001`
    - Ve a la pestaña **Credentials** y copia el **Client Secret**
+   - ⚠️ **CRÍTICO**: Ve a la pestaña **Client scopes**
+     - En la fila de `roles`, cambia "Assigned type" de **"Default"** a **"Optional"**
+     - Esto previene el error "cannot remove last organization admin"
+   
+   **O usa el script automatizado** (recomendado):
+   ```bash
+   ./scripts/recreate-keycloak-clients.sh
+   ```
+   Este script configura todo automáticamente.
 
 3. **Configurar Client Secret en docker-compose.yml**:
    - Actualiza `GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET` con el secret copiado
@@ -266,6 +298,45 @@ environment:
 3. Reinicia Keycloak y Grafana
 4. Usa ventana incógnito
 
+**Error: "User sync failed" / "cannot remove last organization admin"**
+
+**Causa**: Keycloak está devolviendo roles en el token/userinfo (porque 'roles' está en Default Client Scopes), y Grafana intenta sincronizar estos roles, cambiando el rol del admin de "Admin" a "Viewer", lo cual falla porque es el último admin de la organización.
+
+**Solución CORRECTA**:
+1. **En Keycloak Admin UI**:
+   - Ve a: **Clients** → **grafana** → **Settings**
+   - Asegúrate de que **`fullScopeAllowed`** esté en **`false`** (NO en `true`)
+   - Ve a la pestaña **Client scopes**
+   - En la fila de `roles`, cambia "Assigned type" de **"Default"** a **"Optional"**
+   - Esto hace que Keycloak NO incluya roles automáticamente en los tokens
+   - Como Grafana no solicita explícitamente el scope `roles`, no los recibirá
+   - Grafana no intentará sincronizar roles y el error desaparecerá
+
+2. **Alternativa: Usar el script automatizado**:
+   ```bash
+   ./scripts/recreate-keycloak-clients.sh
+   ```
+   Este script configura automáticamente `fullScopeAllowed=false` y mueve `roles` a Optional.
+
+2. **Si el usuario admin ya existe en Grafana**, vincularlo manualmente con Keycloak (solo necesario la primera vez):
+   ```bash
+   # Acceder a la BD de Grafana
+   docker run --rm -v my-selfhosted-ai-kit_grafana_data:/var/lib/grafana -it alpine sh
+   apk add sqlite
+   sqlite3 /var/lib/grafana/grafana.db
+   
+   # Vincular usuario admin (ID 1) con auth_id de Keycloak
+   INSERT INTO user_auth (user_id, auth_module, auth_id, created)
+   VALUES (1, 'oauth_generic_oauth', 'd2e70cd9-7d55-499d-ab05-b355422846ff', datetime('now'));
+   ```
+   ⚠️ **Nota**: El `auth_id` debe obtenerse de los logs de Grafana cuando intentas hacer login.
+
+**Nota sobre `SKIP_ORG_ROLE_SYNC`**:
+- `GF_AUTH_GENERIC_OAUTH_SKIP_ORG_ROLE_SYNC=true` está configurado en `docker-compose.yml` como medida de seguridad adicional
+- Esto es necesario porque el usuario `admin` en Keycloak tiene realm roles (`default-roles-master`, `admin`) que Keycloak puede incluir automáticamente incluso con `fullScopeAllowed=false`
+- Con `fullScopeAllowed=false` y `roles` en Optional, `SKIP_ORG_ROLE_SYNC` actúa como una capa adicional de protección
+- **Nota**: La documentación oficial de Grafana no menciona `SKIP_ORG_ROLE_SYNC` porque asume que los roles se gestionan correctamente en Keycloak. En nuestro caso, usamos esta opción para evitar conflictos con usuarios existentes
+
 **No aparece el botón "Sign in with Keycloak"**
 
 **Causa**: OAuth no está habilitado o configuración incorrecta
@@ -308,19 +379,32 @@ Open WebUI tiene una limitación que hace que no funcione correctamente con Keyc
 **Variables en docker-compose.yml:**
 ```yaml
 environment:
-  - OPENID_ENABLED=true
-  - OPENID_CLIENT_ID=open-webui
-  - OPENID_CLIENT_SECRET=p6pj69pYezNrrmT8VcQRon3BrsR0OP9s
-  - OPENID_PROVIDER_URL=http://keycloak:8080/realms/master/.well-known/openid-configuration
-  - OPENID_REDIRECT_URI=http://localhost:3000/oauth/oidc/callback
-  - OPENID_AUTHORIZATION_ENDPOINT=http://localhost:8080/realms/master/protocol/openid-connect/auth
-  - OPENID_TOKEN_ENDPOINT=http://keycloak:8080/realms/master/protocol/openid-connect/token
-  - OPENID_USERINFO_ENDPOINT=http://keycloak:8080/realms/master/protocol/openid-connect/userinfo
-  - OPENID_ISSUER=http://localhost:8080/realms/master
-  - OPENID_SCOPES=openid profile email
-  - ENABLE_OAUTH_SSO=true
-  - ENABLE_OAUTH_SIGNUP=true
+  # Configuración OAuth (consolidado - OpenID usa variables OAUTH_ según documentación oficial)
+  - ENABLE_OAUTH_SSO=${OPEN_WEBUI_ENABLE_OAUTH_SSO:-true}
+  - ENABLE_OAUTH_SIGNUP=${OPEN_WEBUI_ENABLE_OAUTH_SIGNUP:-true}
+  - OAUTH_CLIENT_ID=${OPEN_WEBUI_OAUTH_CLIENT_ID:-open-webui}
+  - OAUTH_CLIENT_SECRET=${OPEN_WEBUI_OAUTH_CLIENT_SECRET}
+  - OAUTH_PROVIDER_NAME=${OPEN_WEBUI_OAUTH_PROVIDER_NAME:-Keycloak}
+  # Configuración OpenID (usa variables OAUTH_ - consolidado según documentación oficial)
+  - OPENID_ENABLED=${OPEN_WEBUI_OAUTH_ENABLED:-true}
+  - OPENID_CLIENT_ID=${OPEN_WEBUI_OAUTH_CLIENT_ID:-open-webui}
+  - OPENID_CLIENT_SECRET=${OPEN_WEBUI_OAUTH_CLIENT_SECRET}
+  - OPENID_PROVIDER_URL=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/.well-known/openid-configuration
+  - OPENID_REDIRECT_URI=${OPEN_WEBUI_URL_PUBLIC:-http://localhost:3000}/oauth/oidc/callback
+  - OPENID_AUTHORIZATION_ENDPOINT=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/auth
+  - OPENID_TOKEN_ENDPOINT=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/token
+  - OPENID_USERINFO_ENDPOINT=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/userinfo
+  - OPENID_ISSUER=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}
+  - OPENID_SCOPES=${OPEN_WEBUI_OAUTH_SCOPES:-openid profile email}
+  - OPENID_SIGN_OUT_REDIRECT_URL=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/logout
 ```
+
+**⚠️ IMPORTANTE - Nomenclatura de Variables:**
+- Todas las variables de configuración OAuth/OpenID en `.env` usan el prefijo `OPEN_WEBUI_OAUTH_*`
+- Esto es consistente con la [documentación oficial de Open WebUI](https://docs.openwebui.com/getting-started/env-configuration/)
+- OpenID Connect es una extensión de OAuth 2.0, por lo que usar el prefijo `OAUTH_` es correcto
+- En `docker-compose.yml`, las variables `OPENID_*` internas de Open WebUI usan las variables `OAUTH_*` de `.env`
+- **No hay variables `OPEN_WEBUI_OPENID_*` en `.env`** - todo está consolidado bajo `OPEN_WEBUI_OAUTH_*`
 
 **Cliente en Keycloak:**
 - Client ID: `open-webui`
@@ -570,4 +654,10 @@ Para cualquier cliente OIDC/OAuth en Keycloak:
 
 ---
 
-**Última actualización**: 2025-12-07
+**Última actualización**: 2025-01-07
+
+**Cambios recientes (2025-01-07):**
+- **Consolidación de variables Open WebUI**: Todas las variables ahora usan prefijo `OAUTH_` (consolidado según [documentación oficial de Open WebUI](https://docs.openwebui.com/getting-started/env-configuration/))
+- **Eliminación de duplicaciones**: Variables OAuth/OpenID duplicadas eliminadas de `.env` y `.env.example`
+- **Actualización de Grafana**: `GF_AUTH_GENERIC_OAUTH_SKIP_ORG_ROLE_SYNC` ahora es variable de entorno (`GRAFANA_SKIP_ORG_ROLE_SYNC`)
+- **Mejora de nomenclatura**: Variables Open WebUI renombradas de `OPENID_*` a `OAUTH_*` para consistencia y claridad

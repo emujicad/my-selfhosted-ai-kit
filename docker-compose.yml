@@ -339,9 +339,9 @@ services:
       # en lugar de las URLs explícitas (keycloak:8080), causando error 405
       # Esto es una limitación de Open WebUI que no respeta URLs explícitas
       # cuando hay un discovery document configurado
-      - OPENID_ENABLED=${OPEN_WEBUI_OPENID_ENABLED:-true}
-      - OPENID_CLIENT_ID=${OPEN_WEBUI_OPENID_CLIENT_ID:-open-webui}
-      - OPENID_CLIENT_SECRET=${OPEN_WEBUI_OPENID_CLIENT_SECRET}
+      - OPENID_ENABLED=${OPEN_WEBUI_OAUTH_ENABLED:-true}  # OpenID usa variables OAUTH_ (consolidado según documentación)
+      - OPENID_CLIENT_ID=${OPEN_WEBUI_OAUTH_CLIENT_ID:-open-webui}  # OpenID usa variables OAUTH_ (consolidado según documentación)
+      - OPENID_CLIENT_SECRET=${OPEN_WEBUI_OAUTH_CLIENT_SECRET}  # OpenID usa variables OAUTH_ (consolidado según documentación)
       # OPENID_PROVIDER_URL necesario para que aparezca el botón
       - OPENID_PROVIDER_URL=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/.well-known/openid-configuration
       - OPENID_REDIRECT_URI=${OPEN_WEBUI_URL_PUBLIC:-http://localhost:3000}/oauth/oidc/callback
@@ -350,7 +350,7 @@ services:
       - OPENID_TOKEN_ENDPOINT=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/token
       - OPENID_USERINFO_ENDPOINT=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/userinfo
       - OPENID_ISSUER=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}
-      - OPENID_SCOPES=${OPEN_WEBUI_OPENID_SCOPES:-openid profile email}
+      - OPENID_SCOPES=${OPEN_WEBUI_OAUTH_SCOPES:-openid profile email}  # OpenID usa variables OAUTH_ (consolidado según documentación)
       - OPENID_SIGN_OUT_REDIRECT_URL=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/logout
     volumes:
       - open_webui_storage:/app/backend/data   # Datos persistentes
@@ -389,8 +389,6 @@ services:
     networks: ['genai-network']
     entrypoint: /bin/sh            # Usa shell para ejecutar comandos de importación
     environment:
-      - N8N_RUNNERS_ENABLED=true
-      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
     command:
       - "-c"
       - "n8n import:credentials --separate --input=/data/credentials && n8n import:workflow --separate --input=/data/workflows"
@@ -438,7 +436,7 @@ services:
       n8n-import:
         condition: service_completed_successfully  # Espera a que termine la importación
     healthcheck:                       # Verifica que n8n esté funcionando
-      test: ["CMD", "curl", "-f", "http://localhost:5678/healthz"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5678/healthz || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -608,6 +606,7 @@ services:
       # TOKEN_URL y API_URL pueden usar keycloak:8080 porque Grafana las llama desde dentro del contenedor
       - GF_AUTH_GENERIC_OAUTH_TOKEN_URL=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/token
       - GF_AUTH_GENERIC_OAUTH_API_URL=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/userinfo
+      - GF_AUTH_GENERIC_OAUTH_SKIP_ORG_ROLE_SYNC=${GRAFANA_SKIP_ORG_ROLE_SYNC:-true}  # Necesario: Keycloak devuelve realm roles del usuario admin que Grafana intenta sincronizar
       # SIGNOUT_REDIRECT_URL debe usar localhost porque el navegador del usuario necesita acceder
       - GF_AUTH_SIGNOUT_REDIRECT_URL=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/logout
       - GF_SERVER_ROOT_URL=${GRAFANA_URL_PUBLIC:-http://localhost:3001}
@@ -948,7 +947,9 @@ services:
         condition: service_healthy
     command: start-dev --http-enabled=true --hostname-strict=false
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      # Keycloak no tiene curl ni wget, usamos redirección TCP nativa con /bin/sh
+      # Verificamos que /realms/master responda con HTTP 200 (endpoint estándar de Keycloak)
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /realms/master HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && head -1 <&3 | grep -q 'HTTP/1.1 200' || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

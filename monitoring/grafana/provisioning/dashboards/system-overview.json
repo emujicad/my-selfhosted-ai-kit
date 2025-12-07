@@ -540,7 +540,7 @@
               {
                 "id": "unit",
                 "value": "dateTimeFromNow"
-              }
+        }
             ]
           }
         ]

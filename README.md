@@ -697,4 +697,4 @@ Below are visual examples of profile combinations for different usage scenarios.
 ---
 
 **Want to create your own diagrams or modify the existing ones?**
-See [`DIAGRAMS_INSTRUCTIONS.md`](DIAGRAMS_INSTRUCTIONS.md) for how to generate PNGs from `.mmd` files using Mermaid CLI.
+See [`DIAGRAMS_INSTRUCTIONS.md`](DIAGRAMS_INSTRUCTIONS.md) for how to generate PNGs from `.mmd` files using Mermaid CLI. 
