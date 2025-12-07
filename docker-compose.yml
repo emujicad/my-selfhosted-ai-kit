@@ -498,6 +498,7 @@ services:
       - "9090:9090"
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -908,7 +909,8 @@ services:
     container_name: modsecurity
     profiles: ["security"]
     volumes:
-      - ./modsecurity/rules:/etc/nginx/modsecurity/rules
+      - ./modsecurity/modsecurity.conf:/etc/nginx/modsecurity/modsecurity.conf:ro
+      - ./modsecurity/rules:/etc/nginx/modsecurity/rules:ro
       - modsecurity_data:/var/log/modsecurity
     networks:
       - security-network

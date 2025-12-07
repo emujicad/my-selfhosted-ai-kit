@@ -1,0 +1,22 @@
+# =============================================================================
+# ModSecurity Exclusion Rules - After CRS
+# =============================================================================
+# Reglas de exclusión que se aplican DESPUÉS de las reglas CRS
+# 
+# INSTRUCCIONES:
+# 1. Copia este archivo sin el .example
+# 2. Agrega tus exclusiones personalizadas aquí
+# 3. Úsalo para exclusiones finales o ajustes post-procesamiento
+#
+# =============================================================================
+
+# Ejemplo: Permitir respuestas específicas que podrían ser bloqueadas
+# SecRule RESPONSE_STATUS "@eq 200" \
+#     "id:999001,phase:3,pass,nolog,ctl:ruleRemoveById=950901"
+
+# Ejemplo: Excluir ciertos tipos de contenido de la inspección
+# SecRule RESPONSE_CONTENT_TYPE "@beginsWith application/json" \
+#     "id:999002,phase:4,pass,nolog,ctl:responseBodyProcessor=JSON"
+
+# NOTA: Descomenta y ajusta estas reglas según tus necesidades específicas
+

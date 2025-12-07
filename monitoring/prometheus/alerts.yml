@@ -1,0 +1,253 @@
+# =============================================================================
+# Prometheus Alert Rules
+# =============================================================================
+# Reglas de alertas para el stack de IA auto-hospedado
+# Estas alertas se envían a AlertManager cuando se cumplen las condiciones
+# =============================================================================
+
+groups:
+  # ===========================================================================
+  # Alertas de Servicios Críticos
+  # ===========================================================================
+  - name: services_down
+    interval: 30s
+    rules:
+      # Ollama está caído
+      - alert: OllamaDown
+        expr: up{job="ollama"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: ollama
+        annotations:
+          summary: "Ollama está caído"
+          description: "El servicio Ollama ha estado caído por más de 2 minutos"
+
+      # Open WebUI está caído
+      - alert: OpenWebUIDown
+        expr: up{job="open-webui"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: open-webui
+        annotations:
+          summary: "Open WebUI está caído"
+          description: "El servicio Open WebUI ha estado caído por más de 2 minutos"
+
+      # n8n está caído
+      - alert: N8NDown
+        expr: up{job="n8n"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: n8n
+        annotations:
+          summary: "n8n está caído"
+          description: "El servicio n8n ha estado caído por más de 2 minutos"
+
+      # PostgreSQL está caído
+      - alert: PostgreSQLDown
+        expr: up{job="postgres-exporter"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: postgresql
+        annotations:
+          summary: "PostgreSQL está caído"
+          description: "El servicio PostgreSQL ha estado caído por más de 2 minutos"
+
+      # Qdrant está caído
+      - alert: QdrantDown
+        expr: up{job="qdrant"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: qdrant
+        annotations:
+          summary: "Qdrant está caído"
+          description: "El servicio Qdrant ha estado caído por más de 2 minutos"
+
+  # ===========================================================================
+  # Alertas de Recursos del Sistema
+  # ===========================================================================
+  - name: system_resources
+    interval: 30s
+    rules:
+      # Uso alto de CPU
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "Uso alto de CPU"
+          description: "El uso de CPU está por encima del 80% durante más de 5 minutos"
+
+      # Uso crítico de CPU
+      - alert: CriticalCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 95
+        for: 2m
+        labels:
+          severity: critical
+          component: system
+        annotations:
+          summary: "Uso crítico de CPU"
+          description: "El uso de CPU está por encima del 95% durante más de 2 minutos"
+
+      # Uso alto de memoria
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "Uso alto de memoria"
+          description: "El uso de memoria está por encima del 85% durante más de 5 minutos"
+
+      # Uso crítico de memoria
+      - alert: CriticalMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 95
+        for: 2m
+        labels:
+          severity: critical
+          component: system
+        annotations:
+          summary: "Uso crítico de memoria"
+          description: "El uso de memoria está por encima del 95% durante más de 2 minutos"
+
+      # Espacio en disco bajo
+      - alert: LowDiskSpace
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "Espacio en disco bajo"
+          description: "El espacio disponible en disco está por debajo del 15%"
+
+      # Espacio en disco crítico
+      - alert: CriticalDiskSpace
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 5
+        for: 2m
+        labels:
+          severity: critical
+          component: system
+        annotations:
+          summary: "Espacio en disco crítico"
+          description: "El espacio disponible en disco está por debajo del 5%"
+
+  # ===========================================================================
+  # Alertas de Contenedores Docker
+  # ===========================================================================
+  - name: docker_containers
+    interval: 30s
+    rules:
+      # Contenedor reiniciándose frecuentemente
+      - alert: ContainerRestarting
+        expr: rate(container_start_time_seconds{name=~".+"}[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: docker
+        annotations:
+          summary: "Contenedor reiniciándose"
+          description: "El contenedor {{ $labels.name }} se está reiniciando frecuentemente"
+
+      # Uso alto de memoria en contenedor
+      - alert: ContainerHighMemory
+        expr: (container_memory_usage_bytes{name=~".+"} / container_spec_memory_limit_bytes{name=~".+"}) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          component: docker
+        annotations:
+          summary: "Uso alto de memoria en contenedor"
+          description: "El contenedor {{ $labels.name }} está usando más del 90% de su límite de memoria"
+
+  # ===========================================================================
+  # Alertas de PostgreSQL
+  # ===========================================================================
+  - name: postgresql
+    interval: 30s
+    rules:
+      # Conexiones activas altas
+      - alert: PostgreSQLHighConnections
+        expr: pg_stat_database_numbackends{datname!~"template.*"} > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: postgresql
+        annotations:
+          summary: "PostgreSQL: muchas conexiones activas"
+          description: "PostgreSQL tiene más de 80 conexiones activas"
+
+      # Tamaño de base de datos grande
+      - alert: PostgreSQLLargeDatabase
+        expr: pg_database_size_bytes{datname!~"template.*"} > 10737418240
+        for: 1h
+        labels:
+          severity: info
+          component: postgresql
+        annotations:
+          summary: "Base de datos grande"
+          description: "La base de datos {{ $labels.datname }} es mayor a 10GB"
+
+  # ===========================================================================
+  # Alertas de Servicios de Monitoreo
+  # ===========================================================================
+  - name: monitoring_services
+    interval: 30s
+    rules:
+      # Prometheus está caído
+      - alert: PrometheusDown
+        expr: up{job="prometheus"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: monitoring
+        annotations:
+          summary: "Prometheus está caído"
+          description: "El servicio Prometheus está caído"
+
+      # Grafana está caído
+      - alert: GrafanaDown
+        expr: up{job="grafana"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          component: monitoring
+        annotations:
+          summary: "Grafana está caído"
+          description: "El servicio Grafana está caído"
+
+      # AlertManager está caído
+      - alert: AlertManagerDown
+        expr: up{job="alertmanager"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          component: monitoring
+        annotations:
+          summary: "AlertManager está caído"
+          description: "El servicio AlertManager está caído"
+
+  # ===========================================================================
+  # Alertas de Seguridad
+  # ===========================================================================
+  - name: security
+    interval: 1m
+    rules:
+      # Keycloak está caído
+      - alert: KeycloakDown
+        expr: up{job="keycloak"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: security
+        annotations:
+          summary: "Keycloak está caído"
+          description: "El servicio Keycloak está caído - autenticación no disponible"
+
