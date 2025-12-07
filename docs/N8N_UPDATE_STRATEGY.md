@@ -27,7 +27,7 @@
 
 1. **Hacer backup completo ANTES de actualizar**:
    ```bash
-   ./scripts/backup.sh --full --verify
+   ./scripts/backup-manager.sh backup --full --verify
    ```
 
 2. **Actualizar a versión intermedia primero** (ej: 1.110):
@@ -58,7 +58,7 @@
 
 1. **Backup completo**:
    ```bash
-   ./scripts/backup.sh --full --verify
+   ./scripts/backup-manager.sh backup --full --verify
    ```
 
 2. **Actualizar docker-compose.yml**:
@@ -117,7 +117,7 @@ n8n:
 
 ## 📋 Checklist Antes de Actualizar
 
-- [ ] Backup completo realizado (`./scripts/backup.sh --full --verify`)
+- [ ] Backup completo realizado (`./scripts/backup-manager.sh backup --full --verify`)
 - [ ] Verificar que PostgreSQL está corriendo y accesible
 - [ ] Documentar workflows críticos (por si acaso)
 - [ ] Tener plan de rollback (restaurar backup si falla)
@@ -132,7 +132,7 @@ n8n:
 
 2. **Restaurar backup**:
    ```bash
-   ./scripts/restore.sh <timestamp-del-backup>
+   ./scripts/backup-manager.sh restore <timestamp-del-backup>
    ```
 
 3. **Reiniciar servicios**:

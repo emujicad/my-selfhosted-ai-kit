@@ -23,11 +23,11 @@ A complete stack of self-hosted Artificial Intelligence tools using Docker Compo
 - **Development tools**: Container with utilities (profile `dev`)
 
 ### Included AI models:
-- llama3.2 (base model)
-- llama3.3 (more advanced model)
-- all-minilm (embeddings model)
-- deepseek-r1:14b (specialized model)
-- nomic-embed-text (text embeddings)
+- llama3.2 (3.2B parameters - faster, less precise)
+- llama3.3 (70.6B parameters - slower, more precise)
+- all-minilm (embeddings model, auto-updates)
+- deepseek-r1:14b (specialized model, optimized for 16GB VRAM)
+- nomic-embed-text (text embeddings, auto-updates)
 
 ## 📋 Prerequisites
 
@@ -264,14 +264,33 @@ flowchart TD
 docker compose logs -f
 ```
 
+### Manage the stack with the master script:
+```bash
+# Start services (default: gpu-nvidia + monitoring + infrastructure + security)
+./scripts/stack-manager.sh start
+
+# Start with specific profiles
+./scripts/stack-manager.sh start gpu-nvidia monitoring
+
+# View status
+./scripts/stack-manager.sh status
+
+# View help
+./scripts/stack-manager.sh help
+```
+
 ### Monitor model downloads:
 ```bash
-./verifica_modelos.sh
+./scripts/stack-manager.sh monitor
+# Or directly:
+./scripts/verifica_modelos.sh
 ```
 
 ### Stop all services:
 ```bash
 docker compose down
+# Or using stack-manager:
+./scripts/stack-manager.sh stop
 ```
 
 ## 🌐 Access to applications
@@ -320,35 +339,73 @@ Once the services are running, you can access:
 
 ## 🔧 Useful commands
 
-### View service status:
+### Using the stack manager (recommended):
 ```bash
-docker compose ps
+# Start services with default preset
+./scripts/stack-manager.sh start
+
+# View service status
+./scripts/stack-manager.sh status
+
+# View logs
+./scripts/stack-manager.sh logs [service-name]
+
+# Restart services
+./scripts/stack-manager.sh restart [profiles...]
+
+# Validate configuration
+./scripts/stack-manager.sh validate
+
+# Run full auto-validation
+./scripts/stack-manager.sh auto-validate
+
+# Test recent changes
+./scripts/stack-manager.sh test
+
+# Initialize volumes (first time only)
+./scripts/stack-manager.sh init-volumes
+
+# Monitor model downloads
+./scripts/stack-manager.sh monitor
 ```
 
-### View logs of a specific service:
+### Direct Docker Compose commands:
 ```bash
+# View service status
+docker compose ps
+
+# View logs of a specific service
 docker compose logs -f [service-name]
 # Example: docker compose logs -f ollama
-```
 
-### Restart a service:
-```bash
+# Restart a service
 docker compose restart [service-name]
-```
 
-### View resource usage:
-```bash
+# View resource usage
 docker stats
-```
 
-### Clean up space (remove unused images):
-```bash
+# Clean up space (remove unused images)
 docker system prune -a
 ```
 
-### Verify service health:
+### Keycloak management:
 ```bash
-docker compose ps
+# Setup Keycloak for a service
+./scripts/keycloak-manager.sh setup grafana
+./scripts/keycloak-manager.sh setup n8n
+./scripts/keycloak-manager.sh setup openwebui
+
+# Show credentials
+./scripts/keycloak-manager.sh credentials
+
+# Create user
+./scripts/keycloak-manager.sh create-user
+
+# View status
+./scripts/keycloak-manager.sh status
+
+# View help
+./scripts/keycloak-manager.sh help
 ```
 
 ## 📁 Volume structure
@@ -488,11 +545,20 @@ docker compose ps
 
 ### Data backup:
 ```bash
-# Manual volume backup
-docker run --rm -v my-selfhosted-ai-kit_n8n_storage:/data -v $(pwd):/backup alpine tar czf /backup/n8n_backup.tar.gz -C /data .
+# Create backup (recommended)
+./scripts/backup-manager.sh backup
 
-# Automatic backup (with monitoring profile)
-docker compose --profile monitoring up -d
+# Create full backup with verification
+./scripts/backup-manager.sh backup --full --verify
+
+# List available backups
+./scripts/backup-manager.sh list
+
+# Restore from backup
+./scripts/backup-manager.sh restore <timestamp>
+
+# View help
+./scripts/backup-manager.sh help
 ```
 
 ### Update services:

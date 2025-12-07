@@ -319,6 +319,9 @@ services:
     ports:
       - "${PORT_OPEN_WEBUI_HOST:-3000}:${PORT_OPEN_WEBUI_CONTAINER:-8080}"
     environment:
+      # OLLAMA_BASE_URL: URL interna para conectar con Ollama desde el contenedor
+      # IMPORTANTE: Si OLLAMA_URL_INTERNAL está vacía en .env, debe tener un valor o no estar definida
+      # Si está definida pero vacía, Docker Compose la pasa como cadena vacía y ${VAR:-default} no funciona
       - OLLAMA_BASE_URL=${OLLAMA_URL_INTERNAL:-http://ollama:11434}
       - USER_AGENT=${OPEN_WEBUI_USER_AGENT:-OpenWebUI/0.6.13}
       - CORS_ALLOW_ORIGIN=${OPEN_WEBUI_URL_PUBLIC:-http://localhost:3000}

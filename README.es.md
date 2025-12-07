@@ -23,11 +23,11 @@ Un stack completo de herramientas de Inteligencia Artificial auto-hospedadas usa
 - **Herramientas de desarrollo**: Contenedor con utilidades (perfil `dev`)
 
 ### Modelos de IA incluidos:
-- llama3.2 (modelo base)
-- llama3.3 (modelo más avanzado)
-- all-minilm (modelo de embeddings)
-- deepseek-r1:14b (modelo especializado)
-- nomic-embed-text (embeddings de texto)
+- llama3.2 (3.2B parámetros - más rápido, menos preciso)
+- llama3.3 (70.6B parámetros - más lento, más preciso)
+- all-minilm (modelo de embeddings, se actualiza automáticamente)
+- deepseek-r1:14b (modelo especializado, optimizado para 16GB VRAM)
+- nomic-embed-text (embeddings de texto, se actualiza automáticamente)
 
 ## 📋 Prerrequisitos
 
@@ -264,14 +264,33 @@ flowchart TD
 docker compose logs -f
 ```
 
+### Gestionar el stack con el script maestro:
+```bash
+# Levantar servicios (por defecto: gpu-nvidia + monitoring + infrastructure + security)
+./scripts/stack-manager.sh start
+
+# Levantar con perfiles específicos
+./scripts/stack-manager.sh start gpu-nvidia monitoring
+
+# Ver estado
+./scripts/stack-manager.sh status
+
+# Ver ayuda
+./scripts/stack-manager.sh help
+```
+
 ### Monitorear descarga de modelos:
 ```bash
-./verifica_modelos.sh
+./scripts/stack-manager.sh monitor
+# O directamente:
+./scripts/verifica_modelos.sh
 ```
 
 ### Detener todos los servicios:
 ```bash
 docker compose down
+# O usando stack-manager:
+./scripts/stack-manager.sh stop
 ```
 
 ## 🌐 Acceso a las aplicaciones
@@ -320,35 +339,73 @@ Una vez que los servicios estén corriendo, puedes acceder a:
 
 ## 🔧 Comandos útiles
 
-### Ver estado de los servicios:
+### Usando el gestor del stack (recomendado):
 ```bash
-docker compose ps
+# Levantar servicios con preset por defecto
+./scripts/stack-manager.sh start
+
+# Ver estado de servicios
+./scripts/stack-manager.sh status
+
+# Ver logs
+./scripts/stack-manager.sh logs [nombre-servicio]
+
+# Reiniciar servicios
+./scripts/stack-manager.sh restart [perfiles...]
+
+# Validar configuración
+./scripts/stack-manager.sh validate
+
+# Ejecutar validación automática completa
+./scripts/stack-manager.sh auto-validate
+
+# Probar cambios recientes
+./scripts/stack-manager.sh test
+
+# Inicializar volúmenes (solo primera vez)
+./scripts/stack-manager.sh init-volumes
+
+# Monitorear descarga de modelos
+./scripts/stack-manager.sh monitor
 ```
 
-### Ver logs de un servicio específico:
+### Comandos directos de Docker Compose:
 ```bash
+# Ver estado de servicios
+docker compose ps
+
+# Ver logs de un servicio específico
 docker compose logs -f [nombre-servicio]
 # Ejemplo: docker compose logs -f ollama
-```
 
-### Reiniciar un servicio:
-```bash
+# Reiniciar un servicio
 docker compose restart [nombre-servicio]
-```
 
-### Ver uso de recursos:
-```bash
+# Ver uso de recursos
 docker stats
-```
 
-### Limpiar espacio (eliminar imágenes no usadas):
-```bash
+# Limpiar espacio (eliminar imágenes no usadas)
 docker system prune -a
 ```
 
-### Verificar salud de los servicios:
+### Gestión de Keycloak:
 ```bash
-docker compose ps
+# Configurar Keycloak para un servicio
+./scripts/keycloak-manager.sh setup grafana
+./scripts/keycloak-manager.sh setup n8n
+./scripts/keycloak-manager.sh setup openwebui
+
+# Mostrar credenciales
+./scripts/keycloak-manager.sh credentials
+
+# Crear usuario
+./scripts/keycloak-manager.sh create-user
+
+# Ver estado
+./scripts/keycloak-manager.sh status
+
+# Ver ayuda
+./scripts/keycloak-manager.sh help
 ```
 
 ## 📁 Estructura de volúmenes
@@ -488,11 +545,20 @@ docker compose ps
 
 ### Backup de datos:
 ```bash
-# Backup manual de volúmenes
-docker run --rm -v my-selfhosted-ai-kit_n8n_storage:/data -v $(pwd):/backup alpine tar czf /backup/n8n_backup.tar.gz -C /data .
+# Crear backup (recomendado)
+./scripts/backup-manager.sh backup
 
-# Backup automático (con perfil monitoring)
-docker compose --profile monitoring up -d
+# Crear backup completo con verificación
+./scripts/backup-manager.sh backup --full --verify
+
+# Listar backups disponibles
+./scripts/backup-manager.sh list
+
+# Restaurar desde backup
+./scripts/backup-manager.sh restore <timestamp>
+
+# Ver ayuda
+./scripts/backup-manager.sh help
 ```
 
 ### Actualizar servicios:

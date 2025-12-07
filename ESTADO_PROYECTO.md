@@ -1,6 +1,6 @@
 # 📊 Estado del Proyecto - My Self-Hosted AI Kit
 
-**Última actualización**: 2025-12-07
+**Última actualización**: 2025-01-07
 
 ## ✅ Completado
 
@@ -26,6 +26,17 @@
    - ✅ n8n actualizado: 1.101.2 → 1.122.5 (21 versiones)
    - ✅ Estrategia de actualización documentada
 
+5. **Scripts Consolidados**
+   - ✅ Scripts de backup consolidados en `backup-manager.sh`
+   - ✅ Scripts de Keycloak consolidados en `keycloak-manager.sh`
+   - ✅ Scripts de validación integrados en `stack-manager.sh`
+   - ✅ Script maestro `stack-manager.sh` para gestión completa del stack
+
+6. **Mejoras de Documentación**
+   - ✅ Documentación consolidada en archivos principales
+   - ✅ Guías completas para stack-manager, backups y Keycloak
+   - ✅ Todas las rutas actualizadas y verificadas
+
 ## 📝 Pendiente
 
 1. ~~**Scripts de Backup**~~ ✅ **COMPLETADO**
@@ -33,11 +44,14 @@
    - ✅ Restauración
    - ✅ Verificación
    - ✅ Optimización: excluido ollama_storage
+   - ✅ Script consolidado: `backup-manager.sh`
 
 2. **Integración Keycloak**
-   - Open WebUI con OIDC
-   - n8n con OIDC
-   - Jenkins con OIDC
+   - ✅ Grafana con Keycloak (completado)
+   - ⚠️ Open WebUI con OIDC (limitación conocida documentada)
+   - ⏳ n8n con OIDC (configuración lista, puede requerir Enterprise)
+   - ⏳ Jenkins con OIDC (pendiente)
+   - ✅ Script consolidado: `keycloak-manager.sh`
 
 3. **HTTPS/SSL**
    - Generación de certificados
@@ -55,9 +69,9 @@
 
 ## 🎯 Próximos Pasos Sugeridos
 
-**Opción 1: Scripts de Backup** (más útil para producción)
-**Opción 2: Integración Keycloak** (completar SSO)
-**Opción 3: HTTPS/SSL** (seguridad en producción)
+**Opción 1: Integración Keycloak** (completar SSO con n8n y Jenkins)
+**Opción 2: HTTPS/SSL** (seguridad en producción)
+**Opción 3: Redis** (cache de sesiones para Open WebUI y n8n)
 
 ---
 

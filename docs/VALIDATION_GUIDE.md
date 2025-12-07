@@ -136,7 +136,41 @@ docker compose --profile monitoring --profile security up -d
 
 ## 🛠️ Scripts Disponibles
 
-### 1. `scripts/auto-validate.sh` - Validación Automática Completa
+### 1. `scripts/verify-env-variables.sh` - Verificación de Variables de Entorno
+
+**Descripción**: Verifica que todas las variables críticas de `.env` estén configuradas correctamente y detecta variables vacías que podrían causar problemas.
+
+**Uso**:
+```bash
+./scripts/verify-env-variables.sh
+```
+
+**Qué verifica**:
+- ✅ Variables críticas no están vacías
+- ✅ Variables que construyen URLs tienen valores o pueden construirse
+- ✅ Detecta variables definidas pero vacías en `.env` (problema común)
+- ✅ Valores placeholder que deben cambiarse
+
+**Ejemplo de salida**:
+```
+🔍 VERIFICANDO VARIABLES DE ENTORNO CRÍTICAS
+=============================================
+
+❌ ERROR: OLLAMA_URL_INTERNAL está definida pero VACÍA en .env
+   Solución: Darle un valor o eliminar/comentar la línea
+
+RESUMEN:
+Errores encontrados: 1
+Advertencias: 0
+```
+
+**Cuándo ejecutarlo**:
+- Antes de levantar servicios por primera vez
+- Después de modificar `.env`
+- Cuando un servicio no se conecta correctamente
+- En CI/CD pipelines
+
+### 2. `scripts/auto-validate.sh` - Validación Automática Completa
 
 Ejecuta todas las validaciones en secuencia.
 
@@ -145,7 +179,7 @@ Ejecuta todas las validaciones en secuencia.
 ./scripts/auto-validate.sh
 ```
 
-### 2. `scripts/validate-config.sh` - Validación Estática
+### 3. `scripts/validate-config.sh` - Validación Estática
 
 Valida la configuración sin necesidad de Docker corriendo.
 
@@ -154,7 +188,7 @@ Valida la configuración sin necesidad de Docker corriendo.
 ./scripts/validate-config.sh
 ```
 
-### 3. `scripts/test-changes.sh` - Prueba de Cambios Recientes
+### 4. `scripts/test-changes.sh` - Prueba de Cambios Recientes
 
 Prueba específicamente los cambios recientes (ModSecurity y Prometheus Alerts).
 
@@ -167,16 +201,29 @@ Prueba específicamente los cambios recientes (ModSecurity y Prometheus Alerts).
 
 ## 🚀 Flujo de Trabajo Recomendado
 
+### Antes de Levantar Servicios (CRÍTICO)
+
+**Paso 0: Verificar Variables de Entorno**
+```bash
+./scripts/verify-env-variables.sh
+```
+
+Este paso es **crítico** porque detecta variables vacías que podrían causar problemas de conexión. Ejecútalo siempre antes de levantar servicios.
+
 ### Desarrollo Local
 
-1. **Después de hacer cambios**:
+1. **Antes de hacer cambios**:
    ```bash
+   # Verificar variables de entorno (CRÍTICO)
+   ./scripts/verify-env-variables.sh
    # Validación rápida sin Docker
    ./scripts/validate-config.sh
    ```
 
 2. **Antes de commit**:
    ```bash
+   # Verificar variables de entorno (CRÍTICO)
+   ./scripts/verify-env-variables.sh
    # Validación completa
    ./scripts/auto-validate.sh
    ```
@@ -208,6 +255,8 @@ Prueba específicamente los cambios recientes (ModSecurity y Prometheus Alerts).
 
 ## 📋 Checklist de Validación
 
+- [ ] **Variables de entorno verificadas** (`./scripts/verify-env-variables.sh`) - **CRÍTICO**
+- [ ] **No hay variables vacías** que puedan causar problemas de conexión
 - [ ] Script de validación estática pasa sin errores
 - [ ] Docker Compose valida sin errores
 - [ ] Prometheus inicia correctamente con el perfil `monitoring`
@@ -289,6 +338,40 @@ docker compose logs [nombre-servicio]
    ```bash
    grep modsecurity docker-compose.yml
    ```
+
+### Variables de entorno vacías causan problemas de conexión
+
+**Problema**: Cuando una variable está definida pero vacía en `.env`, Docker Compose la pasa como cadena vacía, y `${VAR:-default}` no funciona.
+
+**Ejemplo**:
+- En `.env`: `OLLAMA_URL_INTERNAL=`
+- En `docker-compose.yml`: `OLLAMA_BASE_URL=${OLLAMA_URL_INTERNAL:-http://ollama:11434}`
+- Resultado: `OLLAMA_BASE_URL=http://:` (vacío, no funciona)
+
+**Solución**:
+1. Verificar variables críticas con el script de verificación:
+   ```bash
+   ./scripts/verify-env-variables.sh
+   ```
+
+2. Asegurar que las variables en `.env` tengan valores correctos:
+   ```bash
+   # ❌ MAL: Variable vacía
+   OLLAMA_URL_INTERNAL=
+   
+   # ✅ BIEN: Variable con valor
+   OLLAMA_URL_INTERNAL=http://ollama:11434
+   
+   # ✅ BIEN: No definir la variable si quieres usar el valor por defecto
+   # (simplemente no incluir la línea)
+   ```
+
+3. Variables críticas que NO deben estar vacías:
+   - `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
+   - `OLLAMA_HOST_INTERNAL`, `OLLAMA_PORT_INTERNAL`
+   - `KEYCLOAK_ADMIN_USER`, `KEYCLOAK_ADMIN_PASSWORD`
+   - `N8N_ENCRYPTION_KEY`, `N8N_USER_MANAGEMENT_JWT_SECRET`
+   - Y otras variables críticas de configuración
 
 ---
 

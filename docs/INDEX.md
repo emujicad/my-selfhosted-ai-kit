@@ -27,6 +27,21 @@
 #### Backup y Recuperación
 - **[BACKUP_GUIDE.md](BACKUP_GUIDE.md)** - Guía completa de backups y restauración
 
+#### Monitoreo y Dashboards
+- **[GRAFANA_MONITORING_GUIDE.md](GRAFANA_MONITORING_GUIDE.md)** - ⭐ **GUÍA COMPLETA** - Monitoreo con Grafana, dashboards y troubleshooting
+  - Servicios de monitoreo (Prometheus, Grafana, exporters)
+  - Dashboards disponibles
+  - Configuración y uso
+  - Troubleshooting completo
+  - Métricas disponibles
+
+#### Gestión del Stack
+- **[STACK_MANAGER_GUIDE.md](STACK_MANAGER_GUIDE.md)** - ⭐ **NUEVO** - Script maestro para gestionar perfiles Docker Compose
+  - Gestión simplificada de perfiles
+  - Presets predefinidos (default, dev, production, full)
+  - Validación automática integrada
+  - Comandos disponibles (start, stop, restart, status, info, logs, validate, monitor)
+
 #### Validación y Testing
 - **[VALIDATION_GUIDE.md](VALIDATION_GUIDE.md)** - ⭐ **GUÍA COMPLETA** - Validación automática, scripts y troubleshooting
   - Validación rápida
@@ -110,6 +125,13 @@
 ### Si quieres hacer backups:
 1. Lee **[BACKUP_GUIDE.md](BACKUP_GUIDE.md)**
 
+### Si quieres usar el monitoreo y dashboards:
+1. Lee **[GRAFANA_MONITORING_GUIDE.md](GRAFANA_MONITORING_GUIDE.md)** - Todo está ahí
+   - Servicios de monitoreo
+   - Dashboards disponibles
+   - Configuración y uso
+   - Troubleshooting completo
+
 ---
 
 ## 📝 Notas Importantes
@@ -163,6 +185,11 @@ Los siguientes archivos fueron eliminados porque su información fue consolidada
 - docs/BACKUP_GUIDE.md
 - docs/VARIABLES_ENTORNO_DINAMICAS.md
 - docs/DOCKER_COMPOSE_RESTART_VS_RECREATE.md
+- docs/GRAFANA_MONITORING_GUIDE.md (Monitoreo y dashboards)
+- docs/STACK_MANAGER_GUIDE.md (Gestión de perfiles)
+
+### Monitoreo
+- docs/GRAFANA_MONITORING_GUIDE.md
 
 ### Validación y Testing
 - docs/VALIDATION_GUIDE.md

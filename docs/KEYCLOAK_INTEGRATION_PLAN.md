@@ -431,7 +431,7 @@ environment:
 
 1. **Configurar cliente en Keycloak:**
    ```bash
-   ./scripts/setup-keycloak-n8n.sh
+   ./scripts/keycloak-manager.sh setup n8n
    ```
    O manualmente:
    - Abre Keycloak: http://localhost:8080

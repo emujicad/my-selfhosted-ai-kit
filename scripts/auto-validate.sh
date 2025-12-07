@@ -61,6 +61,40 @@ detect_docker() {
     fi
 }
 
+# Paso 0: Verificar variables de entorno (CRÍTICO)
+step0_verify_env_variables() {
+    print_header "PASO 0: VERIFICAR VARIABLES DE ENTORNO (CRÍTICO)"
+    
+    print_info "Verificando variables críticas de .env..."
+    
+    if [ -f "$SCRIPT_DIR/verify-env-variables.sh" ]; then
+        bash "$SCRIPT_DIR/verify-env-variables.sh" > /tmp/env-verification.log 2>&1
+        ENV_VERIFICATION_EXIT=$?
+        
+        # Contar errores
+        ERROR_COUNT=$(grep -c "❌ ERROR" /tmp/env-verification.log || echo "0")
+        WARNING_COUNT=$(grep -c "⚠️  WARNING" /tmp/env-verification.log || echo "0")
+        
+        if [ $ERROR_COUNT -eq 0 ]; then
+            if [ $WARNING_COUNT -gt 0 ]; then
+                print_warning "Verificación de variables completada con advertencias"
+                cat /tmp/env-verification.log | grep -E "⚠️|ℹ️" | head -10
+            else
+                print_success "Todas las variables críticas están configuradas correctamente"
+            fi
+            return 0
+        else
+            print_error "Se encontraron errores críticos en las variables de entorno"
+            cat /tmp/env-verification.log | grep "❌ ERROR"
+            print_error "Por favor, corrige las variables vacías en .env antes de continuar"
+            return 1
+        fi
+    else
+        print_warning "Script de verificación de variables no encontrado, saltando este paso"
+        return 0
+    fi
+}
+
 # Paso 1: Validación estática
 step1_static_validation() {
     print_header "PASO 1: VALIDACIÓN ESTÁTICA"
@@ -242,13 +276,23 @@ main() {
     print_header "🚀 VALIDACIÓN AUTOMÁTICA COMPLETA"
     echo ""
     print_info "Este script ejecutará automáticamente:"
+    echo "  0. Verificación de variables de entorno (CRÍTICO)"
     echo "  1. Validación estática de configuración"
     echo "  2. Levantamiento de servicios Docker"
     echo "  3. Verificación de servicios corriendo"
     echo ""
     
-    TOTAL_STEPS=3
+    TOTAL_STEPS=4
     COMPLETED_STEPS=0
+    
+    # Paso 0: Verificar variables de entorno (CRÍTICO)
+    if step0_verify_env_variables; then
+        ((COMPLETED_STEPS++))
+    else
+        print_error "Paso 0 falló, abortando..."
+        print_error "Corrige las variables vacías en .env antes de continuar"
+        exit 1
+    fi
     
     # Paso 1: Validación estática
     if step1_static_validation; then

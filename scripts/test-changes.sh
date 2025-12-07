@@ -13,6 +13,20 @@ PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 cd "$PROJECT_DIR"
 
+# Verificar variables de entorno antes de continuar
+if [ -f "$SCRIPT_DIR/verify-env-variables.sh" ]; then
+    echo "🔍 Verificando variables de entorno..."
+    if ! bash "$SCRIPT_DIR/verify-env-variables.sh" > /tmp/env-verification.log 2>&1; then
+        echo "❌ ERROR: Se encontraron errores críticos en las variables de entorno"
+        cat /tmp/env-verification.log | grep "❌ ERROR"
+        echo ""
+        echo "Por favor, corrige las variables vacías en .env antes de continuar"
+        exit 1
+    fi
+    echo "✅ Variables de entorno verificadas"
+    echo ""
+fi
+
 # Detectar comando de Docker
 DOCKER_CMD="docker"
 if ! docker ps > /dev/null 2>&1; then

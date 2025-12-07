@@ -1,26 +1,30 @@
 # 💾 Guía de Backup y Restauración
 
-## 📋 Scripts Disponibles
+## 📋 Script Consolidado: `scripts/backup-manager.sh`
 
-### 1. `scripts/backup.sh` - Crear Backup
+Este script consolida todas las operaciones de backup en un solo comando con subcomandos.
+
+### Comandos Disponibles
+
+#### 1. Crear Backup
 
 Realiza backups de volúmenes Docker, bases de datos y configuraciones.
 
 **Uso básico:**
 ```bash
-./scripts/backup.sh
+./scripts/backup-manager.sh backup
 ```
 
 **Opciones:**
 ```bash
 # Backup completo (no incremental)
-./scripts/backup.sh --full
+./scripts/backup-manager.sh backup --full
 
 # Backup con verificación de integridad
-./scripts/backup.sh --verify
+./scripts/backup-manager.sh backup --verify
 
 # Backup completo con verificación
-./scripts/backup.sh --full --verify
+./scripts/backup-manager.sh backup --full --verify
 ```
 
 **Qué respalda:**
@@ -32,30 +36,36 @@ Realiza backups de volúmenes Docker, bases de datos y configuraciones.
 **Ubicación de backups:**
 - `backups/YYYYMMDD-HHMMSS/`
 
-### 2. `scripts/restore.sh` - Restaurar Backup
+#### 2. Restaurar Backup
 
 Restaura un backup específico.
 
 **Uso:**
 ```bash
-# Listar backups disponibles
-./scripts/list-backups.sh
+# Listar backups disponibles primero
+./scripts/backup-manager.sh list
 
 # Restaurar un backup específico
-./scripts/restore.sh 20251207-140000
+./scripts/backup-manager.sh restore 20251207-140000
 ```
 
 **⚠️ Advertencia:**
 - La restauración reemplazará datos existentes
 - Asegúrate de tener un backup reciente antes de restaurar
+- Requiere confirmación escribiendo 'si'
 
-### 3. `scripts/list-backups.sh` - Listar Backups
+#### 3. Listar Backups
 
 Muestra todos los backups disponibles con información detallada.
 
 **Uso:**
 ```bash
-./scripts/list-backups.sh
+./scripts/backup-manager.sh list
+```
+
+**Ayuda:**
+```bash
+./scripts/backup-manager.sh help
 ```
 
 ## 🔄 Flujo de Trabajo Recomendado
@@ -63,25 +73,25 @@ Muestra todos los backups disponibles con información detallada.
 ### Backup Regular
 ```bash
 # Backup diario (agregar a cron)
-0 2 * * * cd /ruta/al/proyecto && ./scripts/backup.sh --verify
+0 2 * * * cd /ruta/al/proyecto && ./scripts/backup-manager.sh backup --verify
 ```
 
 ### Antes de Cambios Importantes
 ```bash
 # Crear backup completo antes de cambios
-./scripts/backup.sh --full --verify
+./scripts/backup-manager.sh backup --full --verify
 ```
 
 ### Restauración
 ```bash
 # 1. Listar backups disponibles
-./scripts/list-backups.sh
+./scripts/backup-manager.sh list
 
 # 2. Detener servicios (opcional pero recomendado)
 docker compose down
 
 # 3. Restaurar backup específico
-./scripts/restore.sh 20251207-140000
+./scripts/backup-manager.sh restore 20251207-140000
 
 # 4. Reiniciar servicios
 docker compose up -d
@@ -105,7 +115,7 @@ backups/
 Los backups incluyen verificación automática cuando usas `--verify`:
 
 ```bash
-./scripts/backup.sh --verify
+./scripts/backup-manager.sh backup --verify
 ```
 
 Esto verifica que todos los archivos comprimidos no estén corruptos.
@@ -200,4 +210,4 @@ Las configuraciones en bind mounts (`./monitoring/`, `./haproxy/`, `./modsecurit
 - ⚠️ Se pierden si se borra el proyecto
 - ✅ Están incluidas en los backups automáticos
 
-**Recomendación**: Ejecutar `./scripts/backup.sh` regularmente para respaldar estas configuraciones.
+**Recomendación**: Ejecutar `./scripts/backup-manager.sh backup` regularmente para respaldar estas configuraciones.
