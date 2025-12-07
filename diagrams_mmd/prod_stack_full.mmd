@@ -1,0 +1,14 @@
+flowchart TD
+    NVIDIA["gpu-nvidia\nOllama (GPU NVIDIA)"] -- nvidia --> N8N["n8n"]
+    N8N -- monitoring --> MON["monitoring"]
+    N8N -- security --> SEC["security"]
+    N8N -- infrastructure --> INFRA["infrastructure"]
+    classDef ia fill:#e0f7fa,stroke:#00796b,stroke-width:2px,color:#222;
+    classDef monitoring fill:#ede7f6,stroke:#8e24aa,stroke-width:2px,color:#222;
+    classDef security fill:#ffebee,stroke:#e53935,stroke-width:2px,color:#222;
+    classDef infra fill:#efebe9,stroke:#6d4c41,stroke-width:2px,color:#222;
+    class NVIDIA ia;
+    class N8N ia;
+    class MON monitoring;
+    class SEC security;
+    class INFRA infra; 

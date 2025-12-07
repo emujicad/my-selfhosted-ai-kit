@@ -1,0 +1,72 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus se monitorea a sí mismo
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Monitorear servicios del stack
+  - job_name: 'ollama'
+    static_configs:
+      - targets: ['ollama:11434']
+    metrics_path: '/api/tags'
+
+  - job_name: 'n8n'
+    static_configs:
+      - targets: ['n8n:5678']
+    metrics_path: '/healthz'
+
+  - job_name: 'open-webui'
+    static_configs:
+      - targets: ['open-webui:8080']
+    metrics_path: '/healthz'
+
+  - job_name: 'qdrant'
+    static_configs:
+      - targets: ['qdrant:6333']
+    metrics_path: '/health'
+
+  # Monitorear PostgreSQL con exporter
+  - job_name: 'postgres-exporter'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+
+  # Monitorear Redis
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+
+  # Monitorear Node Exporter (métricas del host)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  # Monitorear cAdvisor (métricas de contenedores)
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8082']
+
+  # Monitorear HAProxy
+  - job_name: 'haproxy'
+    static_configs:
+      - targets: ['haproxy:80']
+    metrics_path: '/metrics'
+
+  # Monitorear Jenkins
+  - job_name: 'jenkins'
+    static_configs:
+      - targets: ['jenkins:8080']
+    metrics_path: '/prometheus'
+
+  # Monitorear Keycloak
+  - job_name: 'keycloak'
+    static_configs:
+      - targets: ['keycloak:8080']
+    metrics_path: '/metrics' 

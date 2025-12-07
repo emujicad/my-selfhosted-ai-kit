@@ -1,0 +1,11 @@
+flowchart TD
+    CPU["cpu\nOllama (CPU)"] -- cpu --> N8N["n8n"]
+    N8N -- dev --> DEV["dev"]
+    N8N -- testing --> TEST["testing"]
+    classDef ia fill:#e0f7fa,stroke:#00796b,stroke-width:2px,color:#222;
+    classDef dev fill:#fffde7,stroke:#ffd600,stroke-width:2px,color:#222;
+    classDef testing fill:#f0f4c3,stroke:#cddc39,stroke-width:2px,color:#222;
+    class CPU ia;
+    class N8N ia;
+    class DEV dev;
+    class TEST testing; 

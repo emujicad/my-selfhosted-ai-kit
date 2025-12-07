@@ -1,0 +1,1112 @@
+# =============================================================================
+# MY SELF-HOSTED AI KIT - Docker Compose Configuration
+# =============================================================================
+# Este archivo define todos los servicios necesarios para ejecutar un stack
+# completo de herramientas de Inteligencia Artificial auto-hospedadas.
+#
+# SERVICIOS INCLUIDOS:
+# - Ollama: Servidor de modelos de lenguaje local (LLMs)
+# - Open WebUI: Interfaz web moderna para chat con IA
+# - n8n: Plataforma de automatización de flujos de trabajo
+# - PostgreSQL: Base de datos para n8n
+# - Qdrant: Base de datos vectorial para embeddings
+# - pgvector: Extensión de PostgreSQL para vectores
+# =============================================================================
+
+# =============================================================================
+# CONFIGURACIÓN COMÚN Y VARIABLES DE ENTORNO
+# =============================================================================
+# Configuración compartida entre servicios para consistencia
+x-common-env: &common-env
+  # Configuración de zona horaria
+  TZ: UTC
+  # Configuración de usuario/grupo (para permisos de archivos)
+  PUID: 1000
+  PGID: 1000
+
+# Configuración de desarrollo vs producción
+x-dev-config: &dev-config
+  environment:
+    - DEBUG=true
+    - LOG_LEVEL=debug
+  restart: "no"
+
+x-prod-config: &prod-config
+  environment:
+    - DEBUG=false
+    - LOG_LEVEL=info
+  restart: unless-stopped
+
+# =============================================================================
+# VOLÚMENES PERSISTENTES
+# =============================================================================
+# Los volúmenes almacenan datos de forma persistente, sobreviviendo a reinicios
+# y eliminación de contenedores. Todos los datos importantes se guardan aquí.
+volumes:
+  n8n_storage:        # Datos de n8n (workflows, credenciales, configuraciones)
+  postgres_storage:   # Base de datos PostgreSQL principal
+  ollama_storage:     # Modelos de IA descargados (¡pueden ser muy grandes!)
+  qdrant_storage:     # Base de datos vectorial Qdrant
+  pgvector_data:      # Base de datos PostgreSQL con extensión vectorial
+  open_webui_storage: # Datos de Open WebUI (chats, configuraciones)
+  n8n_data:           # Datos de importación/exportación de n8n
+  shared_data:        # Datos compartidos entre servicios
+  # Nuevos volúmenes para mejoras
+  prometheus_data:    # Datos de métricas de Prometheus
+  grafana_data:       # Datos de Grafana
+  alertmanager_data:  # Datos de AlertManager
+  backup_data:        # Datos de respaldos automáticos
+  # Volúmenes para nuevas mejoras
+  redis_data:         # Cache Redis
+  jenkins_data:       # Datos de Jenkins CI/CD
+  haproxy_data:       # Configuración de HAProxy
+  keycloak_data:      # Datos de Keycloak
+  modsecurity_data:   # Reglas de ModSecurity
+  cadvisor_data:      # Datos de cAdvisor
+  node_exporter_data: # Datos de Node Exporter
+  postgres_exporter_data: # Datos de PostgreSQL Exporter
+
+# =============================================================================
+# REDES
+# =============================================================================
+# Define redes personalizadas para separar frontend y backend
+networks:
+  genai-network:
+    driver: bridge
+    name: genai-network
+  frontend-network:
+    driver: bridge
+    name: frontend-network
+  backend-network:
+    driver: bridge
+    name: backend-network
+    internal: true  # Solo comunicación interna
+  monitoring-network:
+    driver: bridge
+    name: monitoring-network
+  security-network:
+    driver: bridge
+    name: security-network
+    internal: true
+
+# =============================================================================
+# PLANTILLAS DE SERVICIOS (YAML Anchors)
+# =============================================================================
+# Estas plantillas definen configuraciones comunes que se reutilizan en
+# múltiples servicios para evitar duplicación de código.
+
+# Plantilla para servicios n8n (n8n es una plataforma de automatización)
+x-n8n: &service-n8n
+  #image: n8nio/n8n:latest
+  image: docker.n8n.io/n8nio/n8n  # Imagen oficial de n8n
+  networks: ['genai-network']     # Conecta a nuestra red personalizada
+  environment:
+    - DB_TYPE=postgresdb          # Tipo de base de datos (PostgreSQL)
+    - DB_POSTGRESDB_HOST=postgres # Host de la base de datos
+    - DB_POSTGRESDB_USER=${POSTGRES_USER}     # Usuario de BD (desde .env)
+    - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD} # Contraseña de BD (desde .env)
+    - N8N_DIAGNOSTICS_ENABLED=false           # Desactiva telemetría
+    - N8N_PERSONALIZATION_ENABLED=false       # Desactiva personalización
+    - N8N_ENCRYPTION_KEY                      # Clave para encriptar datos
+    - N8N_USER_MANAGEMENT_JWT_SECRET          # Clave para tokens JWT
+    - OLLAMA_HOST=ollama:11434                # Conecta con Ollama
+  env_file:
+    - .env                                    # Carga variables desde archivo .env
+  # Configuración de logging mejorada
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "10m"
+      max-file: "3"
+  # Límites de recursos para evitar consumo excesivo
+  deploy:
+    resources:
+      limits:
+        cpus: '4.0'
+        memory: 4G
+      reservations:
+        cpus: '1.0'
+        memory: 1G
+
+# Plantilla para servicios Ollama (servidor de modelos de IA)
+x-ollama: &service-ollama
+  image: ollama/ollama:latest     # Imagen oficial de Ollama
+  container_name: ollama
+  networks: ['genai-network']
+  restart: unless-stopped         # Reinicia automáticamente si falla
+  ports:
+    - 11434:11434                 # Expone puerto de API de Ollama
+  volumes:
+    - ollama_storage:/root/.ollama # Almacena modelos descargados
+  healthcheck:                    # Verifica que el servicio esté funcionando
+    test: ["CMD", "curl", "-f", "http://localhost:11434"]
+    interval: 10s                 # Verifica cada 10 segundos
+    timeout: 5s                   # Timeout de 5 segundos
+    retries: 5                    # Reintenta 5 veces antes de marcar como unhealthy
+    start_period: 10s             # Espera 10 segundos antes de empezar healthchecks
+  # Configuración de logging mejorada
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "10m"
+      max-file: "3"
+  # Límites de recursos (Ollama puede consumir mucha RAM)
+  deploy:
+    resources:
+      limits:
+        cpus: '6.0'
+        memory: 32G
+      reservations:
+        cpus: '2.0'
+        memory: 8G
+
+# Plantilla para inicialización de modelos de Ollama
+# Este servicio descarga automáticamente los modelos de IA al iniciar
+x-init-ollama: &init-ollama
+  image: ollama/ollama:latest
+  networks: ['genai-network']
+  container_name: ollama-pull-llama
+  volumes:
+    - ollama_storage:/root/.ollama # Comparte el mismo volumen que ollama
+  entrypoint: /bin/sh              # Usa shell para ejecutar comandos
+  environment:
+    - OLLAMA_HOST=ollama:11434     # Conecta con el servicio ollama
+  command:
+    - "-c"
+    - |
+      set -e                       # Termina si cualquier comando falla
+      echo "Descargando llama3.2..."
+      ollama pull llama3.2 || { echo "❌ Falló llama3.2"; exit 1; }
+
+      echo "Descargando llama3.3..."
+      ollama pull llama3.3 || { echo "❌ Falló llama3.3"; exit 1; }
+
+      echo "Descargando all-minilm..."
+      ollama pull all-minilm || { echo "❌ Falló all-minilm"; exit 1; }
+
+      #echo "Descargando all-minilm:33m..."
+      #ollama pull all-minilm:33m || { echo "❌ Falló all-minilm:33m"; exit 1; }
+
+      echo "Descargando deepseek-r1:14b..."
+      ollama pull deepseek-r1:14b || { echo "❌ Falló deepseek"; exit 1; }
+
+      echo "Descargando nomic-embed-text..."
+      ollama pull nomic-embed-text || { echo "❌ Falló nomic-embed-text"; exit 1; }
+
+      echo "✅ Todos los modelos fueron descargados correctamente"
+  # Configuración de logging
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+# =============================================================================
+# SERVICIOS PRINCIPALES
+# =============================================================================
+
+services:
+  # Inicializador de base de datos para Keycloak
+  postgres-init:
+    image: postgres:16-alpine
+    container_name: postgres-init
+    profiles: ["security"]
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - postgres_storage:/var/lib/postgresql/data
+      - ./scripts/init-keycloak-db.sql:/docker-entrypoint-initdb.d/init-keycloak-db.sql
+    networks:
+      - genai-network
+    command: postgres -c 'max_connections=200'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  postgres:
+    image: postgres:16-alpine      # PostgreSQL 16 con Alpine Linux (más ligero)
+    hostname: postgres
+    container_name: postgres
+    networks: ['genai-network']
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER              # Usuario de BD (desde .env)
+      - POSTGRES_PASSWORD          # Contraseña de BD (desde .env)
+      - POSTGRES_DB                # Nombre de BD (desde .env)
+    volumes:
+      - postgres_storage:/var/lib/postgresql/data  # Datos persistentes
+    healthcheck:                   # Verifica que PostgreSQL esté listo
+      test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Configuración de logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Límites de recursos
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # Base de datos PostgreSQL con extensión vectorial (para embeddings)
+  pgvector:
+    image: ankane/pgvector         # PostgreSQL con extensión pgvector
+    container_name: pgvector
+    networks: ['genai-network']
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: pgvector_db
+    ports:
+      - "5433:5432"                # Puerto 5433 en host, 5432 en contenedor
+    restart: unless-stopped
+    volumes:
+      - pgvector_data:/var/lib/postgresql/data
+    # Configuración de logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Límites de recursos
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # Interfaz web moderna para chat con IA
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main # Sugerido: usar una versión fija, por ejemplo: open-webui:0.6.13
+    container_name: open-webui
+    ports:
+      - "3000:8080"                # Puerto 3000 en host, 8080 en contenedor
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434  # Conecta con Ollama
+      - USER_AGENT=OpenWebUI/0.6.13
+      - CORS_ALLOW_ORIGIN=http://localhost:3000  # Permite acceso desde localhost
+    volumes:
+      - open_webui_storage:/app/backend/data   # Datos persistentes
+      #- /mnt/e/docker/app/open-webui/backend/data:/app/backend/data  # Montaje local (comentado)
+    networks:
+      - genai-network
+    healthcheck:                   # Verifica que Open WebUI esté funcionando
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Configuración de logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Límites de recursos
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+#    depends_on:
+#      ollama-gpu:
+#        condition: service_healthy
+
+  # Servicio de importación de datos para n8n (se ejecuta una vez al inicio)
+  n8n-import:
+    <<: *service-n8n               # Usa la plantilla n8n
+    hostname: n8n-import
+    container_name: n8n-import
+    networks: ['genai-network']
+    entrypoint: /bin/sh            # Usa shell para ejecutar comandos de importación
+    environment:
+      - N8N_RUNNERS_ENABLED=true
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+    command:
+      - "-c"
+      - "n8n import:credentials --separate --input=/data/credentials && n8n import:workflow --separate --input=/data/workflows"
+    volumes:
+      - n8n_data:/data             # Datos de importación/exportación
+    depends_on:
+      postgres:
+        condition: service_healthy # Espera a que PostgreSQL esté listo
+    healthcheck:                   # Verifica que n8n-import esté funcionando
+      test: ["CMD", "curl", "-f", "http://n8n:5678/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Servicio principal de n8n (plataforma de automatización)
+  n8n:
+    <<: *service-n8n               # Usa la plantilla n8n
+    hostname: n8n
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - 5678:5678                  # Puerto de n8n
+    environment:
+      - N8N_RUNNERS_ENABLED=true
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+    volumes:
+      - n8n_storage:/home/node/.n8n    # Datos persistentes de n8n
+      - n8n_data:/data                 # Datos de importación/exportación
+      - shared_data:/data/shared       # Datos compartidos
+    depends_on:
+      postgres:
+        condition: service_healthy     # Espera a que PostgreSQL esté listo
+      n8n-import:
+        condition: service_completed_successfully  # Espera a que termine la importación
+    healthcheck:                       # Verifica que n8n esté funcionando
+      test: ["CMD", "curl", "-f", "http://localhost:5678/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Base de datos vectorial Qdrant (para embeddings y búsqueda semántica)
+  qdrant:
+    image: qdrant/qdrant
+    hostname: qdrant
+    container_name: qdrant
+    networks: ['genai-network']
+    restart: unless-stopped
+    ports:
+      - 6333:6333                  # Puerto de Qdrant
+    volumes:
+      - qdrant_storage:/qdrant/storage  # Datos persistentes
+    healthcheck:                   # Verifica que Qdrant esté funcionando
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Configuración de logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Límites de recursos
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # =============================================================================
+  # SERVICIOS DE OLLAMA (DIFERENTES PERFILES)
+  # =============================================================================
+  # Estos servicios usan perfiles para activar solo uno según el hardware disponible
+
+  # Perfil CPU: Ollama usando solo CPU (más lento pero funciona en cualquier máquina)
+  ollama-cpu:
+    profiles: ["cpu"]              # Solo se activa con --profile cpu
+    <<: *service-ollama            # Usa la plantilla ollama
+
+  # Perfil GPU NVIDIA: Ollama con aceleración GPU NVIDIA
+  ollama-gpu:
+    profiles: ["gpu-nvidia"]       # Solo se activa con --profile gpu-nvidia
+    <<: *service-ollama            # Usa la plantilla ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia        # Usa driver NVIDIA
+              count: 1              # Usa 1 GPU
+              capabilities: [gpu]   # Habilita capacidades GPU
+
+  # Perfil GPU AMD: Ollama con aceleración GPU AMD
+  ollama-gpu-amd:
+    profiles: ["gpu-amd"]          # Solo se activa con --profile gpu-amd
+    <<: *service-ollama
+    image: ollama/ollama:rocm      # Imagen con soporte ROCm (AMD)
+    devices:
+      - "/dev/kfd"                 # Dispositivo AMD GPU
+      - "/dev/dri"                 # Dispositivo de renderizado
+
+
+
+  # =============================================================================
+  # SERVICIOS DE INICIALIZACIÓN DE MODELOS (DIFERENTES PERFILES)
+  # =============================================================================
+  # Estos servicios descargan los modelos de IA según el perfil activado
+
+  # Descarga de modelos para CPU
+  # ollama-pull-llama-cpu:
+  #   profiles: ["cpu"]
+  #   <<: *init-ollama               # Usa la plantilla de inicialización
+  #   depends_on:
+  #     - ollama-cpu                 # Espera a que ollama-cpu esté listo
+
+  # Descarga de modelos para GPU NVIDIA
+  # ollama-pull-llama-gpu:
+  #   profiles: ["gpu-nvidia"]
+  #   <<: *init-ollama               # Usa la plantilla de inicialización
+  #   depends_on:
+  #     - ollama-gpu                 # Espera a que ollama-gpu esté listo
+
+  # Descarga de modelos para GPU AMD
+  # ollama-pull-llama-gpu-amd:
+  #   profiles: [gpu-amd]
+  #   <<: *init-ollama               # Usa la plantilla de inicialización
+  #   image: ollama/ollama:rocm      # Imagen con soporte ROCm
+  #   depends_on:
+  #    - ollama-gpu-amd              # Espera a que ollama-gpu-amd esté listo
+
+  # =============================================================================
+  # SERVICIOS DE MONITOREO Y MANTENIMIENTO (OPCIONALES)
+  # =============================================================================
+  # Estos servicios ayudan a monitorear y mantener el stack
+
+  # Prometheus - Recolector de métricas
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    profiles: ["monitoring"]
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - monitoring-network
+      - genai-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # Grafana - Dashboards y visualización
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    profiles: ["monitoring"]
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_AUTH_GENERIC_OAUTH_ENABLED=true
+      - GF_AUTH_GENERIC_OAUTH_NAME=Keycloak
+      - GF_AUTH_GENERIC_OAUTH_CLIENT_ID=grafana
+      - GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET=pr85OgKszvS0KOpVnlzYjM0c0Rp9nQXw
+      - GF_AUTH_GENERIC_OAUTH_SCOPES=openid profile email
+      - GF_AUTH_GENERIC_OAUTH_AUTH_URL=http://keycloak:8080/realms/master/protocol/openid-connect/auth
+      - GF_AUTH_GENERIC_OAUTH_TOKEN_URL=http://keycloak:8080/realms/master/protocol/openid-connect/token
+      - GF_AUTH_GENERIC_OAUTH_API_URL=http://keycloak:8080/realms/master/protocol/openid-connect/userinfo
+      - GF_AUTH_SIGNOUT_REDIRECT_URL=http://keycloak:8080/realms/master/protocol/openid-connect/logout
+      - GF_SERVER_ROOT_URL=http://localhost:3001
+      - GF_USERS_AUTO_LOGIN=true
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    networks:
+      - monitoring-network
+      - genai-network
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # AlertManager - Gestión de alertas
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    profiles: ["monitoring"]
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    networks:
+      - monitoring-network
+      - genai-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+  # Servicio de backup automático
+  backup:
+    image: alpine:latest
+    container_name: backup
+    profiles: ["monitoring"]       # Solo se activa con --profile monitoring
+    volumes:
+      - n8n_storage:/data/n8n:ro
+      - postgres_storage:/data/postgres:ro
+      - backup_data:/backups
+    command: |
+      sh -c "
+      apk add --no-cache tar
+      while true; do
+        tar -czf /backups/backup-$$(date +%Y%m%d-%H%M%S).tar.gz -C /data .
+        sleep 86400
+      done
+      "
+    # Configuración de logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Límites de recursos
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+  # Servicio de herramientas de desarrollo
+  dev-tools:
+    image: alpine:latest
+    container_name: dev-tools
+    profiles: ["dev"]              # Solo se activa con --profile dev
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    command: sh -c "apk add --no-cache curl jq && tail -f /dev/null"
+    # Configuración de logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Límites de recursos
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+  # Node Exporter - Métricas del host
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    profiles: ["monitoring"]
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - monitoring-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9100/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+  # cAdvisor - Métricas de contenedores
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    profiles: ["monitoring"]
+    ports:
+      - "8082:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - monitoring-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+  # PostgreSQL Exporter - Métricas de PostgreSQL
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: postgres-exporter
+    profiles: ["monitoring"]
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
+    ports:
+      - "9187:9187"
+    networks:
+      - monitoring-network
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9187/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+  # =============================================================================
+  # SERVICIOS DE INFRAESTRUCTURA
+  # =============================================================================
+  # Servicios que mejoran el rendimiento y escalabilidad
+
+  # Redis - Cache y sesiones
+  redis:
+    image: redis:alpine
+    container_name: redis
+    profiles: ["infrastructure"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - backend-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+
+  # HAProxy - Load Balancer
+  haproxy:
+    image: haproxy:latest
+    container_name: haproxy
+    profiles: ["infrastructure"]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - haproxy_data:/var/lib/haproxy
+    networks:
+      - frontend-network
+      - backend-network
+    depends_on:
+      - open-webui
+      - n8n
+    healthcheck:
+      test: ["CMD", "haproxy", "-c", "-f", "/usr/local/etc/haproxy/haproxy.cfg"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+
+
+  # =============================================================================
+  # SERVICIOS DE SEGURIDAD Y AUTENTICACIÓN
+  # =============================================================================
+  # Servicios para mejorar la seguridad del stack
+
+  # Keycloak - Autenticación centralizada
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak
+    profiles: ["security"]
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://postgres:5432/keycloak
+      - KC_DB_USERNAME=${POSTGRES_USER}
+      - KC_DB_PASSWORD=${POSTGRES_PASSWORD}
+      - KC_HOSTNAME=localhost
+      - KC_HOSTNAME_PORT=8080
+      - KC_HOSTNAME_STRICT=false
+      - KC_HTTP_ENABLED=true
+      - KC_HEALTH_ENABLED=true
+    ports:
+      - "8080:8080"
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+    networks:
+      - security-network
+      - backend-network
+      - genai-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: start-dev --http-enabled=true --hostname-strict=false
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # ModSecurity - Firewall de aplicaciones web
+  modsecurity:
+    image: owasp/modsecurity-crs:nginx
+    container_name: modsecurity
+    profiles: ["security"]
+    volumes:
+      - ./modsecurity/rules:/etc/nginx/modsecurity/rules
+      - modsecurity_data:/var/log/modsecurity
+    networks:
+      - security-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # =============================================================================
+  # SERVICIOS DE AUTOMATIZACIÓN Y CI/CD
+  # =============================================================================
+  # Servicios para automatizar tareas y desarrollo
+
+  # Watchtower - Actualizaciones automáticas de contenedores
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
+    profiles: ["automation"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_SCHEDULE=0 0 2 * * *  # Actualizar a las 2 AM
+      - WATCHTOWER_NOTIFICATIONS=email
+      - WATCHTOWER_EMAIL_FROM=watchtower@yourdomain.com
+      - WATCHTOWER_EMAIL_TO=admin@yourdomain.com
+      - WATCHTOWER_EMAIL_SERVER=smtp.gmail.com
+      - WATCHTOWER_EMAIL_SERVER_PORT=587
+      - WATCHTOWER_EMAIL_SERVER_USER=your-email@gmail.com
+      - WATCHTOWER_EMAIL_SERVER_PASSWORD=your-app-password
+    networks:
+      - monitoring-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+  # Jenkins - CI/CD Pipeline
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    profiles: ["ci-cd"]
+    ports:
+      - "8081:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - JENKINS_OPTS=--httpPort=8080
+    networks:
+      - backend-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/login"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # Servicio de testing automático
+  test-runner:
+    image: alpine:latest
+    container_name: test-runner
+    profiles: ["testing"]
+    volumes:
+      - .:/workspace
+    command: |
+      sh -c "
+      apk add --no-cache curl
+      while true; do
+        echo 'Testing services...'
+        curl -f http://open-webui:8080/healthz || echo 'Open WebUI down'
+        curl -f http://n8n:5678/healthz || echo 'n8n down'
+        curl -f http://ollama:11434/api/tags || echo 'Ollama down'
+        curl -f http://qdrant:6333/health || echo 'Qdrant down'
+        echo 'Tests completed at $$(date)'
+        sleep 300
+      done
+      "
+    networks:
+      - genai-network
+    depends_on:
+      - open-webui
+      - n8n
+      - ollama
+      - qdrant
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+  # Servicio de sincronización de datos
+  sync:
+    image: alpine:latest
+    container_name: sync
+    profiles: ["automation"]
+    volumes:
+      - shared_data:/data
+      - backup_data:/backup
+    command: |
+      sh -c "
+      apk add --no-cache rsync
+      while true; do
+        echo 'Syncing data...'
+        rsync -av /data/ /backup/sync/
+        echo 'Sync completed at $$(date)'
+        sleep 3600
+      done
+      "
+    networks:
+      - backend-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+  # Servicio de debugging avanzado
+  debug-tools:
+    image: alpine:latest
+    container_name: debug-tools
+    profiles: ["debug"]
+    volumes:
+      - .:/workspace
+      - /var/run/docker.sock:/var/run/docker.sock
+    working_dir: /workspace
+    command: |
+      sh -c "
+      apk add --no-cache curl jq htop vim nano git docker-cli
+      echo 'Debug tools ready. Available commands:'
+      echo '- curl: HTTP requests'
+      echo '- jq: JSON processing'
+      echo '- htop: Process monitoring'
+      echo '- vim/nano: Text editing'
+      echo '- git: Version control'
+      echo '- docker: Container management'
+      tail -f /dev/null
+      "
+    networks:
+      - genai-network
+      - monitoring-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M

@@ -1,0 +1,29 @@
+flowchart TD
+    GPU["gpu-nvidia\nOllama (GPU NVIDIA)"] -- nvidia --> N8N["n8n"]
+    N8N -- monitoring --> MON["monitoring"]
+    N8N -- security --> SEC["security"]
+    N8N -- infrastructure --> INFRA["infrastructure"]
+    N8N -- automation --> AUTO["automation"]
+    N8N -- ci-cd --> CICD["ci-cd"]
+    N8N -- testing --> TEST["testing"]
+    N8N -- debug --> DEBUG["debug"]
+    N8N -- dev --> DEV["dev"]
+    classDef ia fill:#e0f7fa,stroke:#00796b,stroke-width:2px,color:#222;
+    classDef monitoring fill:#ede7f6,stroke:#8e24aa,stroke-width:2px,color:#222;
+    classDef security fill:#ffebee,stroke:#e53935,stroke-width:2px,color:#222;
+    classDef infra fill:#efebe9,stroke:#6d4c41,stroke-width:2px,color:#222;
+    classDef automation fill:#e0f7fa,stroke:#00bcd4,stroke-width:2px,color:#222;
+    classDef cicd fill:#eceff1,stroke:#455a64,stroke-width:2px,color:#222;
+    classDef testing fill:#f0f4c3,stroke:#cddc39,stroke-width:2px,color:#222;
+    classDef debug fill:#fce4ec,stroke:#d81b60,stroke-width:2px,color:#222;
+    classDef dev fill:#fffde7,stroke:#ffd600,stroke-width:2px,color:#222;
+    class GPU ia;
+    class N8N ia;
+    class MON monitoring;
+    class SEC security;
+    class INFRA infra;
+    class AUTO automation;
+    class CICD cicd;
+    class TEST testing;
+    class DEBUG debug;
+    class DEV dev; 
