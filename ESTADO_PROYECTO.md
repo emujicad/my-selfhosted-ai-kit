@@ -20,13 +20,19 @@
    - ✅ Prometheus configurado
    - ✅ Alertas Prometheus configuradas
    - ✅ Grafana funcionando
+   - ✅ Grafana OAuth con Keycloak configurado
+
+4. **Actualizaciones**
+   - ✅ n8n actualizado: 1.101.2 → 1.122.5 (21 versiones)
+   - ✅ Estrategia de actualización documentada
 
 ## 📝 Pendiente
 
-1. **Scripts de Backup**
-   - Backup incremental
-   - Restauración
-   - Verificación
+1. ~~**Scripts de Backup**~~ ✅ **COMPLETADO**
+   - ✅ Backup incremental
+   - ✅ Restauración
+   - ✅ Verificación
+   - ✅ Optimización: excluido ollama_storage
 
 2. **Integración Keycloak**
    - Open WebUI con OIDC
