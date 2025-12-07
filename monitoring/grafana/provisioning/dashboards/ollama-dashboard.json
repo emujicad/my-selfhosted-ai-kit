@@ -15,7 +15,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count(container_tasks_state{name=~\"ollama|postgres|open-webui|n8n|qdrant|grafana|prometheus|alertmanager|cadvisor|node-exporter|postgres-exporter\"})",
+          "expr": "count(container_tasks_state{id=~\"/system.slice/docker-.*\"})",
           "legendFormat": "Total Containers"
         }
       ],
@@ -42,8 +42,8 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(container_cpu_usage_seconds_total{name=\"ollama\"}[5m]) * 100",
-          "legendFormat": "CPU Usage %"
+          "expr": "sum(rate(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"}[5m])) by (id) * 100",
+          "legendFormat": "{{id}} CPU %"
         }
       ],
       "fieldConfig": {
@@ -105,8 +105,8 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "container_memory_usage_bytes{name=\"ollama\"} / 1024 / 1024",
-          "legendFormat": "Memory Usage (MB)"
+          "expr": "sum(container_memory_usage_bytes{id=~\"/system.slice/docker-.*\"}) by (id) / 1024 / 1024",
+          "legendFormat": "{{id}} Memory (MB)"
         }
       ],
       "fieldConfig": {
@@ -168,12 +168,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(container_network_receive_bytes_total{name=\"ollama\"}[5m]) / 1024",
-          "legendFormat": "Network Receive (KB/s)"
+          "expr": "sum(rate(container_network_receive_bytes_total{id=\"/\",interface=~\"br-.*\"}[5m])) by (interface) / 1024",
+          "legendFormat": "{{interface}} Receive (KB/s)"
         },
         {
-          "expr": "rate(container_network_transmit_bytes_total{name=\"ollama\"}[5m]) / 1024",
-          "legendFormat": "Network Transmit (KB/s)"
+          "expr": "sum(rate(container_network_transmit_bytes_total{id=\"/\",interface=~\"br-.*\"}[5m])) by (interface) / 1024",
+          "legendFormat": "{{interface}} Transmit (KB/s)"
         }
       ],
       "fieldConfig": {
@@ -348,10 +348,68 @@
       "type": "table",
       "targets": [
         {
-          "expr": "container_tasks_state{name=~\"ollama|postgres|open-webui|n8n|qdrant|grafana|prometheus|alertmanager|cadvisor|node-exporter|postgres-exporter\"}",
-          "legendFormat": "{{name}} - {{state}}"
+          "expr": "container_start_time_seconds{id=~\"/system.slice/docker-.*\"}",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
         }
       ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "id"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 300
+              },
+              {
+                "id": "displayName",
+                "value": "Container ID"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 200
+              },
+              {
+                "id": "displayName",
+                "value": "Start Time"
+              },
+              {
+                "id": "unit",
+                "value": "dateTimeFromNow"
+              }
+            ]
+          }
+        ]
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -390,8 +448,8 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "time() - container_start_time_seconds{name=~\"ollama|postgres|open-webui|n8n|qdrant|grafana|prometheus|alertmanager|cadvisor|node-exporter|postgres-exporter\"}",
-          "legendFormat": "{{name}} Uptime"
+          "expr": "time() - container_start_time_seconds{id=~\"/system.slice/docker-.*\"}",
+          "legendFormat": "{{id}} Uptime"
         }
       ],
       "fieldConfig": {

@@ -19,22 +19,22 @@
 # Configuración compartida entre servicios para consistencia
 x-common-env: &common-env
   # Configuración de zona horaria
-  TZ: UTC
+  TZ: ${TZ:-UTC}
   # Configuración de usuario/grupo (para permisos de archivos)
-  PUID: 1000
-  PGID: 1000
+  PUID: ${PUID:-1000}
+  PGID: ${PGID:-1000}
 
 # Configuración de desarrollo vs producción
 x-dev-config: &dev-config
   environment:
-    - DEBUG=true
-    - LOG_LEVEL=debug
+    - DEBUG=${DEBUG:-true}
+    - LOG_LEVEL=${LOG_LEVEL:-debug}
   restart: "no"
 
 x-prod-config: &prod-config
   environment:
-    - DEBUG=false
-    - LOG_LEVEL=info
+    - DEBUG=${DEBUG:-false}
+    - LOG_LEVEL=${LOG_LEVEL:-info}
   restart: unless-stopped
 
 # =============================================================================
@@ -65,6 +65,12 @@ volumes:
   cadvisor_data:      # Datos de cAdvisor
   node_exporter_data: # Datos de Node Exporter
   postgres_exporter_data: # Datos de PostgreSQL Exporter
+  # Volúmenes para mejoras de persistencia
+  config_data:        # Configuraciones persistentes (Prometheus, Grafana, AlertManager, HAProxy, ModSecurity)
+  ssl_certs_data:     # Certificados SSL/TLS generados
+  logs_data:          # Logs consolidados de todos los servicios
+  grafana_provisioning_data: # Dashboards y datasources provisionados de Grafana
+  prometheus_rules_data: # Reglas de alertas personalizadas de Prometheus
 
 # =============================================================================
 # REDES
@@ -104,15 +110,15 @@ x-n8n: &service-n8n
   image: docker.n8n.io/n8nio/n8n:1.122.5  # Versión más reciente (actualizado el 2025-12-07)
   networks: ['genai-network']     # Conecta a nuestra red personalizada
   environment:
-    - DB_TYPE=postgresdb          # Tipo de base de datos (PostgreSQL)
-    - DB_POSTGRESDB_HOST=postgres # Host de la base de datos
+    - DB_TYPE=${N8N_DB_TYPE:-postgresdb}          # Tipo de base de datos (PostgreSQL)
+    - DB_POSTGRESDB_HOST=${N8N_DB_HOST:-postgres} # Host de la base de datos
     - DB_POSTGRESDB_USER=${POSTGRES_USER}     # Usuario de BD (desde .env)
     - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD} # Contraseña de BD (desde .env)
-    - N8N_DIAGNOSTICS_ENABLED=false           # Desactiva telemetría
-    - N8N_PERSONALIZATION_ENABLED=false       # Desactiva personalización
+    - N8N_DIAGNOSTICS_ENABLED=${N8N_DIAGNOSTICS_ENABLED:-false}           # Desactiva telemetría
+    - N8N_PERSONALIZATION_ENABLED=${N8N_PERSONALIZATION_ENABLED:-false}       # Desactiva personalización
     - N8N_ENCRYPTION_KEY                      # Clave para encriptar datos
     - N8N_USER_MANAGEMENT_JWT_SECRET          # Clave para tokens JWT
-    - OLLAMA_HOST=ollama:11434                # Conecta con Ollama
+    - OLLAMA_HOST=${OLLAMA_HOST_INTERNAL:-ollama}:${OLLAMA_PORT_INTERNAL:-11434}                # Conecta con Ollama
   env_file:
     - .env                                    # Carga variables desde archivo .env
   # Configuración de logging mejorada
@@ -138,7 +144,7 @@ x-ollama: &service-ollama
   networks: ['genai-network']
   restart: unless-stopped         # Reinicia automáticamente si falla
   ports:
-    - 11434:11434                 # Expone puerto de API de Ollama
+    - "${PORT_OLLAMA_HOST:-11434}:${PORT_OLLAMA_CONTAINER:-11434}"
   volumes:
     - ollama_storage:/root/.ollama # Almacena modelos descargados
   healthcheck:                    # Verifica que el servicio esté funcionando
@@ -173,7 +179,7 @@ x-init-ollama: &init-ollama
     - ollama_storage:/root/.ollama # Comparte el mismo volumen que ollama
   entrypoint: /bin/sh              # Usa shell para ejecutar comandos
   environment:
-    - OLLAMA_HOST=ollama:11434     # Conecta con el servicio ollama
+    - OLLAMA_HOST=${OLLAMA_HOST_INTERNAL:-ollama}:${OLLAMA_PORT_INTERNAL:-11434}     # Conecta con el servicio ollama
   command:
     - "-c"
     - |
@@ -223,7 +229,7 @@ services:
       - ./scripts/init-keycloak-db.sql:/docker-entrypoint-initdb.d/init-keycloak-db.sql
     networks:
       - genai-network
-    command: postgres -c 'max_connections=200'
+    command: postgres -c 'max_connections=${POSTGRES_MAX_CONNECTIONS:-200}'
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
       interval: 5s
@@ -245,7 +251,7 @@ services:
 
   postgres:
     image: postgres:16-alpine      # PostgreSQL 16 con Alpine Linux (más ligero)
-    hostname: postgres
+    hostname: ${POSTGRES_HOSTNAME:-postgres}
     container_name: postgres
     networks: ['genai-network']
     restart: unless-stopped
@@ -282,11 +288,11 @@ services:
     container_name: pgvector
     networks: ['genai-network']
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: pgvector_db
+      POSTGRES_USER: ${PGVECTOR_USER:-user}
+      POSTGRES_PASSWORD: ${PGVECTOR_PASSWORD:-password}
+      POSTGRES_DB: ${PGVECTOR_DB:-pgvector_db}
     ports:
-      - "5433:5432"                # Puerto 5433 en host, 5432 en contenedor
+      - "${PORT_PGVECTOR_HOST:-5433}:${PORT_PGVECTOR_CONTAINER:-5432}"
     restart: unless-stopped
     volumes:
       - pgvector_data:/var/lib/postgresql/data
@@ -311,39 +317,38 @@ services:
     image: ghcr.io/open-webui/open-webui:0.6.41 # Versión más reciente - probando mejoras OIDC
     container_name: open-webui
     ports:
-      - "3000:8080"                # Puerto 3000 en host, 8080 en contenedor
+      - "${PORT_OPEN_WEBUI_HOST:-3000}:${PORT_OPEN_WEBUI_CONTAINER:-8080}"
     environment:
-      - OLLAMA_BASE_URL=http://ollama:11434  # Conecta con Ollama
-      - USER_AGENT=OpenWebUI/0.6.13
-      - CORS_ALLOW_ORIGIN=http://localhost:3000  # Permite acceso desde localhost
+      - OLLAMA_BASE_URL=${OLLAMA_URL_INTERNAL:-http://ollama:11434}
+      - USER_AGENT=${OPEN_WEBUI_USER_AGENT:-OpenWebUI/0.6.13}
+      - CORS_ALLOW_ORIGIN=${OPEN_WEBUI_URL_PUBLIC:-http://localhost:3000}
       # Configuración de usuarios y acceso
-      - ENABLE_SIGNUP=true  # Permitir registro de usuarios
-      - ENABLE_LOGIN_FORM=true  # Permitir login con formulario
+      - ENABLE_SIGNUP=${OPEN_WEBUI_ENABLE_SIGNUP:-true}  # Permitir registro de usuarios
+      - ENABLE_LOGIN_FORM=${OPEN_WEBUI_ENABLE_LOGIN_FORM:-true}  # Permitir login con formulario
       # Configuración OIDC/OAuth con Keycloak
-      - ENABLE_OAUTH_SSO=true
-      - ENABLE_OAUTH_SIGNUP=true  # Permitir registro automático de usuarios OAuth
-      - OAUTH_CLIENT_ID=open-webui
-      - OAUTH_CLIENT_SECRET=p6pj69pYezNrrmT8VcQRon3BrsR0OP9s
-      - OAUTH_PROVIDER_NAME=Keycloak
+      - ENABLE_OAUTH_SSO=${OPEN_WEBUI_ENABLE_OAUTH_SSO:-true}
+      - ENABLE_OAUTH_SIGNUP=${OPEN_WEBUI_ENABLE_OAUTH_SIGNUP:-true}  # Permitir registro automático de usuarios OAuth
+      - OAUTH_CLIENT_ID=${OPEN_WEBUI_OAUTH_CLIENT_ID:-open-webui}
+      - OAUTH_CLIENT_SECRET=${OPEN_WEBUI_OAUTH_CLIENT_SECRET}
+      - OAUTH_PROVIDER_NAME=${OPEN_WEBUI_OAUTH_PROVIDER_NAME:-Keycloak}
       # Configuración OIDC - LIMITACIÓN CONOCIDA DE OPEN WEBUI
       # Problema: Open WebUI usa URLs del discovery document (localhost:8080) 
       # en lugar de las URLs explícitas (keycloak:8080), causando error 405
       # Esto es una limitación de Open WebUI que no respeta URLs explícitas
       # cuando hay un discovery document configurado
-      - OPENID_ENABLED=true
-      - OPENID_CLIENT_ID=open-webui
-      - OPENID_CLIENT_SECRET=p6pj69pYezNrrmT8VcQRon3BrsR0OP9s
+      - OPENID_ENABLED=${OPEN_WEBUI_OPENID_ENABLED:-true}
+      - OPENID_CLIENT_ID=${OPEN_WEBUI_OPENID_CLIENT_ID:-open-webui}
+      - OPENID_CLIENT_SECRET=${OPEN_WEBUI_OPENID_CLIENT_SECRET}
       # OPENID_PROVIDER_URL necesario para que aparezca el botón
-      - OPENID_PROVIDER_URL=http://keycloak:8080/realms/master/.well-known/openid-configuration
-      - OPENID_REDIRECT_URI=http://localhost:3000/oauth/oidc/callback
+      - OPENID_PROVIDER_URL=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/.well-known/openid-configuration
+      - OPENID_REDIRECT_URI=${OPEN_WEBUI_URL_PUBLIC:-http://localhost:3000}/oauth/oidc/callback
       # URLs explícitas configuradas pero Open WebUI las ignora cuando hay discovery document
-      - OPENID_AUTHORIZATION_ENDPOINT=http://localhost:8080/realms/master/protocol/openid-connect/auth
-      - OPENID_TOKEN_ENDPOINT=http://keycloak:8080/realms/master/protocol/openid-connect/token
-      - OPENID_USERINFO_ENDPOINT=http://keycloak:8080/realms/master/protocol/openid-connect/userinfo
-      - OPENID_ISSUER=http://localhost:8080/realms/master
-      - OPENID_ISSUER=http://localhost:8080/realms/master
-      - OPENID_SCOPES=openid profile email
-      - OPENID_SIGN_OUT_REDIRECT_URL=http://localhost:8080/realms/master/protocol/openid-connect/logout
+      - OPENID_AUTHORIZATION_ENDPOINT=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/auth
+      - OPENID_TOKEN_ENDPOINT=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/token
+      - OPENID_USERINFO_ENDPOINT=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/userinfo
+      - OPENID_ISSUER=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}
+      - OPENID_SCOPES=${OPEN_WEBUI_OPENID_SCOPES:-openid profile email}
+      - OPENID_SIGN_OUT_REDIRECT_URL=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/logout
     volumes:
       - open_webui_storage:/app/backend/data   # Datos persistentes
       #- /mnt/e/docker/app/open-webui/backend/data:/app/backend/data  # Montaje local (comentado)
@@ -404,21 +409,22 @@ services:
     container_name: n8n
     restart: unless-stopped
     ports:
-      - 5678:5678                  # Puerto de n8n
+      - "${PORT_N8N_HOST:-5678}:${PORT_N8N_CONTAINER:-5678}"
     environment:
-      - N8N_RUNNERS_ENABLED=true
-      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_RUNNERS_ENABLED=${N8N_RUNNERS_ENABLED:-true}
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=${N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS:-true}
       # Configuración OIDC/OAuth con Keycloak
-      - N8N_AUTH_TYPE=oidc
-      - N8N_OIDC_ISSUER=http://localhost:8080/realms/master
-      - N8N_OIDC_CLIENT_ID=n8n
+      - N8N_AUTH_TYPE=${N8N_AUTH_TYPE:-oidc}
+      - N8N_OIDC_ISSUER=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}
+      - N8N_OIDC_CLIENT_ID=${N8N_OIDC_CLIENT_ID:-n8n}
       - N8N_OIDC_CLIENT_SECRET=${N8N_OIDC_CLIENT_SECRET:-change_me_n8n_client_secret}
       # URLs explícitas - authorization usa localhost (navegador), token/userinfo usan keycloak (interno)
-      - N8N_OIDC_AUTHORIZATION_URL=http://localhost:8080/realms/master/protocol/openid-connect/auth
-      - N8N_OIDC_TOKEN_URL=http://keycloak:8080/realms/master/protocol/openid-connect/token
-      - N8N_OIDC_USER_INFO_URL=http://keycloak:8080/realms/master/protocol/openid-connect/userinfo
-      - N8N_OIDC_REDIRECT_URI=http://localhost:5678/rest/oauth2-credential/callback
-      - N8N_OIDC_SCOPES=openid profile email
+      - N8N_OIDC_AUTHORIZATION_URL=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/auth
+      - N8N_OIDC_TOKEN_URL=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/token
+      - N8N_OIDC_USER_INFO_URL=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/userinfo
+      - N8N_OIDC_REDIRECT_URI=${N8N_URL_PUBLIC:-http://localhost:5678}/rest/oauth2-credential/callback
+      - N8N_OIDC_SCOPES=${N8N_OIDC_SCOPES:-openid profile email}
+      - N8N_OIDC_DISPLAY_NAME=${N8N_OIDC_DISPLAY_NAME:-Keycloak}
     volumes:
       - n8n_storage:/home/node/.n8n    # Datos persistentes de n8n
       - n8n_data:/data                 # Datos de importación/exportación
@@ -442,7 +448,7 @@ services:
     networks: ['genai-network']
     restart: unless-stopped
     ports:
-      - 6333:6333                  # Puerto de Qdrant
+      - "${PORT_QDRANT_HOST:-6333}:${PORT_QDRANT_CONTAINER:-6333}"
     volumes:
       - qdrant_storage:/qdrant/storage  # Datos persistentes
     healthcheck:                   # Verifica que Qdrant esté funcionando
@@ -537,10 +543,11 @@ services:
     container_name: prometheus
     profiles: ["monitoring"]
     ports:
-      - "9090:9090"
+      - "${PORT_PROMETHEUS_HOST:-9090}:${PORT_PROMETHEUS_CONTAINER:-9090}"
     volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_rules_data:/etc/prometheus/rules/custom:ro  # Reglas personalizadas persistentes
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -577,30 +584,32 @@ services:
     container_name: grafana
     profiles: ["monitoring"]
     ports:
-      - "3001:3000"
+      - "${PORT_GRAFANA_HOST:-3001}:${PORT_GRAFANA_CONTAINER:-3000}"
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
       - ./monitoring/grafana/config/grafana.ini:/etc/grafana/grafana.ini:ro
+      # Volumen para dashboards personalizados creados por usuarios
+      - grafana_provisioning_data:/var/lib/grafana/dashboards/custom:ro
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_AUTH_GENERIC_OAUTH_ENABLED=true
-      - GF_AUTH_GENERIC_OAUTH_NAME=Keycloak
-      - GF_AUTH_GENERIC_OAUTH_CLIENT_ID=grafana
-      - GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET=pr85OgKszvS0KOpVnlzYjM0c0Rp9nQXw
-      - GF_AUTH_GENERIC_OAUTH_SCOPES=openid profile email
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=${GRAFANA_USERS_ALLOW_SIGN_UP:-false}
+      - GF_AUTH_GENERIC_OAUTH_ENABLED=${GRAFANA_AUTH_GENERIC_OAUTH_ENABLED:-true}
+      - GF_AUTH_GENERIC_OAUTH_NAME=${GRAFANA_OAUTH_NAME:-Keycloak}
+      - GF_AUTH_GENERIC_OAUTH_CLIENT_ID=${GRAFANA_OAUTH_CLIENT_ID:-grafana}
+      - GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET=${GRAFANA_OAUTH_CLIENT_SECRET}
+      - GF_AUTH_GENERIC_OAUTH_SCOPES=${GRAFANA_OAUTH_SCOPES:-openid profile email}
       # AUTH_URL debe usar localhost porque el navegador del usuario necesita acceder
-      - GF_AUTH_GENERIC_OAUTH_AUTH_URL=http://localhost:8080/realms/master/protocol/openid-connect/auth
+      - GF_AUTH_GENERIC_OAUTH_AUTH_URL=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/auth
       # TOKEN_URL y API_URL pueden usar keycloak:8080 porque Grafana las llama desde dentro del contenedor
-      - GF_AUTH_GENERIC_OAUTH_TOKEN_URL=http://keycloak:8080/realms/master/protocol/openid-connect/token
-      - GF_AUTH_GENERIC_OAUTH_API_URL=http://keycloak:8080/realms/master/protocol/openid-connect/userinfo
+      - GF_AUTH_GENERIC_OAUTH_TOKEN_URL=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/token
+      - GF_AUTH_GENERIC_OAUTH_API_URL=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/userinfo
       # SIGNOUT_REDIRECT_URL debe usar localhost porque el navegador del usuario necesita acceder
-      - GF_AUTH_SIGNOUT_REDIRECT_URL=http://localhost:8080/realms/master/protocol/openid-connect/logout
-      - GF_SERVER_ROOT_URL=http://localhost:3001
-      - GF_USERS_AUTO_LOGIN=false
-      - GF_AUTH_DISABLE_LOGIN_FORM=true  # Solo Keycloak OAuth (más seguro)
+      - GF_AUTH_SIGNOUT_REDIRECT_URL=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/logout
+      - GF_SERVER_ROOT_URL=${GRAFANA_URL_PUBLIC:-http://localhost:3001}
+      - GF_USERS_AUTO_LOGIN=${GRAFANA_USERS_AUTO_LOGIN:-false}
+      - GF_AUTH_DISABLE_LOGIN_FORM=${GRAFANA_AUTH_DISABLE_LOGIN_FORM:-true}  # Solo Keycloak OAuth (más seguro)
     networks:
       - monitoring-network
       - genai-network
@@ -631,9 +640,9 @@ services:
     container_name: alertmanager
     profiles: ["monitoring"]
     ports:
-      - "9093:9093"
+      - "${PORT_ALERTMANAGER_HOST:-9093}:${PORT_ALERTMANAGER_CONTAINER:-9093}"
     volumes:
-      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
       - alertmanager_data:/alertmanager
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
@@ -724,7 +733,7 @@ services:
     container_name: node-exporter
     profiles: ["monitoring"]
     ports:
-      - "9100:9100"
+      - "${PORT_NODE_EXPORTER_HOST:-9100}:${PORT_NODE_EXPORTER_CONTAINER:-9100}"
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
@@ -761,13 +770,14 @@ services:
     container_name: cadvisor
     profiles: ["monitoring"]
     ports:
-      - "8082:8080"
+      - "${PORT_CADVISOR_HOST:-8082}:${PORT_CADVISOR_CONTAINER:-8080}"
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # Necesario para descubrir contenedores
     networks:
       - monitoring-network
     healthcheck:
@@ -797,9 +807,10 @@ services:
     environment:
       DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
     ports:
-      - "9187:9187"
+      - "${PORT_POSTGRES_EXPORTER_HOST:-9187}:${PORT_POSTGRES_EXPORTER_CONTAINER:-9187}"
     networks:
       - monitoring-network
+      - genai-network  # Necesario para conectarse a PostgreSQL
     depends_on:
       - postgres
     healthcheck:
@@ -832,7 +843,7 @@ services:
     container_name: redis
     profiles: ["infrastructure"]
     ports:
-      - "6379:6379"
+      - "${PORT_REDIS_HOST:-6379}:${PORT_REDIS_CONTAINER:-6379}"
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
@@ -863,8 +874,8 @@ services:
     container_name: haproxy
     profiles: ["infrastructure"]
     ports:
-      - "80:80"
-      - "443:443"
+      - "${PORT_HAPROXY_HTTP_HOST:-80}:${PORT_HAPROXY_HTTP_CONTAINER:-80}"
+      - "${PORT_HAPROXY_HTTPS_HOST:-443}:${PORT_HAPROXY_HTTPS_CONTAINER:-443}"
     volumes:
       - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
       - haproxy_data:/var/lib/haproxy
@@ -906,23 +917,23 @@ services:
     container_name: keycloak
     profiles: ["security"]
     environment:
-      - KEYCLOAK_ADMIN=admin
-      - KEYCLOAK_ADMIN_PASSWORD=admin
-      - KC_DB=postgres
-      - KC_DB_URL=jdbc:postgresql://postgres:5432/keycloak
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN_USER:-admin}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      - KC_DB=${KEYCLOAK_DB_TYPE:-postgres}
+      - KC_DB_URL=jdbc:postgresql://${POSTGRES_HOST_INTERNAL:-postgres}:${POSTGRES_PORT_INTERNAL:-5432}/${KEYCLOAK_DB_NAME:-keycloak}
       - KC_DB_USERNAME=${POSTGRES_USER}
       - KC_DB_PASSWORD=${POSTGRES_PASSWORD}
-      - KC_HOSTNAME=localhost
-      - KC_HOSTNAME_PORT=8080
-      - KC_HOSTNAME_STRICT=false
-      - KC_HTTP_ENABLED=true
-      - KC_HEALTH_ENABLED=true
+      - KC_HOSTNAME=${HOSTNAME_PUBLIC:-localhost}
+      - KC_HOSTNAME_PORT=${PORT_KEYCLOAK_HOST:-8080}
+      - KC_HOSTNAME_STRICT=${KEYCLOAK_HOSTNAME_STRICT:-false}
+      - KC_HTTP_ENABLED=${KEYCLOAK_HTTP_ENABLED:-true}
+      - KC_HEALTH_ENABLED=${KEYCLOAK_HEALTH_ENABLED:-true}
       # Configuración para cookies en contexto HTTP (no seguro)
-      - KC_HTTP_RELATIVE_PATH=/
-      - KC_PROXY=edge
-      - KC_PROXY_ADDRESS_FORWARDING=true
+      - KC_HTTP_RELATIVE_PATH=${KEYCLOAK_HTTP_RELATIVE_PATH:-/}
+      - KC_PROXY=${KEYCLOAK_PROXY:-edge}
+      - KC_PROXY_ADDRESS_FORWARDING=${KEYCLOAK_PROXY_ADDRESS_FORWARDING:-true}
     ports:
-      - "8080:8080"
+      - "${PORT_KEYCLOAK_HOST:-8080}:${PORT_KEYCLOAK_CONTAINER:-8080}"
     volumes:
       - keycloak_data:/opt/keycloak/data
     networks:
@@ -991,15 +1002,15 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_SCHEDULE=0 0 2 * * *  # Actualizar a las 2 AM
-      - WATCHTOWER_NOTIFICATIONS=email
-      - WATCHTOWER_EMAIL_FROM=watchtower@yourdomain.com
-      - WATCHTOWER_EMAIL_TO=admin@yourdomain.com
-      - WATCHTOWER_EMAIL_SERVER=smtp.gmail.com
-      - WATCHTOWER_EMAIL_SERVER_PORT=587
-      - WATCHTOWER_EMAIL_SERVER_USER=your-email@gmail.com
-      - WATCHTOWER_EMAIL_SERVER_PASSWORD=your-app-password
+      - WATCHTOWER_CLEANUP=${WATCHTOWER_CLEANUP:-true}
+      - WATCHTOWER_SCHEDULE=${WATCHTOWER_SCHEDULE:-0 0 2 * * *}  # Actualizar a las 2 AM
+      - WATCHTOWER_NOTIFICATIONS=${WATCHTOWER_NOTIFICATIONS:-email}
+      - WATCHTOWER_EMAIL_FROM=${WATCHTOWER_EMAIL_FROM:-watchtower@yourdomain.com}
+      - WATCHTOWER_EMAIL_TO=${WATCHTOWER_EMAIL_TO:-admin@yourdomain.com}
+      - WATCHTOWER_EMAIL_SERVER=${WATCHTOWER_EMAIL_SERVER:-smtp.gmail.com}
+      - WATCHTOWER_EMAIL_SERVER_PORT=${WATCHTOWER_EMAIL_SERVER_PORT:-587}
+      - WATCHTOWER_EMAIL_SERVER_USER=${WATCHTOWER_EMAIL_SERVER_USER:-your-email@gmail.com}
+      - WATCHTOWER_EMAIL_SERVER_PASSWORD=${WATCHTOWER_EMAIL_SERVER_PASSWORD:-your-app-password}
     networks:
       - monitoring-network
     logging:
@@ -1022,13 +1033,13 @@ services:
     container_name: jenkins
     profiles: ["ci-cd"]
     ports:
-      - "8081:8080"
-      - "50000:50000"
+      - "${PORT_JENKINS_HOST:-8081}:${PORT_JENKINS_CONTAINER:-8080}"
+      - "${PORT_JENKINS_AGENT_HOST:-50000}:${PORT_JENKINS_AGENT_CONTAINER:-50000}"
     volumes:
       - jenkins_data:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - JENKINS_OPTS=--httpPort=8080
+      - JENKINS_OPTS=--httpPort=${JENKINS_HTTP_PORT:-8080}
     networks:
       - backend-network
     healthcheck:

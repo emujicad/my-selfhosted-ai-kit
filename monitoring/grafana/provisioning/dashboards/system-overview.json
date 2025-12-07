@@ -312,8 +312,8 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(container_cpu_usage_seconds_total{name=~\"ollama|postgres|open-webui|n8n|qdrant|grafana|prometheus|alertmanager|cadvisor|node-exporter|postgres-exporter\"}[5m]) * 100",
-          "legendFormat": "{{name}} CPU %"
+          "expr": "rate(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"}[5m]) * 100",
+          "legendFormat": "Container CPU %"
         }
       ],
       "fieldConfig": {
@@ -375,8 +375,8 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "container_memory_usage_bytes{name=~\"ollama|postgres|open-webui|n8n|qdrant|grafana|prometheus|alertmanager|cadvisor|node-exporter|postgres-exporter\"} / 1024 / 1024",
-          "legendFormat": "{{name}} Memory (MB)"
+          "expr": "container_memory_usage_bytes{id=~\"/system.slice/docker-.*\"} / 1024 / 1024",
+          "legendFormat": "Container Memory (MB)"
         }
       ],
       "fieldConfig": {
@@ -425,8 +425,8 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "pg_up",
-          "legendFormat": "PostgreSQL Status"
+          "expr": "sum(pg_stat_database_numbackends) or up{job=\"postgres-exporter\"} * 0",
+          "legendFormat": "Active Connections"
         }
       ],
       "fieldConfig": {
@@ -435,14 +435,30 @@
             "mode": "thresholds"
           },
           "custom": {
-            "displayMode": "color-background"
+            "displayMode": "color-background",
+            "graphMode": "none"
           },
-          "mappings": [],
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Exporter Not Connected",
+                  "color": "yellow"
+                },
+                "match": "null",
+                "result": {
+                  "text": "No Data",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "yellow",
                 "value": null
               },
               {
@@ -450,7 +466,8 @@
                 "value": 1
               }
             ]
-          }
+          },
+          "unit": "short"
         }
       },
       "gridPos": {
@@ -466,10 +483,68 @@
       "type": "table",
       "targets": [
         {
-          "expr": "container_tasks_state{name=~\"ollama|postgres|open-webui|n8n|qdrant|grafana|prometheus|alertmanager|cadvisor|node-exporter|postgres-exporter\"}",
-          "legendFormat": "{{name}} - {{state}}"
+          "expr": "container_start_time_seconds{id=~\"/system.slice/docker-.*\"}",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
         }
       ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "id"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 300
+              },
+              {
+                "id": "displayName",
+                "value": "Container ID"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 200
+              },
+              {
+                "id": "displayName",
+                "value": "Start Time"
+              },
+              {
+                "id": "unit",
+                "value": "dateTimeFromNow"
+              }
+            ]
+          }
+        ]
+      },
       "fieldConfig": {
         "defaults": {
           "color": {

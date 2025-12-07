@@ -50,7 +50,7 @@ scrape_configs:
   # Monitorear cAdvisor (métricas de contenedores)
   - job_name: 'cadvisor'
     static_configs:
-      - targets: ['cadvisor:8082']
+      - targets: ['cadvisor:8080']  # Puerto interno del contenedor
 
   # Monitorear HAProxy
   - job_name: 'haproxy'

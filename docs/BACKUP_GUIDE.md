@@ -149,3 +149,55 @@ docker compose up -d postgres
 
 **Última actualización**: 2025-12-07
 
+
+## 📦 Nuevos Volúmenes de Persistencia
+
+### Volúmenes Agregados para Mejorar Persistencia
+
+#### 1. `ssl_certs_data` - Certificados SSL/TLS
+**Propósito**: Almacenar certificados SSL/TLS generados automáticamente o por Let's Encrypt.
+
+**Contenido**:
+- Certificados generados automáticamente
+- Claves privadas
+- Certificados intermedios
+
+**Uso**: Montar en servicios que necesiten certificados SSL/TLS.
+
+#### 2. `logs_data` - Logs Consolidados
+**Propósito**: Centralizar logs de todos los servicios para análisis y auditoría.
+
+**Contenido**:
+- Logs consolidados de servicios
+- Logs de acceso
+- Logs de errores
+
+**Uso**: Para análisis centralizado de logs y auditoría.
+
+#### 3. `prometheus_rules_data` - Reglas Personalizadas de Prometheus
+**Propósito**: Almacenar reglas de alertas personalizadas que persistan independientemente del proyecto.
+
+**Contenido**:
+- Reglas de alertas personalizadas (`.yml`)
+- Configuraciones de alertas específicas del usuario
+
+**Uso**: Montar en `/etc/prometheus/rules/custom/` para reglas personalizadas.
+
+#### 4. `grafana_provisioning_data` - Dashboards Personalizados de Grafana
+**Propósito**: Almacenar dashboards personalizados creados por usuarios.
+
+**Contenido**:
+- Dashboards JSON personalizados
+- Configuraciones de dashboards específicas
+
+**Uso**: Complementa los dashboards provisionados desde el proyecto.
+
+### ⚠️ Nota sobre Configuraciones Existentes
+
+Las configuraciones en bind mounts (`./monitoring/`, `./haproxy/`, `./modsecurity/`) están montadas directamente desde el proyecto. Estas configuraciones:
+
+- ✅ Son fáciles de editar durante desarrollo
+- ⚠️ Se pierden si se borra el proyecto
+- ✅ Están incluidas en los backups automáticos
+
+**Recomendación**: Ejecutar `./scripts/backup.sh` regularmente para respaldar estas configuraciones.
