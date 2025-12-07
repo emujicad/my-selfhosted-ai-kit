@@ -49,6 +49,14 @@ Stack actual: Ollama (LLMs) + Open WebUI (chat) + n8n (automatización) + Postgr
   - [ ] Script de restauración automática
   - [ ] Verificación de integridad de backups
 
+### ⚙️ Optimización de Configuración
+- [ ] **Enfoque híbrido para variables de entorno dinámicas**
+  - [ ] Implementar archivos de configuración dinámicos cuando sea posible
+  - [ ] Mantener variables de entorno solo para credenciales críticas
+  - [ ] Reducir necesidad de recrear contenedores para cambios de configuración
+  - [ ] Estado actual: Grafana ya implementado (grafana.ini)
+  - [ ] Referencia: `docs/VARIABLES_ENTORNO_DINAMICAS.md`
+
 ---
 
 ## ⚡ PRIORIDAD MEDIA (Implementar Después)

@@ -148,41 +148,6 @@ docker compose --profile cpu --profile dev --profile testing up -d
 docker compose --profile gpu-nvidia --profile monitoring --profile infrastructure --profile security --profile automation up -d
 ```
 
-### Ver logs en tiempo real:
-```bash
-docker compose logs -f
-```
-
-### Monitorear descarga de modelos:
-```bash
-./verifica_modelos.sh
-```
-
-### Detener todos los servicios:
-```bash
-docker compose down
-```
-
-## 🌐 Acceso a las aplicaciones
-
-Una vez que los servicios estén corriendo, puedes acceder a:
-
-| Servicio | URL | Descripción |
-|----------|-----|-------------|
-| **Open WebUI** | http://localhost:3000 | Interfaz web para chat con IA |
-| **n8n** | http://localhost:5678 | Automatización de flujos de trabajo |
-| **Qdrant** | http://localhost:6333 | Base de datos vectorial |
-| **pgvector** | localhost:5433 | PostgreSQL con vectores |
-| **Grafana** | http://localhost:3001 | Dashboards de monitoreo (perfil monitoring) |
-| **Prometheus** | http://localhost:9090 | Métricas del sistema (perfil monitoring) |
-| **AlertManager** | http://localhost:9093 | Gestión de alertas (perfil monitoring) |
-| **cAdvisor** | http://localhost:8082 | Métricas de contenedores (perfil monitoring) |
-| **Node Exporter** | http://localhost:9100 | Métricas del host (perfil monitoring) |
-| **HAProxy** | http://localhost:80 | Load balancer (perfil infrastructure) |
-| **Redis** | localhost:6379 | Cache y sesiones (perfil infrastructure) |
-| **Keycloak** | http://localhost:8080 | Autenticación centralizada (perfil security) |
-| **Jenkins** | http://localhost:8081 | CI/CD Pipeline (perfil ci-cd) |
-
 ## 🧩 ¿Qué hace cada perfil y cómo usarlos?
 
 | Perfil           | ¿Qué incluye?                                                                 | ¿Cuándo usarlo?                                                                                   | ¿Se recomienda combinar?         |
@@ -226,18 +191,57 @@ Por ejemplo, si solo levantas `security`, tendrás Keycloak y ModSecurity, pero 
   docker compose --profile security up -d
   ```
 
-### ⚠️ Importante
-- **Ningún perfil incluye todo**: Por modularidad, debes combinar los perfiles que necesites.
-- **Perfiles de IA (`cpu`, `gpu-nvidia`, `gpu-amd`)**: Solo uno a la vez, según tu hardware.
-- **Perfiles de servicios**: Puedes combinarlos libremente según lo que quieras habilitar.
-
 ### 🗺️ Diagrama visual de perfiles y dependencias
 
-![Diagrama de perfiles y dependencias](diagrams_png/perfiles.png)
+```mermaid
+flowchart TD
+    subgraph IA
+        CPU["Perfil cpu\nOllama (CPU)"]
+        NVIDIA["Perfil gpu-nvidia\nOllama (GPU NVIDIA)"]
+        AMD["Perfil gpu-amd\nOllama (GPU AMD)"]
+    end
+    subgraph Servicios
+        MON["monitoring\nPrometheus, Grafana, AlertManager, backup"]
+        INFRA["infrastructure\nRedis, HAProxy"]
+        SEC["security\nKeycloak, ModSecurity"]
+        AUTO["automation\nWatchtower, Sync"]
+        CICD["ci-cd\nJenkins"]
+        TEST["testing\nTest Runner"]
+        DEBUG["debug\nDebug Tools"]
+        DEV["dev\nHerramientas de desarrollo"]
+    end
+    CPU---MON
+    NVIDIA---MON
+    AMD---MON
+    CPU---INFRA
+    NVIDIA---INFRA
+    AMD---INFRA
+    CPU---SEC
+    NVIDIA---SEC
+    AMD---SEC
+    CPU---AUTO
+    NVIDIA---AUTO
+    AMD---AUTO
+    CPU---CICD
+    NVIDIA---CICD
+    AMD---CICD
+    CPU---TEST
+    NVIDIA---TEST
+    AMD---TEST
+    CPU---DEBUG
+    NVIDIA---DEBUG
+    AMD---DEBUG
+    CPU---DEV
+    NVIDIA---DEV
+    AMD---DEV
+    classDef ia fill:#e0f7fa,stroke:#00796b,stroke-width:2px;
+    classDef servicios fill:#fff3e0,stroke:#e65100,stroke-width:2px;
+    class IA,Servicios ia,servicios;
+```
 
 ### 🖼️ Versión en imagen
 
-![Diagrama de perfiles y dependencias](diagrams_png/perfiles.png)
+![Diagrama de perfiles y dependencias](perfiles.png)
 
 ### 🗒️ Leyenda de colores del diagrama
 
@@ -252,6 +256,341 @@ Por ejemplo, si solo levantas `security`, tendrás Keycloak y ModSecurity, pero 
 - **Líneas verde lima**: Servicios de testing (`testing`)
 - **Líneas rosas**: Servicios de debugging (`debug`)
 - **Líneas amarillas**: Herramientas de desarrollo (`dev`)
+
+---
+
+### Ver logs en tiempo real:
+```bash
+docker compose logs -f
+```
+
+### Monitorear descarga de modelos:
+```bash
+./verifica_modelos.sh
+```
+
+### Detener todos los servicios:
+```bash
+docker compose down
+```
+
+## 🌐 Acceso a las aplicaciones
+
+Una vez que los servicios estén corriendo, puedes acceder a:
+
+| Servicio | URL | Descripción |
+|----------|-----|-------------|
+| **Open WebUI** | http://localhost:3000 | Interfaz web para chat con IA |
+| **n8n** | http://localhost:5678 | Automatización de flujos de trabajo |
+| **Qdrant** | http://localhost:6333 | Base de datos vectorial |
+| **pgvector** | localhost:5433 | PostgreSQL con vectores |
+| **Grafana** | http://localhost:3001 | Dashboards de monitoreo (perfil monitoring) |
+| **Prometheus** | http://localhost:9090 | Métricas del sistema (perfil monitoring) |
+| **AlertManager** | http://localhost:9093 | Gestión de alertas (perfil monitoring) |
+| **cAdvisor** | http://localhost:8082 | Métricas de contenedores (perfil monitoring) |
+| **Node Exporter** | http://localhost:9100 | Métricas del host (perfil monitoring) |
+| **HAProxy** | http://localhost:80 | Load balancer (perfil infrastructure) |
+| **Redis** | localhost:6379 | Cache y sesiones (perfil infrastructure) |
+| **Keycloak** | http://localhost:8080 | Autenticación centralizada (perfil security) |
+| **Jenkins** | http://localhost:8081 | CI/CD Pipeline (perfil ci-cd) |
+
+## 📚 Guía de uso por servicio
+
+### Open WebUI
+- **Propósito**: Interfaz web moderna para interactuar con modelos de IA
+- **Primer uso**: 
+  1. Ve a http://localhost:3000
+  2. Crea una cuenta o inicia sesión
+  3. Selecciona un modelo de la lista
+  4. ¡Comienza a chatear!
+
+### n8n
+- **Propósito**: Automatizar tareas y flujos de trabajo
+- **Primer uso**:
+  1. Ve a http://localhost:5678
+  2. Completa la configuración inicial
+  3. Crea tu primer workflow
+  4. Conecta con Ollama para usar IA en tus automatizaciones
+
+### Ollama
+- **Propósito**: Servidor de modelos de lenguaje local
+- **API**: http://localhost:11434
+- **Modelos disponibles**: Ejecuta `docker exec ollama ollama list`
+- **Optimizado para**: Tu RTX 5060 Ti con 16GB VRAM
+
+## 🔧 Comandos útiles
+
+### Ver estado de los servicios:
+```bash
+docker compose ps
+```
+
+### Ver logs de un servicio específico:
+```bash
+docker compose logs -f [nombre-servicio]
+# Ejemplo: docker compose logs -f ollama
+```
+
+### Reiniciar un servicio:
+```bash
+docker compose restart [nombre-servicio]
+```
+
+### Ver uso de recursos:
+```bash
+docker stats
+```
+
+### Limpiar espacio (eliminar imágenes no usadas):
+```bash
+docker system prune -a
+```
+
+### Verificar salud de los servicios:
+```bash
+docker compose ps
+```
+
+## 📁 Estructura de volúmenes
+
+Todos los datos se almacenan en volúmenes persistentes de Docker:
+
+- `n8n_storage`: Datos de n8n (workflows, credenciales)
+- `ollama_storage`: Modelos de IA descargados
+- `postgres_storage`: Base de datos PostgreSQL
+- `qdrant_storage`: Base de datos vectorial
+- `open_webui_storage`: Datos de Open WebUI
+- `backup_data`: Respaldo automático de datos
+- `prometheus_data`: Métricas de monitoreo (opcional)
+- `grafana_data`: Dashboards de Grafana (opcional)
+
+## 🔧 Servicios adicionales
+
+### Infraestructura (perfil `infrastructure`)
+- **Redis**: Cache en memoria para mejorar rendimiento
+- **HAProxy**: Load balancer para distribuir carga entre servicios
+
+### Monitoreo (perfil `monitoring`)
+- **Prometheus**: Recolector de métricas
+- **Grafana**: Dashboards pre-configurados:
+  - **Ollama AI Models Dashboard**: Monitoreo específico de modelos de IA
+  - **System Overview**: Vista general del sistema completo
+- **AlertManager**: Gestión de alertas
+- **Node Exporter**: Métricas del host
+- **cAdvisor**: Métricas de contenedores
+- **PostgreSQL Exporter**: Métricas de PostgreSQL
+
+### Seguridad (perfil `security`)
+- **Keycloak**: Autenticación y autorización centralizada
+- **ModSecurity**: Firewall de aplicaciones web (WAF)
+
+### Automatización (perfil `automation`)
+- **Watchtower**: Actualizaciones automáticas de contenedores
+- **Sync**: Sincronización automática de datos
+
+### CI/CD (perfil `ci-cd`)
+- **Jenkins**: Pipeline de integración y despliegue continuo
+
+### Testing (perfil `testing`)
+- **Test Runner**: Monitoreo automático de salud de servicios
+
+### Debug (perfil `debug`)
+- **Debug Tools**: Herramientas avanzadas de debugging
+
+## 🚀 Optimización para tu hardware
+
+Tu sistema tiene especificaciones excelentes:
+- **CPU**: AMD Ryzen 7 7700 (8 cores, 16 threads)
+- **RAM**: 96GB DDR5
+- **GPU**: NVIDIA RTX 5060 Ti
+
+### Configuraciones recomendadas:
+
+#### Para máximo rendimiento:
+```bash
+# Stack completo con GPU
+docker compose --profile gpu-nvidia --profile monitoring --profile infrastructure up -d
+```
+
+#### Para desarrollo:
+```bash
+# Stack de desarrollo con herramientas
+docker compose --profile cpu --profile dev --profile testing up -d
+```
+
+#### Para producción:
+```bash
+# Stack de producción con seguridad
+docker compose --profile gpu-nvidia --profile monitoring --profile infrastructure --profile security up -d
+```
+
+## 🔒 Seguridad
+
+### Recomendaciones:
+1. **Cambia las contraseñas por defecto** en el archivo `.env`
+2. **No expongas los puertos** a Internet sin configuración adicional
+3. **Usa HTTPS** en producción
+4. **Mantén actualizados** los contenedores
+
+### Variables sensibles:
+- `POSTGRES_PASSWORD`: Contraseña de la base de datos
+- `N8N_ENCRYPTION_KEY`: Clave para encriptar datos de n8n
+- `N8N_USER_MANAGEMENT_JWT_SECRET`: Clave para tokens JWT
+
+## 🐛 Solución de problemas
+
+### Problema: "Cannot connect to Docker daemon"
+```bash
+sudo systemctl start docker
+sudo usermod -aG docker $USER
+# Cierra sesión y vuelve a entrar
+```
+
+### Problema: GPU no funciona
+```bash
+# Verificar drivers NVIDIA
+nvidia-smi
+
+# Verificar runtime de Docker
+sudo docker run --rm --gpus all nvidia/cuda:12.0.0-base-ubuntu22.04 nvidia-smi
+```
+
+### Problema: Modelos no se descargan
+```bash
+# Ver logs del contenedor de descarga
+docker logs ollama-pull-llama
+
+# Descargar manualmente
+docker exec -it ollama ollama pull llama3.2
+```
+
+### Problema: Puerto ya en uso
+```bash
+# Ver qué usa el puerto
+sudo netstat -tulpn | grep :3000
+
+# Cambiar puerto en docker-compose.yml
+```
+
+### Problema: Logs muy grandes
+```bash
+# Los logs están configurados para rotar automáticamente
+# Si necesitas limpiar manualmente:
+docker system prune -f
+```
+
+## 📈 Monitoreo y mantenimiento
+
+### Verificar salud de los servicios:
+```bash
+docker compose ps
+```
+
+### Backup de datos:
+```bash
+# Backup manual de volúmenes
+docker run --rm -v my-selfhosted-ai-kit_n8n_storage:/data -v $(pwd):/backup alpine tar czf /backup/n8n_backup.tar.gz -C /data .
+
+# Backup automático (con perfil monitoring)
+docker compose --profile monitoring up -d
+```
+
+### Actualizar servicios:
+```bash
+docker compose pull
+docker compose up -d
+```
+
+### Monitorear uso de recursos:
+```bash
+# Ver uso en tiempo real
+docker stats
+
+# Ver logs de todos los servicios
+docker compose logs -f
+```
+
+## 🛠️ Servicios opcionales
+
+### Perfil de Monitoreo (`monitoring`)
+El perfil `monitoring` agrega un stack completo de monitoreo y observabilidad:
+
+#### Prometheus - Recolector de métricas
+- **URL**: http://localhost:9090
+- **Función**: Recolecta métricas de todos los servicios del stack
+- **Métricas incluidas**: CPU, memoria, estado de salud, logs de errores
+
+#### Grafana - Dashboards y visualización
+- **URL**: http://localhost:3001
+- **Usuario**: admin
+- **Contraseña**: admin
+- **Función**: Dashboards visuales para monitorear el rendimiento
+- **Dashboards incluidos**: Métricas de servicios, uso de recursos, estado de salud
+
+#### AlertManager - Gestión de alertas
+- **URL**: http://localhost:9093
+- **Función**: Gestiona alertas cuando los servicios tienen problemas
+- **Alertas configuradas**: Servicios caídos, alto uso de recursos, errores críticos
+
+#### Backup automático
+- **Función**: Respalda datos diariamente
+- **Ubicación**: Volumen `backup_data`
+- **Frecuencia**: Cada 24 horas
+
+### Herramientas de desarrollo
+- **Perfil**: `dev`
+- **Función**: Contenedor con curl, jq y otras utilidades
+- **Uso**: Para debugging y desarrollo
+
+### Cómo usar el monitoreo:
+
+```bash
+# Levantar stack completo con monitoreo
+docker compose --profile gpu-nvidia --profile monitoring up -d
+
+# Acceder a Grafana
+# 1. Ve a http://localhost:3001
+# 2. Usuario: admin, Contraseña: admin
+# 3. Explora los dashboards disponibles
+
+# Acceder a Prometheus
+# 1. Ve a http://localhost:9090
+# 2. Ve a Status > Targets para ver servicios monitoreados
+# 3. Usa la pestaña Graph para consultar métricas
+
+# Ver alertas
+# 1. Ve a http://localhost:9093
+# 2. Revisa alertas activas y configuración
+```
+
+## 🤝 Contribuir
+
+1. Fork el proyecto
+2. Crea una rama para tu feature
+3. Commit tus cambios
+4. Push a la rama
+5. Abre un Pull Request
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+
+## 🆘 Soporte
+
+Si tienes problemas:
+1. Revisa la sección de solución de problemas
+2. Consulta [docs/INDEX.md](docs/INDEX.md) para guía de documentación
+3. Busca en los issues del repositorio
+4. Crea un nuevo issue con detalles del problema
+
+---
+
+## 📚 Documentación Adicional
+
+Para más información, consulta:
+- **[docs/INDEX.md](docs/INDEX.md)** - Guía de lectura de toda la documentación
+- **[TODO.md](TODO.md)** - Lista de tareas pendientes
+- **[ESTADO_PROYECTO.md](ESTADO_PROYECTO.md)** - Estado actual del proyecto
 
 ---
 
@@ -290,4 +629,4 @@ A continuación se muestran ejemplos visuales de combinaciones de perfiles para 
 ---
 
 **¿Quieres crear tus propios diagramas o modificar los existentes?**
-Consulta el archivo [`DIAGRAMS_INSTRUCTIONS.es.md`](DIAGRAMS_INSTRUCTIONS.es.md) para aprender cómo generar los PNG a partir de los archivos `.mmd` usando Mermaid CLI. 
+Consulta el archivo [`DIAGRAMS_INSTRUCTIONS.es.md`](DIAGRAMS_INSTRUCTIONS.es.md) para aprender cómo generar los PNG a partir de los archivos `.mmd` usando Mermaid CLI.

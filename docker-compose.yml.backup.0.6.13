@@ -308,7 +308,7 @@ services:
 
   # Interfaz web moderna para chat con IA
   open-webui:
-    image: ghcr.io/open-webui/open-webui:0.6.41 # Versión más reciente - probando mejoras OIDC
+    image: ghcr.io/open-webui/open-webui:0.6.13 # Versión fija con mejor soporte OIDC
     container_name: open-webui
     ports:
       - "3000:8080"                # Puerto 3000 en host, 8080 en contenedor
@@ -408,17 +408,6 @@ services:
     environment:
       - N8N_RUNNERS_ENABLED=true
       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
-      # Configuración OIDC/OAuth con Keycloak
-      - N8N_AUTH_TYPE=oidc
-      - N8N_OIDC_ISSUER=http://localhost:8080/realms/master
-      - N8N_OIDC_CLIENT_ID=n8n
-      - N8N_OIDC_CLIENT_SECRET=${N8N_OIDC_CLIENT_SECRET:-change_me_n8n_client_secret}
-      # URLs explícitas - authorization usa localhost (navegador), token/userinfo usan keycloak (interno)
-      - N8N_OIDC_AUTHORIZATION_URL=http://localhost:8080/realms/master/protocol/openid-connect/auth
-      - N8N_OIDC_TOKEN_URL=http://keycloak:8080/realms/master/protocol/openid-connect/token
-      - N8N_OIDC_USER_INFO_URL=http://keycloak:8080/realms/master/protocol/openid-connect/userinfo
-      - N8N_OIDC_REDIRECT_URI=http://localhost:5678/rest/oauth2-credential/callback
-      - N8N_OIDC_SCOPES=openid profile email
     volumes:
       - n8n_storage:/home/node/.n8n    # Datos persistentes de n8n
       - n8n_data:/data                 # Datos de importación/exportación

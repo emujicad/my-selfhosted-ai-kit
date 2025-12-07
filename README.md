@@ -6,199 +6,199 @@
 
 # My Self-Hosted AI Kit
 
-Un stack completo de herramientas de Inteligencia Artificial auto-hospedadas usando Docker Compose. Este proyecto incluye Ollama para modelos de lenguaje local, n8n para automatización, Open WebUI para interfaz de chat, y más.
+A complete stack of self-hosted Artificial Intelligence tools using Docker Compose. This project includes Ollama for local language models, n8n for automation, Open WebUI for chat interface, and more.
 
-## 🚀 ¿Qué incluye este stack?
+## 🚀 What does this stack include?
 
-### Servicios principales:
-- **Ollama**: Servidor de modelos de lenguaje local (LLMs)
-- **Open WebUI**: Interfaz web moderna para chat con IA
-- **n8n**: Plataforma de automatización de flujos de trabajo
-- **PostgreSQL**: Base de datos para n8n
-- **Qdrant**: Base de datos vectorial para embeddings
-- **pgvector**: Extensión de PostgreSQL para vectores
+### Main services:
+- **Ollama**: Local language model server (LLMs)
+- **Open WebUI**: Modern web interface for AI chat
+- **n8n**: Workflow automation platform
+- **PostgreSQL**: Database for n8n
+- **Qdrant**: Vector database for embeddings
+- **pgvector**: PostgreSQL extension for vectors
 
-### Servicios opcionales:
-- **Backup automático**: Respaldo diario de datos (perfil `monitoring`)
-- **Herramientas de desarrollo**: Contenedor con utilidades (perfil `dev`)
+### Optional services:
+- **Automatic backup**: Daily data backup (profile `monitoring`)
+- **Development tools**: Container with utilities (profile `dev`)
 
-### Modelos de IA incluidos:
-- llama3.2 (modelo base)
-- llama3.3 (modelo más avanzado)
-- all-minilm (modelo de embeddings)
-- deepseek-r1:14b (modelo especializado)
-- nomic-embed-text (embeddings de texto)
+### Included AI models:
+- llama3.2 (base model)
+- llama3.3 (more advanced model)
+- all-minilm (embeddings model)
+- deepseek-r1:14b (specialized model)
+- nomic-embed-text (text embeddings)
 
-## 📋 Prerrequisitos
+## 📋 Prerequisites
 
-### Software necesario:
-- **Docker Engine** (no Docker Desktop)
+### Required software:
+- **Docker Engine** (not Docker Desktop)
 - **Docker Compose**
-- **Git** (para clonar el repositorio)
+- **Git** (to clone the repository)
 
-### Hardware recomendado:
-- **RAM**: Mínimo 8GB, recomendado 16GB+ (optimizado para 96GB)
-- **GPU**: NVIDIA con drivers propietarios (optimizado para RTX 5060 Ti)
-- **CPU**: Mínimo 4 cores, recomendado 8+ cores (optimizado para Ryzen 7 7700)
-- **Almacenamiento**: Al menos 50GB libres (los modelos de IA son grandes)
+### Recommended hardware:
+- **RAM**: Minimum 8GB, recommended 16GB+ (optimized for 96GB)
+- **GPU**: NVIDIA with proprietary drivers (optimized for RTX 5060 Ti)
+- **CPU**: Minimum 4 cores, recommended 8+ cores (optimized for Ryzen 7 7700)
+- **Storage**: At least 50GB free (AI models are large)
 
-## 🛠️ Instalación
+## 🛠️ Installation
 
-### 1. Clonar el repositorio
+### 1. Clone the repository
 ```bash
-git clone <tu-repositorio>
+git clone <your-repository>
 cd my-selfhosted-ai-kit
 ```
 
-### 2. Configurar variables de entorno
-Crea un archivo `.env` en la raíz del proyecto:
+### 2. Configure environment variables
+Create a `.env` file in the project root:
 ```bash
-# Configuración de PostgreSQL
+# PostgreSQL Configuration
 POSTGRES_USER=postgres
-POSTGRES_PASSWORD=tu_contraseña_segura
+POSTGRES_PASSWORD=your_secure_password
 POSTGRES_DB=n8n
 
-# Configuración de n8n
-N8N_ENCRYPTION_KEY=tu_clave_de_encriptacion_32_caracteres
-N8N_USER_MANAGEMENT_JWT_SECRET=tu_jwt_secret_seguro
+# n8n Configuration
+N8N_ENCRYPTION_KEY=your_32_character_encryption_key
+N8N_USER_MANAGEMENT_JWT_SECRET=your_secure_jwt_secret
 ```
 
-### 3. Configurar GPU (opcional)
-Si tienes GPU NVIDIA y quieres aceleración:
+### 3. Configure GPU (optional)
+If you have an NVIDIA GPU and want acceleration:
 
 ```bash
-# Instalar nvidia-container-toolkit
+# Install nvidia-container-toolkit
 sudo apt-get install -y nvidia-container-toolkit
 sudo systemctl restart docker
 
-# Verificar que funciona
+# Verify it works
 sudo docker run --rm --gpus all nvidia/cuda:12.0.0-base-ubuntu22.04 nvidia-smi
 ```
 
-## 🚀 Uso
+## 🚀 Usage
 
-### Perfiles disponibles
+### Available profiles
 
-El stack incluye diferentes perfiles para optimizar según tus necesidades:
+The stack includes different profiles to optimize according to your needs:
 
-#### Perfil básico (CPU):
+#### Basic profile (CPU):
 ```bash
 docker compose --profile cpu up -d
 ```
 
-#### Perfil GPU NVIDIA (recomendado para tu RTX 5060 Ti):
+#### NVIDIA GPU profile (recommended for your RTX 5060 Ti):
 ```bash
 docker compose --profile gpu-nvidia up -d
 ```
 
-#### Perfil GPU AMD:
+#### AMD GPU profile:
 ```bash
 docker compose --profile gpu-amd up -d
 ```
 
-#### Perfil de desarrollo:
+#### Development profile:
 ```bash
 docker compose --profile dev up -d
 ```
 
-#### Perfil de monitoreo y respaldos:
+#### Monitoring and backup profile:
 ```bash
 docker compose --profile monitoring up -d
 ```
 
-#### Perfil de infraestructura (Redis, HAProxy):
+#### Infrastructure profile (Redis, HAProxy):
 ```bash
 docker compose --profile infrastructure up -d
 ```
 
-#### Perfil de seguridad (Keycloak, ModSecurity):
+#### Security profile (Keycloak, ModSecurity):
 ```bash
 docker compose --profile security up -d
 ```
 
-#### Perfil de automatización (Watchtower, Sync):
+#### Automation profile (Watchtower, Sync):
 ```bash
 docker compose --profile automation up -d
 ```
 
-#### Perfil de CI/CD (Jenkins):
+#### CI/CD profile (Jenkins):
 ```bash
 docker compose --profile ci-cd up -d
 ```
 
-#### Perfil de testing:
+#### Testing profile:
 ```bash
 docker compose --profile testing up -d
 ```
 
-#### Perfil de debugging:
+#### Debugging profile:
 ```bash
 docker compose --profile debug up -d
 ```
 
-#### Combinar múltiples perfiles:
+#### Combine multiple profiles:
 ```bash
-# Producción completa con GPU, monitoreo e infraestructura
+# Full production with GPU, monitoring and infrastructure
 docker compose --profile gpu-nvidia --profile monitoring --profile infrastructure up -d
 
-# Desarrollo con herramientas y testing
+# Development with tools and testing
 docker compose --profile cpu --profile dev --profile testing up -d
 
-# Stack completo (¡cuidado con el uso de recursos!)
+# Full stack (watch out for resource usage!)
 docker compose --profile gpu-nvidia --profile monitoring --profile infrastructure --profile security --profile automation up -d
 ```
 
-## 🧩 ¿Qué hace cada perfil y cómo usarlos?
+## 🧩 What does each profile do and how to use them?
 
-| Perfil           | ¿Qué incluye?                                                                 | ¿Cuándo usarlo?                                                                                   | ¿Se recomienda combinar?         |
+| Profile           | What does it include?                                                                 | When to use it?                                                                                   | Can it be combined?         |
 |------------------|-------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|----------------------------------|
-| **cpu**          | Ollama (CPU)                                                                  | No tienes GPU o quieres ahorrar recursos.                                                         | Sí, con otros servicios.         |
-| **gpu-nvidia**   | Ollama (GPU NVIDIA)                                                           | Tienes GPU NVIDIA y quieres máximo rendimiento en IA.                                             | Sí, con otros servicios.         |
-| **gpu-amd**      | Ollama (GPU AMD)                                                              | Tienes GPU AMD compatible.                                                                        | Sí, con otros servicios.         |
-| **monitoring**   | Prometheus, Grafana, AlertManager, backup automático                          | Quieres monitoreo, dashboards y respaldos automáticos.                                            | Sí, con cualquier perfil.        |
-| **infrastructure**| Redis, HAProxy                                                               | Necesitas cache o balanceo de carga.                                                              | Sí, con cualquier perfil.        |
-| **security**     | Keycloak (autenticación), ModSecurity (WAF)                                   | Quieres autenticación centralizada y firewall de aplicaciones web.                                | Sí, con cualquier perfil.        |
-| **automation**   | Watchtower (auto-actualización), Sync                                         | Quieres automatización de actualizaciones y sincronización de datos.                              | Sí, con cualquier perfil.        |
-| **ci-cd**        | Jenkins                                                                       | Necesitas pipelines de integración y despliegue continuo.                                         | Sí, con cualquier perfil.        |
-| **testing**      | Test Runner                                                                   | Quieres monitoreo automático de salud de servicios.                                               | Sí, con cualquier perfil.        |
-| **debug**        | Debug Tools                                                                   | Necesitas herramientas avanzadas de debugging.                                                    | Sí, con cualquier perfil.        |
-| **dev**          | Herramientas de desarrollo (curl, jq, etc.)                                   | Estás desarrollando o depurando el stack.                                                         | Sí, con cualquier perfil.        |
+| **cpu**          | Ollama (CPU)                                                                  | You don't have a GPU or want to save resources.                                                         | Yes, with other services.         |
+| **gpu-nvidia**   | Ollama (NVIDIA GPU)                                                           | You have an NVIDIA GPU and want maximum AI performance.                                             | Yes, with other services.         |
+| **gpu-amd**      | Ollama (AMD GPU)                                                              | You have a compatible AMD GPU.                                                                        | Yes, with other services.         |
+| **monitoring**   | Prometheus, Grafana, AlertManager, automatic backup                          | You want monitoring, dashboards and automatic backups.                                            | Yes, with any profile.        |
+| **infrastructure**| Redis, HAProxy                                                               | You need caching or load balancing.                                                              | Yes, with any profile.        |
+| **security**     | Keycloak (authentication), ModSecurity (WAF)                                   | You want centralized authentication and web application firewall.                                | Yes, with any profile.        |
+| **automation**   | Watchtower (auto-updates), Sync                                         | You want automation of updates and data synchronization.                              | Yes, with any profile.        |
+| **ci-cd**        | Jenkins                                                                       | You need continuous integration and deployment pipelines.                                         | Yes, with any profile.        |
+| **testing**      | Test Runner                                                                   | You want automatic service health monitoring.                                               | Yes, with any profile.        |
+| **debug**        | Debug Tools                                                                   | You need advanced debugging tools.                                                    | Yes, with any profile.        |
+| **dev**          | Development tools (curl, jq, etc.)                                   | You are developing or debugging the stack.                                                         | Yes, with any profile.        |
 
 ---
 
-### 🔑 ¿Debo levantar más de un perfil a la vez?
+### 🔑 Should I run more than one profile at a time?
 
-**¡Sí!**  
-Cada perfil es modular y **debes combinarlos** según tus necesidades.  
-Por ejemplo, si solo levantas `security`, tendrás Keycloak y ModSecurity, pero **no tendrás IA, ni monitoreo, ni automatización**.
+**Yes!**  
+Each profile is modular and **you should combine them** according to your needs.  
+For example, if you only run `security`, you'll have Keycloak and ModSecurity, but **you won't have AI, monitoring, or automation**.
 
-#### Ejemplos de combinaciones recomendadas:
+#### Recommended combination examples:
 
-- **Desarrollo básico (sin GPU):**
+- **Basic development (without GPU):**
   ```bash
   docker compose --profile cpu --profile dev up -d
   ```
-- **IA con GPU y monitoreo:**
+- **AI with GPU and monitoring:**
   ```bash
   docker compose --profile gpu-nvidia --profile monitoring up -d
   ```
-- **Producción completa (IA, monitoreo, seguridad, infraestructura):**
+- **Full production (AI, monitoring, security, infrastructure):**
   ```bash
   docker compose --profile gpu-nvidia --profile monitoring --profile infrastructure --profile security up -d
   ```
-- **Solo autenticación y seguridad:**
+- **Authentication and security only:**
   ```bash
   docker compose --profile security up -d
   ```
 
-### 🗺️ Diagrama visual de perfiles y dependencias
+### 🗺️ Visual diagram of profiles and dependencies
 
 ```mermaid
 flowchart TD
     subgraph IA
-        CPU["Perfil cpu\nOllama (CPU)"]
-        NVIDIA["Perfil gpu-nvidia\nOllama (GPU NVIDIA)"]
-        AMD["Perfil gpu-amd\nOllama (GPU AMD)"]
+        CPU["Profile cpu\nOllama (CPU)"]
+        NVIDIA["Profile gpu-nvidia\nOllama (NVIDIA GPU)"]
+        AMD["Profile gpu-amd\nOllama (AMD GPU)"]
     end
     subgraph Servicios
         MON["monitoring\nPrometheus, Grafana, AlertManager, backup"]
@@ -208,7 +208,7 @@ flowchart TD
         CICD["ci-cd\nJenkins"]
         TEST["testing\nTest Runner"]
         DEBUG["debug\nDebug Tools"]
-        DEV["dev\nHerramientas de desarrollo"]
+        DEV["dev\nDevelopment tools"]
     end
     CPU---MON
     NVIDIA---MON
@@ -239,353 +239,362 @@ flowchart TD
     class IA,Servicios ia,servicios;
 ```
 
-### 🖼️ Versión en imagen
+### 🖼️ Image version
 
-![Diagrama de perfiles y dependencias](perfiles.png)
+![Profile and dependencies diagram](perfiles.png)
 
-### 🗒️ Leyenda de colores del diagrama
+### 🗒️ Diagram color legend
 
-- **Líneas azules**: Conexiones desde el perfil `cpu`
-- **Líneas verdes**: Conexiones desde el perfil `gpu-nvidia`
-- **Líneas naranjas**: Conexiones desde el perfil `gpu-amd`
-- **Líneas moradas**: Servicios de monitoreo (`monitoring`)
-- **Líneas rojas**: Servicios de seguridad (`security`)
-- **Líneas marrones**: Servicios de infraestructura (`infrastructure`)
-- **Líneas celestes**: Servicios de automatización (`automation`)
-- **Líneas gris oscuro**: Servicios de CI/CD (`ci-cd`)
-- **Líneas verde lima**: Servicios de testing (`testing`)
-- **Líneas rosas**: Servicios de debugging (`debug`)
-- **Líneas amarillas**: Herramientas de desarrollo (`dev`)
+- **Blue lines**: Connections from the `cpu` profile
+- **Green lines**: Connections from the `gpu-nvidia` profile
+- **Orange lines**: Connections from the `gpu-amd` profile
+- **Purple lines**: Monitoring services (`monitoring`)
+- **Red lines**: Security services (`security`)
+- **Brown lines**: Infrastructure services (`infrastructure`)
+- **Sky blue lines**: Automation services (`automation`)
+- **Dark gray lines**: CI/CD services (`ci-cd`)
+- **Lime green lines**: Testing services (`testing`)
+- **Pink lines**: Debugging services (`debug`)
+- **Yellow lines**: Development tools (`dev`)
 
 ---
 
-### Ver logs en tiempo real:
+### View logs in real time:
 ```bash
 docker compose logs -f
 ```
 
-### Monitorear descarga de modelos:
+### Monitor model downloads:
 ```bash
 ./verifica_modelos.sh
 ```
 
-### Detener todos los servicios:
+### Stop all services:
 ```bash
 docker compose down
 ```
 
-## 🌐 Acceso a las aplicaciones
+## 🌐 Access to applications
 
-Una vez que los servicios estén corriendo, puedes acceder a:
+Once the services are running, you can access:
 
-| Servicio | URL | Descripción |
+| Service | URL | Description |
 |----------|-----|-------------|
-| **Open WebUI** | http://localhost:3000 | Interfaz web para chat con IA |
-| **n8n** | http://localhost:5678 | Automatización de flujos de trabajo |
-| **Qdrant** | http://localhost:6333 | Base de datos vectorial |
-| **pgvector** | localhost:5433 | PostgreSQL con vectores |
-| **Grafana** | http://localhost:3001 | Dashboards de monitoreo (perfil monitoring) |
-| **Prometheus** | http://localhost:9090 | Métricas del sistema (perfil monitoring) |
-| **AlertManager** | http://localhost:9093 | Gestión de alertas (perfil monitoring) |
-| **cAdvisor** | http://localhost:8082 | Métricas de contenedores (perfil monitoring) |
-| **Node Exporter** | http://localhost:9100 | Métricas del host (perfil monitoring) |
-| **HAProxy** | http://localhost:80 | Load balancer (perfil infrastructure) |
+| **Open WebUI** | http://localhost:3000 | Web interface for AI chat |
+| **n8n** | http://localhost:5678 | Workflow automation |
+| **Qdrant** | http://localhost:6333 | Vector database |
+| **pgvector** | localhost:5433 | PostgreSQL with vectors |
+| **Grafana** | http://localhost:3001 | Monitoring dashboards (monitoring profile) |
+| **Prometheus** | http://localhost:9090 | System metrics (monitoring profile) |
+| **AlertManager** | http://localhost:9093 | Alert management (monitoring profile) |
+| **cAdvisor** | http://localhost:8082 | Container metrics (monitoring profile) |
+| **Node Exporter** | http://localhost:9100 | Host metrics (monitoring profile) |
+| **HAProxy** | http://localhost:80 | Load balancer (infrastructure profile) |
+| **Redis** | localhost:6379 | Cache and sessions (infrastructure profile) |
+| **Keycloak** | http://localhost:8080 | Centralized authentication (security profile) |
+| **Jenkins** | http://localhost:8081 | CI/CD Pipeline (ci-cd profile) |
 
-| **Redis** | localhost:6379 | Cache y sesiones (perfil infrastructure) |
-| **Keycloak** | http://localhost:8080 | Autenticación centralizada (perfil security) |
-| **Jenkins** | http://localhost:8081 | CI/CD Pipeline (perfil ci-cd) |
-
-## 📚 Guía de uso por servicio
+## 📚 Service usage guide
 
 ### Open WebUI
-- **Propósito**: Interfaz web moderna para interactuar con modelos de IA
-- **Primer uso**: 
-  1. Ve a http://localhost:3000
-  2. Crea una cuenta o inicia sesión
-  3. Selecciona un modelo de la lista
-  4. ¡Comienza a chatear!
+- **Purpose**: Modern web interface to interact with AI models
+- **First use**: 
+  1. Go to http://localhost:3000
+  2. Create an account or sign in
+  3. Select a model from the list
+  4. Start chatting!
 
 ### n8n
-- **Propósito**: Automatizar tareas y flujos de trabajo
-- **Primer uso**:
-  1. Ve a http://localhost:5678
-  2. Completa la configuración inicial
-  3. Crea tu primer workflow
-  4. Conecta con Ollama para usar IA en tus automatizaciones
+- **Purpose**: Automate tasks and workflows
+- **First use**:
+  1. Go to http://localhost:5678
+  2. Complete initial setup
+  3. Create your first workflow
+  4. Connect with Ollama to use AI in your automations
 
 ### Ollama
-- **Propósito**: Servidor de modelos de lenguaje local
+- **Purpose**: Local language model server
 - **API**: http://localhost:11434
-- **Modelos disponibles**: Ejecuta `docker exec ollama ollama list`
-- **Optimizado para**: Tu RTX 5060 Ti con 16GB VRAM
+- **Available models**: Run `docker exec ollama ollama list`
+- **Optimized for**: Your RTX 5060 Ti with 16GB VRAM
 
-## 🔧 Comandos útiles
+## 🔧 Useful commands
 
-### Ver estado de los servicios:
+### View service status:
 ```bash
 docker compose ps
 ```
 
-### Ver logs de un servicio específico:
+### View logs of a specific service:
 ```bash
-docker compose logs -f [nombre-servicio]
-# Ejemplo: docker compose logs -f ollama
+docker compose logs -f [service-name]
+# Example: docker compose logs -f ollama
 ```
 
-### Reiniciar un servicio:
+### Restart a service:
 ```bash
-docker compose restart [nombre-servicio]
+docker compose restart [service-name]
 ```
 
-### Ver uso de recursos:
+### View resource usage:
 ```bash
 docker stats
 ```
 
-### Limpiar espacio (eliminar imágenes no usadas):
+### Clean up space (remove unused images):
 ```bash
 docker system prune -a
 ```
 
-### Verificar salud de los servicios:
+### Verify service health:
 ```bash
 docker compose ps
 ```
 
-## 📁 Estructura de volúmenes
+## 📁 Volume structure
 
-Todos los datos se almacenan en volúmenes persistentes de Docker:
+All data is stored in persistent Docker volumes:
 
-- `n8n_storage`: Datos de n8n (workflows, credenciales)
-- `ollama_storage`: Modelos de IA descargados
-- `postgres_storage`: Base de datos PostgreSQL
-- `qdrant_storage`: Base de datos vectorial
-- `open_webui_storage`: Datos de Open WebUI
-- `backup_data`: Respaldo automático de datos
-- `prometheus_data`: Métricas de monitoreo (opcional)
-- `grafana_data`: Dashboards de Grafana (opcional)
+- `n8n_storage`: n8n data (workflows, credentials)
+- `ollama_storage`: Downloaded AI models
+- `postgres_storage`: PostgreSQL database
+- `qdrant_storage`: Vector database
+- `open_webui_storage`: Open WebUI data
+- `backup_data`: Automatic data backup
+- `prometheus_data`: Monitoring metrics (optional)
+- `grafana_data`: Grafana dashboards (optional)
 
-## 🔧 Servicios adicionales
+## 🔧 Additional services
 
-### Infraestructura (perfil `infrastructure`)
-- **Redis**: Cache en memoria para mejorar rendimiento
-- **HAProxy**: Load balancer para distribuir carga entre servicios
+### Infrastructure (profile `infrastructure`)
+- **Redis**: In-memory cache to improve performance
+- **HAProxy**: Load balancer to distribute load between services
 
-### Monitoreo (perfil `monitoring`)
-- **Prometheus**: Recolector de métricas
-- **Grafana**: Dashboards pre-configurados:
-  - **Ollama AI Models Dashboard**: Monitoreo específico de modelos de IA
-  - **System Overview**: Vista general del sistema completo
-- **AlertManager**: Gestión de alertas
-- **Node Exporter**: Métricas del host
-- **cAdvisor**: Métricas de contenedores
-- **PostgreSQL Exporter**: Métricas de PostgreSQL
+### Monitoring (profile `monitoring`)
+- **Prometheus**: Metrics collector
+- **Grafana**: Pre-configured dashboards:
+  - **Ollama AI Models Dashboard**: Specific monitoring for AI models
+  - **System Overview**: Complete system overview
+- **AlertManager**: Alert management
+- **Node Exporter**: Host metrics
+- **cAdvisor**: Container metrics
+- **PostgreSQL Exporter**: PostgreSQL metrics
 
-### Seguridad (perfil `security`)
-- **Keycloak**: Autenticación y autorización centralizada
-- **ModSecurity**: Firewall de aplicaciones web (WAF)
+### Security (profile `security`)
+- **Keycloak**: Centralized authentication and authorization
+- **ModSecurity**: Web Application Firewall (WAF)
 
-### Automatización (perfil `automation`)
-- **Watchtower**: Actualizaciones automáticas de contenedores
-- **Sync**: Sincronización automática de datos
+### Automation (profile `automation`)
+- **Watchtower**: Automatic container updates
+- **Sync**: Automatic data synchronization
 
-### CI/CD (perfil `ci-cd`)
-- **Jenkins**: Pipeline de integración y despliegue continuo
+### CI/CD (profile `ci-cd`)
+- **Jenkins**: Continuous integration and deployment pipeline
 
-### Testing (perfil `testing`)
-- **Test Runner**: Monitoreo automático de salud de servicios
+### Testing (profile `testing`)
+- **Test Runner**: Automatic service health monitoring
 
-### Debug (perfil `debug`)
-- **Debug Tools**: Herramientas avanzadas de debugging
+### Debug (profile `debug`)
+- **Debug Tools**: Advanced debugging tools
 
-## 🚀 Optimización para tu hardware
+## 🚀 Hardware optimization
 
-Tu sistema tiene especificaciones excelentes:
+Your system has excellent specifications:
 - **CPU**: AMD Ryzen 7 7700 (8 cores, 16 threads)
 - **RAM**: 96GB DDR5
 - **GPU**: NVIDIA RTX 5060 Ti
 
-### Configuraciones recomendadas:
+### Recommended configurations:
 
-#### Para máximo rendimiento:
+#### For maximum performance:
 ```bash
-# Stack completo con GPU
+# Full stack with GPU
 docker compose --profile gpu-nvidia --profile monitoring --profile infrastructure up -d
 ```
 
-#### Para desarrollo:
+#### For development:
 ```bash
-# Stack de desarrollo con herramientas
+# Development stack with tools
 docker compose --profile cpu --profile dev --profile testing up -d
 ```
 
-#### Para producción:
+#### For production:
 ```bash
-# Stack de producción con seguridad
+# Production stack with security
 docker compose --profile gpu-nvidia --profile monitoring --profile infrastructure --profile security up -d
 ```
 
-## 🔒 Seguridad
+## 🔒 Security
 
-### Recomendaciones:
-1. **Cambia las contraseñas por defecto** en el archivo `.env`
-2. **No expongas los puertos** a Internet sin configuración adicional
-3. **Usa HTTPS** en producción
-4. **Mantén actualizados** los contenedores
+### Recommendations:
+1. **Change default passwords** in the `.env` file
+2. **Don't expose ports** to the Internet without additional configuration
+3. **Use HTTPS** in production
+4. **Keep containers updated**
 
-### Variables sensibles:
-- `POSTGRES_PASSWORD`: Contraseña de la base de datos
-- `N8N_ENCRYPTION_KEY`: Clave para encriptar datos de n8n
-- `N8N_USER_MANAGEMENT_JWT_SECRET`: Clave para tokens JWT
+### Sensitive variables:
+- `POSTGRES_PASSWORD`: Database password
+- `N8N_ENCRYPTION_KEY`: Key to encrypt n8n data
+- `N8N_USER_MANAGEMENT_JWT_SECRET`: Key for JWT tokens
 
-## 🐛 Solución de problemas
+## 🐛 Troubleshooting
 
-### Problema: "Cannot connect to Docker daemon"
+### Problem: "Cannot connect to Docker daemon"
 ```bash
 sudo systemctl start docker
 sudo usermod -aG docker $USER
-# Cierra sesión y vuelve a entrar
+# Log out and log back in
 ```
 
-### Problema: GPU no funciona
+### Problem: GPU not working
 ```bash
-# Verificar drivers NVIDIA
+# Verify NVIDIA drivers
 nvidia-smi
 
-# Verificar runtime de Docker
+# Verify Docker runtime
 sudo docker run --rm --gpus all nvidia/cuda:12.0.0-base-ubuntu22.04 nvidia-smi
 ```
 
-### Problema: Modelos no se descargan
+### Problem: Models not downloading
 ```bash
-# Ver logs del contenedor de descarga
+# View download container logs
 docker logs ollama-pull-llama
 
-# Descargar manualmente
+# Download manually
 docker exec -it ollama ollama pull llama3.2
 ```
 
-### Problema: Puerto ya en uso
+### Problem: Port already in use
 ```bash
-# Ver qué usa el puerto
+# See what's using the port
 sudo netstat -tulpn | grep :3000
 
-# Cambiar puerto en docker-compose.yml
+# Change port in docker-compose.yml
 ```
 
-### Problema: Logs muy grandes
+### Problem: Very large logs
 ```bash
-# Los logs están configurados para rotar automáticamente
-# Si necesitas limpiar manualmente:
+# Logs are configured to rotate automatically
+# If you need to clean manually:
 docker system prune -f
 ```
 
-## 📈 Monitoreo y mantenimiento
+## 📈 Monitoring and maintenance
 
-### Verificar salud de los servicios:
+### Verify service health:
 ```bash
 docker compose ps
 ```
 
-### Backup de datos:
+### Data backup:
 ```bash
-# Backup manual de volúmenes
+# Manual volume backup
 docker run --rm -v my-selfhosted-ai-kit_n8n_storage:/data -v $(pwd):/backup alpine tar czf /backup/n8n_backup.tar.gz -C /data .
 
-# Backup automático (con perfil monitoring)
+# Automatic backup (with monitoring profile)
 docker compose --profile monitoring up -d
 ```
 
-### Actualizar servicios:
+### Update services:
 ```bash
 docker compose pull
 docker compose up -d
 ```
 
-### Monitorear uso de recursos:
+### Monitor resource usage:
 ```bash
-# Ver uso en tiempo real
+# View real-time usage
 docker stats
 
-# Ver logs de todos los servicios
+# View logs of all services
 docker compose logs -f
 ```
 
-## 🛠️ Servicios opcionales
+## 🛠️ Optional services
 
-### Perfil de Monitoreo (`monitoring`)
-El perfil `monitoring` agrega un stack completo de monitoreo y observabilidad:
+### Monitoring Profile (`monitoring`)
+The `monitoring` profile adds a complete monitoring and observability stack:
 
-#### Prometheus - Recolector de métricas
+#### Prometheus - Metrics collector
 - **URL**: http://localhost:9090
-- **Función**: Recolecta métricas de todos los servicios del stack
-- **Métricas incluidas**: CPU, memoria, estado de salud, logs de errores
+- **Function**: Collects metrics from all stack services
+- **Included metrics**: CPU, memory, health status, error logs
 
-#### Grafana - Dashboards y visualización
+#### Grafana - Dashboards and visualization
 - **URL**: http://localhost:3001
-- **Usuario**: admin
-- **Contraseña**: admin
-- **Función**: Dashboards visuales para monitorear el rendimiento
-- **Dashboards incluidos**: Métricas de servicios, uso de recursos, estado de salud
+- **User**: admin
+- **Password**: admin
+- **Function**: Visual dashboards to monitor performance
+- **Included dashboards**: Service metrics, resource usage, health status
 
-#### AlertManager - Gestión de alertas
+#### AlertManager - Alert management
 - **URL**: http://localhost:9093
-- **Función**: Gestiona alertas cuando los servicios tienen problemas
-- **Alertas configuradas**: Servicios caídos, alto uso de recursos, errores críticos
+- **Function**: Manages alerts when services have problems
+- **Configured alerts**: Services down, high resource usage, critical errors
 
-#### Backup automático
-- **Función**: Respalda datos diariamente
-- **Ubicación**: Volumen `backup_data`
-- **Frecuencia**: Cada 24 horas
+#### Automatic backup
+- **Function**: Backs up data daily
+- **Location**: `backup_data` volume
+- **Frequency**: Every 24 hours
 
-### Herramientas de desarrollo
-- **Perfil**: `dev`
-- **Función**: Contenedor con curl, jq y otras utilidades
-- **Uso**: Para debugging y desarrollo
+### Development tools
+- **Profile**: `dev`
+- **Function**: Container with curl, jq and other utilities
+- **Usage**: For debugging and development
 
-### Cómo usar el monitoreo:
+### How to use monitoring:
 
 ```bash
-# Levantar stack completo con monitoreo
+# Start full stack with monitoring
 docker compose --profile gpu-nvidia --profile monitoring up -d
 
-# Acceder a Grafana
-# 1. Ve a http://localhost:3001
-# 2. Usuario: admin, Contraseña: admin
-# 3. Explora los dashboards disponibles
+# Access Grafana
+# 1. Go to http://localhost:3001
+# 2. User: admin, Password: admin
+# 3. Explore available dashboards
 
-# Acceder a Prometheus
-# 1. Ve a http://localhost:9090
-# 2. Ve a Status > Targets para ver servicios monitoreados
-# 3. Usa la pestaña Graph para consultar métricas
+# Access Prometheus
+# 1. Go to http://localhost:9090
+# 2. Go to Status > Targets to see monitored services
+# 3. Use the Graph tab to query metrics
 
-# Ver alertas
-# 1. Ve a http://localhost:9093
-# 2. Revisa alertas activas y configuración
+# View alerts
+# 1. Go to http://localhost:9093
+# 2. Review active alerts and configuration
 ```
 
-## 🤝 Contribuir
+## 🤝 Contributing
 
-1. Fork el proyecto
-2. Crea una rama para tu feature
-3. Commit tus cambios
-4. Push a la rama
-5. Abre un Pull Request
+1. Fork the project
+2. Create a branch for your feature
+3. Commit your changes
+4. Push to the branch
+5. Open a Pull Request
 
-## 📄 Licencia
+## 📄 License
 
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+This project is licensed under the MIT License. See the `LICENSE` file for more details.
 
-## 🆘 Soporte
+## 🆘 Support
 
-Si tienes problemas:
-1. Revisa la sección de solución de problemas
-2. Busca en los issues del repositorio
-3. Crea un nuevo issue con detalles del problema
+If you have problems:
+1. Review the troubleshooting section
+2. Check [docs/INDEX.md](docs/INDEX.md) for documentation guide
+3. Search in the repository issues
+4. Create a new issue with problem details
 
 ---
 
-**¡Disfruta tu kit de IA auto-hospedado optimizado para tu hardware potente! 🎉** 
+## 📚 Additional Documentation
+
+For more information, see:
+- **[docs/INDEX.md](docs/INDEX.md)** - Reading guide for all documentation
+- **[TODO.md](TODO.md)** - Pending tasks list
+- **[ESTADO_PROYECTO.md](ESTADO_PROYECTO.md)** - Current project status
+
+---
+
+**Enjoy your self-hosted AI kit optimized for your powerful hardware! 🎉** 
 
 ## 📊 Visual examples of typical stacks
 
@@ -622,4 +631,4 @@ Below are visual examples of profile combinations for different usage scenarios.
 ---
 
 **Want to create your own diagrams or modify the existing ones?**
-See [`DIAGRAMS_INSTRUCTIONS.md`](DIAGRAMS_INSTRUCTIONS.md) for how to generate PNGs from `.mmd` files using Mermaid CLI. 
+See [`DIAGRAMS_INSTRUCTIONS.md`](DIAGRAMS_INSTRUCTIONS.md) for how to generate PNGs from `.mmd` files using Mermaid CLI.
