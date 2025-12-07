@@ -540,6 +540,7 @@ services:
       - grafana_data:/var/lib/grafana
       - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
       - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/config/grafana.ini:/etc/grafana/grafana.ini:ro
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
@@ -548,13 +549,16 @@ services:
       - GF_AUTH_GENERIC_OAUTH_CLIENT_ID=grafana
       - GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET=pr85OgKszvS0KOpVnlzYjM0c0Rp9nQXw
       - GF_AUTH_GENERIC_OAUTH_SCOPES=openid profile email
-      - GF_AUTH_GENERIC_OAUTH_AUTH_URL=http://keycloak:8080/realms/master/protocol/openid-connect/auth
+      # AUTH_URL debe usar localhost porque el navegador del usuario necesita acceder
+      - GF_AUTH_GENERIC_OAUTH_AUTH_URL=http://localhost:8080/realms/master/protocol/openid-connect/auth
+      # TOKEN_URL y API_URL pueden usar keycloak:8080 porque Grafana las llama desde dentro del contenedor
       - GF_AUTH_GENERIC_OAUTH_TOKEN_URL=http://keycloak:8080/realms/master/protocol/openid-connect/token
       - GF_AUTH_GENERIC_OAUTH_API_URL=http://keycloak:8080/realms/master/protocol/openid-connect/userinfo
-      - GF_AUTH_SIGNOUT_REDIRECT_URL=http://keycloak:8080/realms/master/protocol/openid-connect/logout
+      # SIGNOUT_REDIRECT_URL debe usar localhost porque el navegador del usuario necesita acceder
+      - GF_AUTH_SIGNOUT_REDIRECT_URL=http://localhost:8080/realms/master/protocol/openid-connect/logout
       - GF_SERVER_ROOT_URL=http://localhost:3001
-      - GF_USERS_AUTO_LOGIN=true
-      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_USERS_AUTO_LOGIN=false
+      - GF_AUTH_DISABLE_LOGIN_FORM=true  # Solo Keycloak OAuth (más seguro)
     networks:
       - monitoring-network
       - genai-network
@@ -871,6 +875,10 @@ services:
       - KC_HOSTNAME_STRICT=false
       - KC_HTTP_ENABLED=true
       - KC_HEALTH_ENABLED=true
+      # Configuración para cookies en contexto HTTP (no seguro)
+      - KC_HTTP_RELATIVE_PATH=/
+      - KC_PROXY=edge
+      - KC_PROXY_ADDRESS_FORWARDING=true
     ports:
       - "8080:8080"
     volumes:
