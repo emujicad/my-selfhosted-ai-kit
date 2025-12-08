@@ -18,14 +18,19 @@
 Ejecuta un solo comando que hace todo:
 
 ```bash
-./scripts/auto-validate.sh
+./scripts/stack-manager.sh validate
+# O simplemente:
+./scripts/stack-manager.sh start
 ```
 
-Este script:
-1. ✅ Valida la configuración estáticamente (sin Docker)
-2. 🐳 Levanta los servicios necesarios automáticamente
-3. 🔍 Verifica que todo funciona correctamente
-4. 📊 Genera reporte completo
+El sistema ahora:
+1. ✅ **Corrige automáticamente** variables de `.env` que necesitan comillas
+2. ✅ Valida la configuración estáticamente (sin Docker)
+3. 🐳 Levanta los servicios necesarios automáticamente
+4. 🔍 **Corrige automáticamente** problemas de base de datos de Keycloak (si aplica)
+5. 📊 Genera reporte completo
+
+**Todo es automático y transparente** - no necesitas scripts adicionales.
 
 ### Opción 2: Validación Estática Rápida (Sin Docker)
 
@@ -338,6 +343,10 @@ docker compose logs [nombre-servicio]
    ```bash
    grep modsecurity docker-compose.yml
    ```
+
+### Corrección Automática de Variables de .env
+
+**Nuevo**: El sistema ahora corrige automáticamente variables de `.env` que necesitan comillas cuando ejecutas `validate` o `start`. Ver [ENV_AUTO_FIX.md](ENV_AUTO_FIX.md) para más detalles.
 
 ### Variables de entorno vacías causan problemas de conexión
 

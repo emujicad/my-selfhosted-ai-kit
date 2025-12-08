@@ -45,6 +45,8 @@ show_help() {
     echo ""
     echo "    init-db               Inicializar base de datos de Keycloak (si no existe)"
     echo ""
+    echo "    fix-db                Solucionar problemas de base de datos (diagnóstico manual - la corrección es automática en 'start')"
+    echo ""
     echo "    status                Verificar estado de Keycloak y servicios relacionados"
     echo ""
     echo "    help                  Mostrar esta ayuda"
@@ -58,6 +60,7 @@ show_help() {
     echo "    ./scripts/keycloak-manager.sh credentials"
     echo "    ./scripts/keycloak-manager.sh create-user"
     echo "    ./scripts/keycloak-manager.sh init-db"
+    echo "    ./scripts/keycloak-manager.sh fix-db"
     echo "    ./scripts/keycloak-manager.sh status"
     echo ""
 }
@@ -306,6 +309,25 @@ cmd_init_db() {
     echo "   Keycloak creará automáticamente todas las tablas necesarias"
     echo "   cuando se inicie por primera vez"
     echo ""
+}
+
+# =============================================================================
+# COMANDO: Solucionar Problemas de Base de Datos
+# =============================================================================
+cmd_fix_db() {
+    echo "🔧 SOLUCIONAR PROBLEMAS DE BASE DE DATOS DE KEYCLOAK"
+    echo "=================================================="
+    echo ""
+    
+    # Usar el comando diagnose de stack-manager.sh
+    if [ -f "${SCRIPT_DIR}/stack-manager.sh" ]; then
+        echo -e "${BLUE}Usando diagnóstico integrado de stack-manager.sh...${NC}"
+        echo ""
+        bash "${SCRIPT_DIR}/stack-manager.sh" diagnose keycloak-db
+    else
+        echo -e "${RED}❌ Script stack-manager.sh no encontrado${NC}"
+        exit 1
+    fi
 }
 
 # =============================================================================
@@ -957,6 +979,9 @@ case "$COMMAND" in
         ;;
     init-db)
         cmd_init_db
+        ;;
+    fix-db)
+        cmd_fix_db
         ;;
     status)
         cmd_status

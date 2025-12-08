@@ -670,6 +670,87 @@ JENKINS_OIDC_SCOPES=openid email profile
 - Reinicia Keycloak para limpiar sesiones
 - Verifica que el usuario exista en Keycloak
 
+**6. Error: Keycloak no inicia - Base de datos con transacciones pendientes**
+
+**Causa**: Cuando Keycloak se detiene (reinicio del sistema, `docker compose down`, problemas de red, crashes, etc.), PostgreSQL puede quedar con:
+- Transacciones pendientes (`idle in transaction`)
+- Locks en la base de datos
+- Conexiones huérfanas
+
+**Síntomas**:
+- Keycloak no inicia aunque PostgreSQL esté corriendo
+- Logs muestran errores de conexión a la base de datos
+- PostgreSQL muestra transacciones `idle in transaction` en `pg_stat_activity`
+
+**Solución Automática (Recomendado - Integrado)**:
+```bash
+# La corrección ahora es AUTOMÁTICA al levantar servicios
+./scripts/stack-manager.sh start security
+# O simplemente:
+./scripts/stack-manager.sh start  # (si incluye perfil security)
+```
+
+El sistema verifica y corrige automáticamente antes de levantar Keycloak. Solo verás un mensaje si corrigió algo.
+
+**Solución Manual (Opcional - Solo si necesitas diagnóstico detallado)**:
+```bash
+# Usar el script de fix manual si necesitas ver detalles
+./scripts/keycloak-manager.sh fix-db
+```
+
+Este script:
+1. Verifica conexiones activas (solo lectura)
+2. Verifica transacciones pendientes (solo lectura)
+3. Verifica locks (solo lectura)
+4. Te muestra el estado y pregunta si quieres limpiar
+5. Si autorizas, limpia conexiones muertas, transacciones pendientes y locks de forma segura
+
+**⚠️ IMPORTANTE**: El script es seguro porque:
+- Solo termina conexiones "muertas" (no activas)
+- Solo termina transacciones "colgadas" (no activas)
+- NO borra datos, solo cierra conexiones
+- Es como "desenchufar" conexiones que ya no sirven
+
+**Para más detalles**: Ver [KEYCLOAK_DB_TROUBLESHOOTING.md](KEYCLOAK_DB_TROUBLESHOOTING.md) - Explicación completa de qué hace el script y por qué es seguro
+
+**Solución Manual**:
+```bash
+# 1. Conectarse a PostgreSQL
+docker compose exec postgres psql -U postgres -d keycloak
+
+# 2. Ver transacciones pendientes
+SELECT pid, usename, state, query, xact_start 
+FROM pg_stat_activity 
+WHERE datname = 'keycloak' 
+AND state IN ('idle in transaction', 'idle in transaction (aborted)');
+
+# 3. Terminar transacciones pendientes
+SELECT pg_terminate_backend(pid)
+FROM pg_stat_activity
+WHERE datname = 'keycloak'
+AND state IN ('idle in transaction', 'idle in transaction (aborted)')
+AND pid != pg_backend_pid();
+
+# 4. Salir de psql
+\q
+
+# 5. Reiniciar Keycloak
+docker compose --profile security up -d keycloak
+```
+
+**Prevención**:
+- La configuración en `docker-compose.yml` ahora incluye:
+  - `stop_grace_period: 30s` para Keycloak y PostgreSQL (permite shutdown limpio)
+  - Timeouts de transacciones en PostgreSQL (`idle_in_transaction_session_timeout=60000`)
+  - Configuración de pool de conexiones en Keycloak
+- Estas configuraciones ayudan a prevenir el problema, pero pueden ocurrir por:
+  - Reinicios del sistema
+  - `docker compose down` o `docker compose stop`
+  - Problemas de red
+  - Crashes de Keycloak
+  - Falta de memoria (OOM Killer)
+- Si ocurre, simplemente ejecuta: `./scripts/keycloak-manager.sh fix-db`
+
 ### Verificar Configuración
 
 **Verificar Keycloak:**
@@ -736,3 +817,4 @@ Para cualquier cliente OIDC/OAuth en Keycloak:
 - **Eliminación de duplicaciones**: Variables OAuth/OpenID duplicadas eliminadas de `.env` y `.env.example`
 - **Actualización de Grafana**: `GF_AUTH_GENERIC_OAUTH_SKIP_ORG_ROLE_SYNC` ahora es variable de entorno (`GRAFANA_SKIP_ORG_ROLE_SYNC`)
 - **Mejora de nomenclatura**: Variables Open WebUI renombradas de `OPENID_*` a `OAUTH_*` para consistencia y claridad
+- **Solución para transacciones pendientes**: Agregado `stop_grace_period`, timeouts de transacciones y script `fix-db` para resolver problemas de base de datos cuando Keycloak se detiene abruptamente

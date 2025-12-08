@@ -259,8 +259,20 @@ services:
       - POSTGRES_USER              # Usuario de BD (desde .env)
       - POSTGRES_PASSWORD          # Contraseña de BD (desde .env)
       - POSTGRES_DB                # Nombre de BD (desde .env)
+      # Configuración para prevenir transacciones pendientes y locks
+      - POSTGRES_INITDB_ARGS=-E UTF8 --locale=C
     volumes:
       - postgres_storage:/var/lib/postgresql/data  # Datos persistentes
+    # Tiempo de gracia para shutdown limpio (30 segundos)
+    stop_grace_period: 30s
+    # Comando con configuración para manejar mejor los shutdowns
+    command: >
+      postgres
+      -c shared_buffers=256MB
+      -c max_connections=${POSTGRES_MAX_CONNECTIONS:-200}
+      -c statement_timeout=30000
+      -c idle_in_transaction_session_timeout=60000
+      -c lock_timeout=10000
     healthcheck:                   # Verifica que PostgreSQL esté listo
       test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
       interval: 5s
@@ -942,9 +954,13 @@ services:
       - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN_USER:-admin}
       - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD:-admin}
       - KC_DB=${KEYCLOAK_DB_TYPE:-postgres}
-      - KC_DB_URL=jdbc:postgresql://${POSTGRES_HOST_INTERNAL:-postgres}:${POSTGRES_PORT_INTERNAL:-5432}/${KEYCLOAK_DB_NAME:-keycloak}
+      - KC_DB_URL=jdbc:postgresql://${POSTGRES_HOST_INTERNAL:-postgres}:${POSTGRES_PORT_INTERNAL:-5432}/${KEYCLOAK_DB_NAME:-keycloak}?connectTimeout=10&socketTimeout=60
       - KC_DB_USERNAME=${POSTGRES_USER}
       - KC_DB_PASSWORD=${POSTGRES_PASSWORD}
+      # Configuración de pool de conexiones para prevenir transacciones pendientes
+      - KC_DB_POOL_INITIAL_SIZE=${KEYCLOAK_DB_POOL_INITIAL_SIZE:-5}
+      - KC_DB_POOL_MIN_SIZE=${KEYCLOAK_DB_POOL_MIN_SIZE:-5}
+      - KC_DB_POOL_MAX_SIZE=${KEYCLOAK_DB_POOL_MAX_SIZE:-20}
       - KC_HOSTNAME=${HOSTNAME_PUBLIC:-localhost}
       - KC_HOSTNAME_PORT=${PORT_KEYCLOAK_HOST:-8080}
       - KC_HOSTNAME_STRICT=${KEYCLOAK_HOSTNAME_STRICT:-false}
@@ -965,6 +981,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    # Tiempo de gracia para shutdown limpio (30 segundos)
+    stop_grace_period: 30s
     command: start-dev --http-enabled=true --hostname-strict=false
     healthcheck:
       # Keycloak tiene endpoint de health en /health/ready

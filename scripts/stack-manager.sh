@@ -77,6 +77,7 @@ OPCIONES:
     logs [servicio]      Mostrar logs de servicios
     validate             Validar configuración antes de levantar
     auto-validate        Validación completa automática (variables, config, servicios)
+    diagnose [target]    Diagnóstico detallado (keycloak-db)
     test                 Probar cambios recientes (ModSecurity, Prometheus, etc.)
     init-volumes         Inicializar volúmenes con configuraciones por defecto
     monitor              Monitorear descarga de modelos Ollama
@@ -145,9 +146,107 @@ NOTAS:
 HELP_EOF
 }
 
+# Función para corregir automáticamente variables de .env que necesitan comillas
+# Esta función se ejecuta automáticamente antes de validar variables de entorno
+auto_fix_env_quotes() {
+    local ENV_FILE="${PROJECT_DIR}/.env"
+    
+    if [ ! -f "$ENV_FILE" ]; then
+        return 0  # No hay .env, no hay nada que corregir
+    fi
+    
+    # Verificar directamente si hay variables sin comillas que las necesitan
+    local needs_fix=0
+    
+    # Verificar SCOPES sin comillas
+    if grep -qE '^(N8N_OIDC_SCOPES|OPEN_WEBUI_OAUTH_SCOPES|GRAFANA_OAUTH_SCOPES|JENKINS_OIDC_SCOPES)=openid (profile|email)' "$ENV_FILE" 2>/dev/null; then
+        needs_fix=1
+    fi
+    
+    # Verificar WATCHTOWER_SCHEDULE sin comillas
+    if grep -qE '^WATCHTOWER_SCHEDULE=0 0 2 \* \* \*$' "$ENV_FILE" 2>/dev/null; then
+        needs_fix=1
+    fi
+    
+    if [ "$needs_fix" = "0" ]; then
+        # No hay problemas, salir silenciosamente
+        return 0
+    fi
+    
+    # Hay problemas, corregirlos automáticamente
+    local fixes_applied=0
+    local fix_messages=()
+    
+    # Crear backup temporal del .env ANTES de modificarlo (solo para seguridad)
+    # NOTA: Este NO es un backup del sistema, solo una copia de seguridad temporal
+    # del .env antes de modificarlo, para poder restaurarlo si algo sale mal.
+    # Los backups del sistema completo se hacen con: ./scripts/backup-manager.sh
+    local ENV_BACKUP="${ENV_FILE}.backup.$(date +%Y%m%d_%H%M%S)"
+    
+    # Crear backup temporal
+    cp "$ENV_FILE" "$ENV_BACKUP" 2>/dev/null || true
+    
+    # Corregir SCOPES (tienen espacios: "openid profile email")
+    if grep -q '^N8N_OIDC_SCOPES=openid profile email$' "$ENV_FILE" 2>/dev/null; then
+        sed -i.tmp 's/^N8N_OIDC_SCOPES=openid profile email$/N8N_OIDC_SCOPES="openid profile email"/' "$ENV_FILE" 2>/dev/null && {
+            fixes_applied=$((fixes_applied + 1))
+            fix_messages+=("N8N_OIDC_SCOPES")
+        }
+    fi
+    
+    if grep -q '^OPEN_WEBUI_OAUTH_SCOPES=openid profile email$' "$ENV_FILE" 2>/dev/null; then
+        sed -i.tmp 's/^OPEN_WEBUI_OAUTH_SCOPES=openid profile email$/OPEN_WEBUI_OAUTH_SCOPES="openid profile email"/' "$ENV_FILE" 2>/dev/null && {
+            fixes_applied=$((fixes_applied + 1))
+            fix_messages+=("OPEN_WEBUI_OAUTH_SCOPES")
+        }
+    fi
+    
+    if grep -q '^GRAFANA_OAUTH_SCOPES=openid profile email$' "$ENV_FILE" 2>/dev/null; then
+        sed -i.tmp 's/^GRAFANA_OAUTH_SCOPES=openid profile email$/GRAFANA_OAUTH_SCOPES="openid profile email"/' "$ENV_FILE" 2>/dev/null && {
+            fixes_applied=$((fixes_applied + 1))
+            fix_messages+=("GRAFANA_OAUTH_SCOPES")
+        }
+    fi
+    
+    if grep -qE '^JENKINS_OIDC_SCOPES=openid (email profile|profile email)$' "$ENV_FILE" 2>/dev/null; then
+        sed -i.tmp -E 's/^JENKINS_OIDC_SCOPES=openid (email profile|profile email)$/JENKINS_OIDC_SCOPES="openid \1"/' "$ENV_FILE" 2>/dev/null && {
+            fixes_applied=$((fixes_applied + 1))
+            fix_messages+=("JENKINS_OIDC_SCOPES")
+        }
+    fi
+    
+    # Corregir WATCHTOWER_SCHEDULE (tiene espacios: "0 0 2 * * *")
+    if grep -q '^WATCHTOWER_SCHEDULE=0 0 2 \* \* \*$' "$ENV_FILE" 2>/dev/null; then
+        sed -i.tmp 's/^WATCHTOWER_SCHEDULE=0 0 2 \* \* \*$/WATCHTOWER_SCHEDULE="0 0 2 * * *"/' "$ENV_FILE" 2>/dev/null && {
+            fixes_applied=$((fixes_applied + 1))
+            fix_messages+=("WATCHTOWER_SCHEDULE")
+        }
+    fi
+    
+    # Limpiar archivos temporales
+    rm -f "${ENV_FILE}.tmp" 2>/dev/null || true
+    
+    # Informar qué se corrigió
+    if [ $fixes_applied -gt 0 ]; then
+        print_success "✅ Archivo .env corregido automáticamente ($fixes_applied variables):"
+        for msg in "${fix_messages[@]}"; do
+            echo "   • $msg"
+        done
+        echo ""
+        print_info "   Backup temporal guardado en: $(basename "$ENV_BACKUP")"
+        print_info "   (Puedes restaurarlo si algo sale mal: cp $(basename "$ENV_BACKUP") .env)"
+        echo ""
+    fi
+    
+    return 0
+}
+
 # Función para validar antes de levantar
 validate_before_start() {
     print_header "VALIDACIÓN PREVIA"
+    
+    # Corregir automáticamente variables de .env que necesitan comillas
+    auto_fix_env_quotes
     
     # Verificar variables de entorno
     if [ -f "$SCRIPT_DIR/verify-env-variables.sh" ]; then
@@ -838,6 +937,239 @@ cleanup_orphaned_resources() {
     fi
 }
 
+# Función para verificar y corregir automáticamente problemas de base de datos de Keycloak
+# Esta función se ejecuta automáticamente antes de levantar Keycloak
+auto_fix_keycloak_db() {
+    # Verificar que PostgreSQL está corriendo
+    if ! $DOCKER_CMD ps --format "{{.Names}}" 2>/dev/null | grep -qE "^postgres$|postgres"; then
+        # PostgreSQL no está corriendo, no hay nada que verificar
+        return 0
+    fi
+    
+    # Cargar variables de entorno si existen
+    if [ -f ".env" ]; then
+        set -a
+        source .env 2>/dev/null || true
+        set +a
+    fi
+    
+    local POSTGRES_USER=${POSTGRES_USER:-postgres}
+    local POSTGRES_DB=${POSTGRES_DB:-postgres}
+    local KEYCLOAK_DB_NAME=${KEYCLOAK_DB_NAME:-keycloak}
+    
+    # Verificar que la base de datos keycloak existe
+    local DB_EXISTS=$($DOCKER_CMD exec postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc \
+        "SELECT 1 FROM pg_database WHERE datname = '$KEYCLOAK_DB_NAME'" 2>/dev/null || echo "0")
+    
+    if [ "$DB_EXISTS" != "1" ]; then
+        # Base de datos no existe aún, es normal si Keycloak no se ha iniciado nunca
+        return 0
+    fi
+    
+    # Verificar si hay problemas (transacciones pendientes, locks antiguos, etc.)
+    local has_problems=0
+    local fixes_applied=0
+    local fix_messages=()
+    
+    # Verificar transacciones pendientes
+    local idle_tx=$($DOCKER_CMD exec postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc \
+        "SELECT COUNT(*) FROM pg_stat_activity WHERE datname = '$KEYCLOAK_DB_NAME' AND state IN ('idle in transaction', 'idle in transaction (aborted)') AND pid != pg_backend_pid();" 2>/dev/null || echo "0")
+    
+    # Verificar locks antiguos en databasechangeloglock (más de 5 minutos)
+    local old_locks=$($DOCKER_CMD exec postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc \
+        "SELECT COUNT(*) FROM pg_stat_activity a JOIN pg_locks l ON a.pid = l.pid WHERE a.datname = '$KEYCLOAK_DB_NAME' AND a.pid != pg_backend_pid() AND l.relation::regclass::text = 'databasechangeloglock' AND a.query_start < now() - interval '5 minutes';" 2>/dev/null || echo "0")
+    
+    # Verificar locks colgados en la tabla databasechangeloglock
+    local hung_locks=$($DOCKER_CMD exec postgres psql -U "$POSTGRES_USER" -d "$KEYCLOAK_DB_NAME" -tAc \
+        "SELECT COUNT(*) FROM databasechangeloglock WHERE locked = true AND (lockgranted IS NULL OR lockgranted < now() - interval '5 minutes');" 2>/dev/null || echo "0")
+    
+    # Si no hay problemas, salir silenciosamente
+    if [ "$idle_tx" = "0" ] && [ "$old_locks" = "0" ] && [ "$hung_locks" = "0" ]; then
+        return 0
+    fi
+    
+    # Hay problemas, corregirlos automáticamente
+    print_info "🔧 Verificando base de datos de Keycloak..."
+    
+    # Corregir transacciones pendientes
+    if [ "$idle_tx" != "0" ]; then
+        local terminated=$($DOCKER_CMD exec postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc \
+            "SELECT COUNT(*) FROM (SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$KEYCLOAK_DB_NAME' AND state IN ('idle in transaction', 'idle in transaction (aborted)') AND pid != pg_backend_pid()) t;" 2>/dev/null || echo "0")
+        if [ "$terminated" != "0" ]; then
+            fixes_applied=$((fixes_applied + terminated))
+            fix_messages+=("Terminadas $terminated transacciones pendientes")
+        fi
+    fi
+    
+    # Corregir locks antiguos
+    if [ "$old_locks" != "0" ]; then
+        local terminated=$($DOCKER_CMD exec postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc \
+            "SELECT COUNT(*) FROM (SELECT pg_terminate_backend(a.pid) FROM pg_stat_activity a JOIN pg_locks l ON a.pid = l.pid WHERE a.datname = '$KEYCLOAK_DB_NAME' AND a.pid != pg_backend_pid() AND l.relation::regclass::text = 'databasechangeloglock' AND a.query_start < now() - interval '5 minutes') t;" 2>/dev/null || echo "0")
+        if [ "$terminated" != "0" ]; then
+            fixes_applied=$((fixes_applied + terminated))
+            fix_messages+=("Terminadas $terminated conexiones con locks antiguos")
+        fi
+    fi
+    
+    # Limpiar tabla databasechangeloglock
+    if [ "$hung_locks" != "0" ]; then
+        local updated=$($DOCKER_CMD exec postgres psql -U "$POSTGRES_USER" -d "$KEYCLOAK_DB_NAME" -tAc \
+            "UPDATE databasechangeloglock SET locked = false, lockgranted = NULL, lockedby = NULL WHERE locked = true AND (lockgranted IS NULL OR lockgranted < now() - interval '5 minutes'); SELECT COUNT(*) FROM databasechangeloglock WHERE locked = false AND (lockgranted IS NULL OR lockgranted < now() - interval '5 minutes');" 2>/dev/null || echo "0")
+        if [ "$updated" != "0" ]; then
+            fixes_applied=$((fixes_applied + 1))
+            fix_messages+=("Limpiada tabla databasechangeloglock")
+        fi
+    fi
+    
+    # Informar qué se corrigió
+    if [ $fixes_applied -gt 0 ]; then
+        print_success "✅ Base de datos de Keycloak corregida automáticamente:"
+        for msg in "${fix_messages[@]}"; do
+            echo "   • $msg"
+        done
+        echo ""
+    fi
+    
+    return 0
+}
+
+# Función para diagnóstico detallado de base de datos de Keycloak
+# Similar a auto_fix_keycloak_db pero con salida detallada y opción de limpiar manualmente
+diagnose_keycloak_db() {
+    # Verificar que PostgreSQL está corriendo
+    if ! $DOCKER_CMD ps --format "{{.Names}}" 2>/dev/null | grep -qE "^postgres$|postgres"; then
+        print_error "PostgreSQL NO está corriendo"
+        echo "   Levántalo con: docker compose up -d postgres"
+        return 1
+    fi
+    
+    # Cargar variables de entorno si existen
+    if [ -f ".env" ]; then
+        set -a
+        source .env 2>/dev/null || true
+        set +a
+    fi
+    
+    local POSTGRES_USER=${POSTGRES_USER:-postgres}
+    local POSTGRES_DB=${POSTGRES_DB:-postgres}
+    local KEYCLOAK_DB_NAME=${KEYCLOAK_DB_NAME:-keycloak}
+    
+    print_header "DIAGNÓSTICO DE BASE DE DATOS DE KEYCLOAK"
+    
+    # Verificar que la base de datos keycloak existe
+    local DB_EXISTS=$($DOCKER_CMD exec postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc \
+        "SELECT 1 FROM pg_database WHERE datname = '$KEYCLOAK_DB_NAME'" 2>/dev/null || echo "0")
+    
+    if [ "$DB_EXISTS" != "1" ]; then
+        print_warning "La base de datos '$KEYCLOAK_DB_NAME' no existe"
+        echo "   Esto es normal si Keycloak no se ha iniciado nunca"
+        echo "   La base de datos se creará automáticamente cuando Keycloak inicie"
+        return 0
+    fi
+    
+    print_success "Base de datos '$KEYCLOAK_DB_NAME' existe"
+    echo ""
+    
+    # Mostrar conexiones activas
+    print_info "📊 Conexiones activas:"
+    $DOCKER_CMD exec postgres psql -U "$POSTGRES_USER" -d "$KEYCLOAK_DB_NAME" -c "
+        SELECT 
+            pid,
+            usename,
+            application_name,
+            state,
+            query_start,
+            age(now(), query_start) AS connection_age
+        FROM pg_stat_activity
+        WHERE datname = '$KEYCLOAK_DB_NAME'
+        AND pid != pg_backend_pid()
+        ORDER BY query_start;
+    " 2>/dev/null || print_warning "No se pudo verificar conexiones"
+    echo ""
+    
+    # Mostrar transacciones pendientes
+    print_info "📊 Transacciones pendientes:"
+    $DOCKER_CMD exec postgres psql -U "$POSTGRES_USER" -d "$KEYCLOAK_DB_NAME" -c "
+        SELECT 
+            pid,
+            usename,
+            application_name,
+            state,
+            xact_start,
+            now() - xact_start AS transaction_duration
+        FROM pg_stat_activity
+        WHERE datname = '$KEYCLOAK_DB_NAME'
+        AND state IN ('idle in transaction', 'idle in transaction (aborted)')
+        AND pid != pg_backend_pid()
+        ORDER BY xact_start;
+    " 2>/dev/null || print_warning "No se pudo verificar transacciones"
+    echo ""
+    
+    # Mostrar locks
+    print_info "📊 Locks:"
+    $DOCKER_CMD exec postgres psql -U "$POSTGRES_USER" -d "$KEYCLOAK_DB_NAME" -c "
+        SELECT 
+            l.locktype,
+            l.relation::regclass,
+            l.mode,
+            l.granted,
+            a.usename,
+            a.query_start,
+            age(now(), a.query_start) AS age
+        FROM pg_locks l
+        LEFT JOIN pg_stat_activity a ON l.pid = a.pid
+        WHERE l.database = (SELECT oid FROM pg_database WHERE datname = '$KEYCLOAK_DB_NAME')
+        AND a.pid != pg_backend_pid()
+        ORDER BY a.query_start;
+    " 2>/dev/null || print_warning "No se pudo verificar locks"
+    echo ""
+    
+    # Verificar si hay problemas
+    local idle_tx=$($DOCKER_CMD exec postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc \
+        "SELECT COUNT(*) FROM pg_stat_activity WHERE datname = '$KEYCLOAK_DB_NAME' AND state IN ('idle in transaction', 'idle in transaction (aborted)') AND pid != pg_backend_pid();" 2>/dev/null || echo "0")
+    
+    local old_locks=$($DOCKER_CMD exec postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc \
+        "SELECT COUNT(*) FROM pg_stat_activity a JOIN pg_locks l ON a.pid = l.pid WHERE a.datname = '$KEYCLOAK_DB_NAME' AND a.pid != pg_backend_pid() AND l.relation::regclass::text = 'databasechangeloglock' AND a.query_start < now() - interval '5 minutes';" 2>/dev/null || echo "0")
+    
+    local hung_locks=$($DOCKER_CMD exec postgres psql -U "$POSTGRES_USER" -d "$KEYCLOAK_DB_NAME" -tAc \
+        "SELECT COUNT(*) FROM databasechangeloglock WHERE locked = true AND (lockgranted IS NULL OR lockgranted < now() - interval '5 minutes');" 2>/dev/null || echo "0")
+    
+    if [ "$idle_tx" = "0" ] && [ "$old_locks" = "0" ] && [ "$hung_locks" = "0" ]; then
+        print_success "✅ No se detectaron problemas"
+        return 0
+    fi
+    
+    # Hay problemas
+    print_warning "⚠️ Se detectaron problemas:"
+    [ "$idle_tx" != "0" ] && echo "   • $idle_tx transacciones pendientes"
+    [ "$old_locks" != "0" ] && echo "   • $old_locks locks antiguos"
+    [ "$hung_locks" != "0" ] && echo "   • $hung_locks locks colgados en databasechangeloglock"
+    echo ""
+    
+    # Preguntar si quiere limpiar
+    read -p "¿Deseas limpiar automáticamente? (s/n) " -n 1 -r
+    echo ""
+    
+    if [[ "$REPLY" =~ ^[Ss]$ ]]; then
+        # Usar la función automática de corrección
+        auto_fix_keycloak_db
+        print_success "✅ Limpieza completada"
+        echo ""
+        print_info "Ahora puedes intentar levantar Keycloak:"
+        echo "   ./scripts/stack-manager.sh start security"
+    else
+        print_info "Operación cancelada"
+        echo ""
+        print_info "Puedes limpiar automáticamente ejecutando:"
+        echo "   ./scripts/stack-manager.sh start security"
+        echo ""
+        print_info "O manualmente con:"
+        echo "   ./scripts/keycloak-manager.sh fix-db"
+    fi
+    
+    return 0
+}
+
 # Función para analizar estado de servicios antes de levantar
 analyze_services_before_start() {
     local profiles=("$@")
@@ -988,6 +1320,11 @@ start_services() {
         exit 1
     fi
     
+    # Si hay perfil security, verificar y corregir base de datos de Keycloak automáticamente
+    if [[ " ${unique_profiles[@]} " =~ " security " ]]; then
+        auto_fix_keycloak_db
+    fi
+    
     # Construir y ejecutar comando
     local cmd=$(build_compose_command up "${unique_profiles[@]}")
     print_info "Ejecutando: $cmd"
@@ -1070,6 +1407,40 @@ start_services() {
     fi
 }
 
+# Función para limpiar base de datos de Keycloak antes de detener (opcional)
+# Esto ayuda a prevenir problemas cuando se reinicie
+cleanup_keycloak_db_before_stop() {
+    # Solo si Keycloak está corriendo y vamos a detenerlo
+    if ! $DOCKER_CMD ps --format "{{.Names}}" 2>/dev/null | grep -qE "^postgres$|postgres"; then
+        return 0
+    fi
+    
+    # Cargar variables de entorno si existen
+    if [ -f ".env" ]; then
+        set -a
+        source .env 2>/dev/null || true
+        set +a
+    fi
+    
+    local POSTGRES_USER=${POSTGRES_USER:-postgres}
+    local POSTGRES_DB=${POSTGRES_DB:-postgres}
+    local KEYCLOAK_DB_NAME=${KEYCLOAK_DB_NAME:-keycloak}
+    
+    # Verificar que la base de datos existe
+    local DB_EXISTS=$($DOCKER_CMD exec postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc \
+        "SELECT 1 FROM pg_database WHERE datname = '$KEYCLOAK_DB_NAME'" 2>/dev/null || echo "0")
+    
+    if [ "$DB_EXISTS" != "1" ]; then
+        return 0
+    fi
+    
+    # Limpiar transacciones pendientes antes de detener (solo las muy antiguas)
+    $DOCKER_CMD exec postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc \
+        "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$KEYCLOAK_DB_NAME' AND state IN ('idle in transaction', 'idle in transaction (aborted)') AND query_start < now() - interval '10 minutes' AND pid != pg_backend_pid();" >/dev/null 2>&1 || true
+    
+    return 0
+}
+
 # Función para detener servicios
 stop_services() {
     local profiles=()
@@ -1085,6 +1456,11 @@ stop_services() {
     done
     
     print_header "DETENIENDO SERVICIOS"
+    
+    # Si se está deteniendo el perfil security, limpiar base de datos de Keycloak antes
+    if [ ${#profiles[@]} -eq 0 ] || [[ " ${profiles[@]} " =~ " security " ]]; then
+        cleanup_keycloak_db_before_stop
+    fi
     
     if [ ${#profiles[@]} -eq 0 ]; then
         print_info "Deteniendo todos los servicios (incluyendo todos los perfiles)..."
@@ -1347,6 +1723,22 @@ main() {
             ;;
         test)
             test_changes
+            ;;
+        diagnose)
+            local diagnose_target=${1:-""}
+            case "$diagnose_target" in
+                keycloak-db)
+                    diagnose_keycloak_db
+                    ;;
+                *)
+                    print_error "Diagnóstico no válido: $diagnose_target"
+                    echo ""
+                    print_info "Diagnósticos disponibles:"
+                    echo "  keycloak-db    - Diagnóstico detallado de base de datos de Keycloak"
+                    echo ""
+                    exit 1
+                    ;;
+            esac
             ;;
         init-volumes)
             init_volumes

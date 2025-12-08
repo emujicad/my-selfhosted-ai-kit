@@ -7,6 +7,7 @@
 1. **[README.md](../README.md)** - Visión general del proyecto, instalación y uso básico
 2. **[ESTADO_PROYECTO.md](../ESTADO_PROYECTO.md)** - Estado actual del proyecto y tareas completadas
 3. **[TODO.md](../TODO.md)** - Tareas pendientes y próximos pasos
+4. **[PROXIMOS_PASOS.md](../PROXIMOS_PASOS.md)** - ⭐ **NUEVO** - Plan de acción detallado con próximos pasos recomendados
 
 ### Configuración y Setup
 
@@ -16,7 +17,11 @@
 
 #### Autenticación y Seguridad
 - **[KEYCLOAK_INTEGRATION_PLAN.md](KEYCLOAK_INTEGRATION_PLAN.md)** - ⭐ **GUÍA PRINCIPAL** - Integración completa de Keycloak con todos los servicios
+- **[KEYCLOAK_DB_TROUBLESHOOTING.md](KEYCLOAK_DB_TROUBLESHOOTING.md)** - Solución de problemas de base de datos de Keycloak (transacciones pendientes)
+- **[KEYCLOAK_AUTO_FIX.md](KEYCLOAK_AUTO_FIX.md)** - Corrección automática integrada en stack-manager (transparente para el usuario)
   - Conceptos clave (URLs, flujos OAuth)
+- **[ENV_AUTO_FIX.md](ENV_AUTO_FIX.md)** - Corrección automática de variables .env (transparente para el usuario)
+- **[AUTO_FIXES_SUMMARY.md](AUTO_FIXES_SUMMARY.md)** - ⭐ **NUEVO** - Resumen de todas las correcciones automáticas
   - Credenciales y acceso
   - Grafana + Keycloak ✅ (configuración completa y troubleshooting)
   - Open WebUI + Keycloak ⚠️ (limitación conocida documentada)
@@ -179,6 +184,7 @@ Los siguientes archivos fueron eliminados porque su información fue consolidada
 - README.md / README.es.md
 - ESTADO_PROYECTO.md
 - TODO.md
+- PROXIMOS_PASOS.md - ⭐ **NUEVO** - Plan de acción detallado con próximos pasos recomendados
 
 ### Configuración
 - docs/KEYCLOAK_INTEGRATION_PLAN.md (TODO Keycloak)
@@ -187,6 +193,7 @@ Los siguientes archivos fueron eliminados porque su información fue consolidada
 - docs/DOCKER_COMPOSE_RESTART_VS_RECREATE.md
 - docs/GRAFANA_MONITORING_GUIDE.md (Monitoreo y dashboards)
 - docs/STACK_MANAGER_GUIDE.md (Gestión de perfiles)
+- docs/ENV_AUTO_FIX.md - ⭐ **NUEVO** - Corrección automática de variables .env (transparente para el usuario)
 
 ### Monitoreo
 - docs/GRAFANA_MONITORING_GUIDE.md

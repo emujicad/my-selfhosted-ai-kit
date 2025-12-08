@@ -22,6 +22,7 @@ backups/
 .archive/
 .achive/
 *.backup
+.env.backup.*
 *.bak
 *.tar.gz
 *.zip

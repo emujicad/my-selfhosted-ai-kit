@@ -1,6 +1,6 @@
 # 📊 Estado del Proyecto - My Self-Hosted AI Kit
 
-**Última actualización**: 2025-01-07
+**Última actualización**: 2025-01-07 (revisado y actualizado)
 
 ## ✅ Completado
 
@@ -36,6 +36,9 @@
    - ✅ Documentación consolidada en archivos principales
    - ✅ Guías completas para stack-manager, backups y Keycloak
    - ✅ Todas las rutas actualizadas y verificadas
+   - ✅ Guía completa de monitoreo con Grafana
+   - ✅ Guía de validación completa
+   - ✅ Guía de variables de entorno dinámicas
 
 ## 📝 Pendiente
 
@@ -47,31 +50,83 @@
    - ✅ Script consolidado: `backup-manager.sh`
 
 2. **Integración Keycloak**
-   - ✅ Grafana con Keycloak (completado)
-   - ⚠️ Open WebUI con OIDC (limitación conocida documentada)
-   - ⏳ n8n con OIDC (configuración lista, puede requerir Enterprise)
-   - ⏳ Jenkins con OIDC (pendiente)
+   - ✅ Grafana con Keycloak (completado y funcionando)
+   - ⚠️ Open WebUI con OIDC (limitación conocida documentada - no funciona debido a problema con discovery document)
+   - ⏳ n8n con OIDC (configuración lista en docker-compose.yml, pendiente probar)
+   - ⏳ Jenkins con OIDC (script de inicialización listo: `init-jenkins-oidc.sh`, pendiente probar)
    - ✅ Script consolidado: `keycloak-manager.sh`
+   - ✅ Documentación completa: `docs/KEYCLOAK_INTEGRATION_PLAN.md`
 
-3. **HTTPS/SSL**
-   - Generación de certificados
-   - Configuración HAProxy
+3. **HTTPS/SSL** (Prioridad Alta)
+   - ⏳ Generación de certificados (Let's Encrypt)
+   - ⏳ Configuración HAProxy con SSL termination
+   - ⏳ Redirección HTTP a HTTPS
+   - ⏳ Renovación automática de certificados
 
-4. **Dashboards Grafana**
-   - Modelos IA
-   - GPU/CPU
-   - Usuarios activos
+4. **Dashboards Grafana** (Prioridad Media)
+   - ✅ System Overview Dashboard (completado)
+   - ✅ Ollama AI Models Dashboard (completado)
+   - ⏳ Dashboard específico para modelos de IA (tokens/s, latencia)
+   - ⏳ Dashboard de uso de GPU/CPU por modelo
+   - ⏳ Dashboard de usuarios activos y sesiones
+   - ⏳ Dashboard de costos estimados por uso
 
-5. **Redis**
-   - Cache de sesiones
-   - Integración Open WebUI
-   - Integración n8n
+5. **Redis** (Prioridad Media)
+   - ⏳ Cache de sesiones de usuario
+   - ⏳ Cache de respuestas frecuentes
+   - ⏳ Cache de embeddings
+   - ⏳ Integración Open WebUI
+   - ⏳ Integración n8n
+   - ⏳ Configurar persistencia de Redis
 
-## 🎯 Próximos Pasos Sugeridos
+## 🎯 Próximos Pasos Sugeridos (Orden de Prioridad)
 
-**Opción 1: Integración Keycloak** (completar SSO con n8n y Jenkins)
-**Opción 2: HTTPS/SSL** (seguridad en producción)
-**Opción 3: Redis** (cache de sesiones para Open WebUI y n8n)
+### 🔥 Prioridad Alta
+
+1. **Completar Integración Keycloak**
+   - Probar y completar n8n con OIDC (configuración lista)
+   - Probar y completar Jenkins con OIDC (script listo)
+   - Configurar roles y permisos básicos en Keycloak
+
+2. **Implementar HTTPS/SSL**
+   - Configurar Let's Encrypt para certificados SSL
+   - Configurar HAProxy con SSL termination
+   - Redirigir HTTP a HTTPS
+   - Configurar renovación automática
+
+3. **Gestión de Secretos**
+   - Configurar HashiCorp Vault (opcional pero recomendado)
+   - Migrar credenciales sensibles a Vault
+   - Configurar rotación automática de secretos
+
+### ⚡ Prioridad Media
+
+4. **Mejorar Dashboards de Grafana**
+   - Dashboard específico para modelos de IA (tokens/s, latencia)
+   - Dashboard de uso de GPU/CPU por modelo
+   - Dashboard de usuarios activos y sesiones
+
+5. **Implementar Redis**
+   - Cache de sesiones de usuario
+   - Cache de respuestas frecuentes
+   - Integración con Open WebUI y n8n
+
+6. **Logging Centralizado**
+   - Configurar ELK Stack (Elasticsearch, Logstash, Kibana)
+   - Configurar log rotation y retención
+   - Crear dashboards de logs
+
+### 🎯 Prioridad Baja
+
+7. **Optimizaciones de Rendimiento**
+   - Optimizar configuración de Ollama
+   - Implementar queue de requests
+   - Monitorear uso de memoria por modelo
+
+8. **Panel de Administración Unificado**
+   - Dashboard principal con estado de servicios
+   - Gestión de usuarios y permisos
+   - Configuración de servicios
 
 ---
 

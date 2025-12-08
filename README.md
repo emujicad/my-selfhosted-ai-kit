@@ -657,6 +657,7 @@ For more information, see:
 - **[docs/INDEX.md](docs/INDEX.md)** - Reading guide for all documentation
 - **[TODO.md](TODO.md)** - Pending tasks list
 - **[ESTADO_PROYECTO.md](ESTADO_PROYECTO.md)** - Current project status
+- **[PROXIMOS_PASOS.md](PROXIMOS_PASOS.md)** - ⭐ **NEW** - Detailed action plan with recommended next steps
 
 ---
 

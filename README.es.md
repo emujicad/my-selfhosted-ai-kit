@@ -657,6 +657,7 @@ Para más información, consulta:
 - **[docs/INDEX.md](docs/INDEX.md)** - Guía de lectura de toda la documentación
 - **[TODO.md](TODO.md)** - Lista de tareas pendientes
 - **[ESTADO_PROYECTO.md](ESTADO_PROYECTO.md)** - Estado actual del proyecto
+- **[PROXIMOS_PASOS.md](PROXIMOS_PASOS.md)** - ⭐ **NUEVO** - Plan de acción detallado con próximos pasos recomendados
 
 ---
 
