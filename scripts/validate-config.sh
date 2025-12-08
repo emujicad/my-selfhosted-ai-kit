@@ -6,7 +6,9 @@
 # Valida que todos los cambios estén correctamente configurados
 # =============================================================================
 
-set -e
+# NO usar 'set -e' aquí porque algunos comandos (como grep) pueden fallar
+# y queremos manejarlos explícitamente con códigos de retorno
+set +e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"

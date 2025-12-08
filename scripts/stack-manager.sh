@@ -163,8 +163,10 @@ validate_before_start() {
     # Validar configuración
     if [ -f "$SCRIPT_DIR/validate-config.sh" ]; then
         print_info "Validando configuración..."
-        if ! bash "$SCRIPT_DIR/validate-config.sh" > /tmp/stack-config-validation.log 2>&1; then
-            print_warning "Algunos problemas en configuración (revisa el log)"
+        local log_file="/tmp/stack-config-validation.log"
+        if ! bash "$SCRIPT_DIR/validate-config.sh" > "$log_file" 2>&1; then
+            print_warning "Algunos problemas en configuración"
+            print_info "Log de validación: $log_file"
             return 0  # No bloqueamos, solo advertimos
         fi
         print_success "Configuración OK"
@@ -255,6 +257,215 @@ check_all_containers_stopped() {
     fi
     
     return 0
+}
+
+# Función para limpiar contenedores en estado "Created" (problemáticos)
+# Estos contenedores pueden tener referencias a redes corruptas y causan errores
+# DIFERENCIA: "Created" = nunca iniciados (problemáticos) vs "exited" = detenidos (del proyecto, se reutilizan)
+cleanup_created_containers() {
+    local project_dir=$(pwd)
+    local created_containers=$($DOCKER_CMD ps -a --filter "label=com.docker.compose.project.working_dir=$project_dir" --filter "status=created" --format "{{.Names}}" 2>/dev/null)
+    
+    if [ -n "$created_containers" ]; then
+        print_info "🧹 Limpiando contenedores en estado 'Created' (pueden tener referencias corruptas)..."
+        local cleaned=0
+        local failed=0
+        
+        while IFS= read -r container; do
+            if [ -n "$container" ]; then
+                if $DOCKER_CMD rm -f "$container" >/dev/null 2>&1; then
+                    print_success "   ✅ Eliminado: $container"
+                    cleaned=$((cleaned + 1))
+                else
+                    print_warning "   ⚠️  No se pudo eliminar: $container"
+                    failed=$((failed + 1))
+                fi
+            fi
+        done <<< "$created_containers"
+        
+        if [ $cleaned -gt 0 ]; then
+            print_info "✅ Limpiados $cleaned contenedores en estado 'Created'"
+        fi
+        
+        if [ $failed -gt 0 ]; then
+            print_warning "⚠️  No se pudieron limpiar $failed contenedores"
+        fi
+        
+        return 0
+    fi
+    
+    return 0
+}
+
+# Función para generar reporte de recursos disponibles después de stop
+generate_stop_report() {
+    local project_dir=$(pwd)
+    print_header "REPORTE DE RECURSOS DISPONIBLES"
+    
+    echo ""
+    print_info "📊 Estado de recursos del proyecto después de detener servicios:"
+    echo ""
+    
+    # Contenedores detenidos (listos para reutilizar)
+    local stopped_containers=$($DOCKER_CMD ps -a --filter "label=com.docker.compose.project.working_dir=$project_dir" --filter "status=exited" --format "{{.Names}}" 2>/dev/null)
+    if [ -n "$stopped_containers" ]; then
+        local count=$(echo "$stopped_containers" | grep -v "^$" | wc -l)
+        print_success "📦 Contenedores detenidos (listos para reutilizar): $count"
+        echo "$stopped_containers" | while IFS= read -r container; do
+            if [ -n "$container" ]; then
+                local image=$($DOCKER_CMD inspect "$container" --format '{{.Config.Image}}' 2>/dev/null)
+                echo "   ✅ $container (imagen: $image)"
+            fi
+        done
+    else
+        print_info "📦 Contenedores detenidos: 0"
+    fi
+    
+    echo ""
+    
+    # Redes del proyecto
+    local project_networks=("genai-network" "frontend-network" "backend-network" "security-network" "monitoring-network")
+    local existing_networks=()
+    for network in "${project_networks[@]}"; do
+        if $DOCKER_CMD network inspect "$network" >/dev/null 2>&1; then
+            existing_networks+=("$network")
+        fi
+    done
+    
+    if [ ${#existing_networks[@]} -gt 0 ]; then
+        print_success "🌐 Redes del proyecto (disponibles): ${#existing_networks[@]}"
+        for network in "${existing_networks[@]}"; do
+            local driver=$($DOCKER_CMD network inspect "$network" --format '{{.Driver}}' 2>/dev/null)
+            local containers_count=$($DOCKER_CMD network inspect "$network" --format '{{len .Containers}}' 2>/dev/null)
+            echo "   ✅ $network (driver: $driver, contenedores: $containers_count)"
+        done
+    else
+        print_info "🌐 Redes del proyecto: 0"
+    fi
+    
+    echo ""
+    
+    # Volúmenes del proyecto
+    # Docker Compose agrega automáticamente el prefijo del proyecto a los nombres de volúmenes
+    # Necesitamos obtener el nombre del proyecto primero
+    local project_name=""
+    if $DOCKER_CMD compose config >/dev/null 2>&1; then
+        # Intentar obtener el nombre del proyecto desde docker compose config
+        project_name=$($DOCKER_CMD compose config 2>/dev/null | grep -E "^name:" | head -1 | awk '{print $2}' || echo "")
+    fi
+    
+    # Si no se pudo obtener, usar el nombre del directorio
+    if [ -z "$project_name" ]; then
+        project_name=$(basename "$(pwd)" | tr '[:upper:]' '[:lower:]' | tr -cd '[:alnum:]-' | sed 's/--/-/g')
+    fi
+    
+    local volume_base_names=("n8n_storage" "postgres_storage" "qdrant_storage" "pgvector_data" "open_webui_storage" "n8n_data" "shared_data" "prometheus_data" "grafana_data" "alertmanager_data" "backup_data" "redis_data" "jenkins_data" "haproxy_data" "keycloak_data" "modsecurity_data" "cadvisor_data" "node_exporter_data" "postgres_exporter_data" "config_data" "ssl_certs_data" "logs_data" "grafana_provisioning_data" "prometheus_rules_data" "ollama_storage")
+    local existing_volumes=()
+    
+    print_success "💾 Volúmenes del proyecto (con datos persistentes):"
+    for volume_base in "${volume_base_names[@]}"; do
+        # Intentar primero con el prefijo del proyecto
+        local volume_with_prefix="${project_name}_${volume_base}"
+        local volume_found=""
+        
+        if $DOCKER_CMD volume inspect "$volume_with_prefix" >/dev/null 2>&1; then
+            volume_found="$volume_with_prefix"
+        elif $DOCKER_CMD volume inspect "$volume_base" >/dev/null 2>&1; then
+            # Si no existe con prefijo, intentar sin prefijo (por compatibilidad)
+            volume_found="$volume_base"
+        fi
+        
+        if [ -n "$volume_found" ]; then
+            existing_volumes+=("$volume_found")
+            # Obtener tamaño del volumen (si está disponible)
+            local mountpoint=$($DOCKER_CMD volume inspect "$volume_found" --format '{{.Mountpoint}}' 2>/dev/null)
+            if [ -n "$mountpoint" ] && [ -d "$mountpoint" ]; then
+                local size=$(du -sh "$mountpoint" 2>/dev/null | cut -f1)
+                echo "   ✅ $volume_found (tamaño: $size)"
+            else
+                echo "   ✅ $volume_found"
+            fi
+        fi
+    done
+    
+    if [ ${#existing_volumes[@]} -eq 0 ]; then
+        print_info "   (ningún volumen encontrado)"
+    fi
+    
+    echo ""
+    
+    # Imágenes del proyecto (usadas por los contenedores reales del proyecto)
+    # Obtener imágenes de los contenedores del proyecto (más preciso que docker compose config)
+    local project_images=()
+    local project_dir=$(pwd)
+    
+    # Método 1: Intentar obtener imágenes de contenedores usando el label del directorio de trabajo
+    local container_images=$($DOCKER_CMD ps -a --filter "label=com.docker.compose.project.working_dir=$project_dir" --format "{{.Config.Image}}" 2>/dev/null | sort -u)
+    
+    # Método 2: Si no funciona, obtener de los contenedores detenidos que listamos antes
+    if [ -z "$container_images" ] || [ "$(echo "$container_images" | grep -v "^$" | wc -l)" -eq 0 ]; then
+        # Usar los contenedores que ya identificamos en stopped_containers
+        if [ -n "$stopped_containers" ]; then
+            while IFS= read -r container; do
+                if [ -n "$container" ]; then
+                    local img=$($DOCKER_CMD inspect "$container" --format '{{.Config.Image}}' 2>/dev/null)
+                    if [ -n "$img" ]; then
+                        container_images=$(echo -e "$container_images\n$img" | grep -v "^$" | sort -u)
+                    fi
+                fi
+            done <<< "$stopped_containers"
+        fi
+    fi
+    
+    if [ -n "$container_images" ]; then
+        while IFS= read -r image; do
+            if [ -n "$image" ]; then
+                project_images+=("$image")
+            fi
+        done <<< "$container_images"
+    fi
+    
+    if [ ${#project_images[@]} -gt 0 ]; then
+        print_success "🖼️  Imágenes del proyecto (disponibles localmente): ${#project_images[@]}"
+        local available_count=0
+        for image in "${project_images[@]}"; do
+            # Verificar si la imagen existe localmente
+            if $DOCKER_CMD image inspect "$image" >/dev/null 2>&1; then
+                local size=$($DOCKER_CMD image inspect "$image" --format '{{.Size}}' 2>/dev/null | numfmt --to=iec-i --suffix=B 2>/dev/null || $DOCKER_CMD images "$image" --format "{{.Size}}" 2>/dev/null | head -1)
+                echo "   ✅ $image (tamaño: $size)"
+                available_count=$((available_count + 1))
+            else
+                echo "   ⚠️  $image (no disponible localmente - se descargará en el próximo start)"
+            fi
+        done
+        if [ $available_count -lt ${#project_images[@]} ]; then
+            echo ""
+            print_info "   ℹ️  $available_count de ${#project_images[@]} imágenes disponibles localmente"
+        fi
+    else
+        print_info "🖼️  Imágenes del proyecto: 0"
+    fi
+    
+    echo ""
+    print_info "📋 RESUMEN:"
+    local stopped_count=$(echo "$stopped_containers" | grep -v "^$" | wc -l)
+    local available_images=0
+    for image in "${project_images[@]}"; do
+        if $DOCKER_CMD image inspect "$image" >/dev/null 2>&1; then
+            available_images=$((available_images + 1))
+        fi
+    done
+    echo "   - Contenedores detenidos: $stopped_count"
+    echo "   - Redes disponibles: ${#existing_networks[@]}"
+    echo "   - Volúmenes con datos: ${#existing_volumes[@]}"
+    if [ ${#project_images[@]} -gt 0 ]; then
+        echo "   - Imágenes disponibles: $available_images de ${#project_images[@]} totales"
+    else
+        echo "   - Imágenes disponibles: 0"
+    fi
+    echo ""
+    print_success "✅ Todos estos recursos están listos para el próximo 'start'"
+    echo ""
 }
 
 # Función para limpiar recursos del proyecto
@@ -752,9 +963,11 @@ start_services() {
     print_info "Perfiles activos: ${unique_profiles[*]}"
     echo ""
     
-    # NO limpiar automáticamente recursos huérfanos al iniciar
-    # Los contenedores detenidos del proyecto NO son huérfanos - pertenecen al proyecto
-    # Solo limpiar si el usuario lo solicita explícitamente con 'clean' o 'stop --clean'
+    # Limpiar automáticamente contenedores en estado "Created" (problemáticos)
+    # Estos contenedores pueden tener referencias a redes corruptas y causan errores
+    # NOTA: NO limpiamos contenedores "exited" - esos son del proyecto y se reutilizan
+    echo ""
+    cleanup_created_containers
     
     # Verificar estado de servicios antes de levantar
     echo ""
@@ -779,7 +992,12 @@ start_services() {
     local cmd=$(build_compose_command up "${unique_profiles[@]}")
     print_info "Ejecutando: $cmd"
     
-    if eval "$cmd"; then
+    # Capturar salida del comando para análisis de errores
+    local compose_output
+    compose_output=$(eval "$cmd" 2>&1)
+    local compose_exit_code=$?
+    
+    if [ $compose_exit_code -eq 0 ]; then
         print_success "Servicios levantados correctamente"
         
         # Esperar un poco y mostrar estado
@@ -806,6 +1024,48 @@ start_services() {
         return 0
     else
         print_error "Error al levantar servicios"
+        echo ""
+        
+        # Detectar errores específicos y proporcionar información detallada
+        if echo "$compose_output" | grep -q "failed to set up container networking.*network.*not found"; then
+            print_warning "⚠️  ERROR DETECTADO: Contenedores con referencias a redes inexistentes"
+            echo ""
+            print_info "📋 Contenedores problemáticos detectados:"
+            
+            # Buscar contenedores en estado "Created" que pueden tener referencias corruptas
+            local project_dir=$(pwd)
+            local problematic_containers=$($DOCKER_CMD ps -a --filter "label=com.docker.compose.project.working_dir=$project_dir" --filter "status=created" --format "{{.Names}}" 2>/dev/null)
+            
+            if [ -n "$problematic_containers" ]; then
+                echo "$problematic_containers" | while read container; do
+                    if [ -n "$container" ]; then
+                        print_warning "   ❌ $container (estado: Created - tiene referencias a redes inexistentes)"
+                    fi
+                done
+                echo ""
+                print_info "🔧 ACCIÓN: Limpiando contenedores problemáticos..."
+                cleanup_created_containers
+                echo ""
+                print_info "🔄 Reintentando levantar servicios..."
+                if eval "$cmd" 2>&1; then
+                    print_success "✅ Servicios levantados correctamente después de limpiar contenedores problemáticos"
+                    return 0
+                else
+                    print_error "❌ Error persistente después de limpiar. Revisa los logs."
+                    return 1
+                fi
+            else
+                print_warning "   No se encontraron contenedores en estado 'Created'"
+                print_info "   El error puede deberse a redes huérfanas del sistema"
+                echo ""
+                print_info "💡 SUGERENCIA: Ejecuta 'docker network prune' manualmente si es necesario"
+            fi
+        else
+            # Otro tipo de error - mostrar salida completa
+            print_error "Detalles del error:"
+            echo "$compose_output" | tail -20
+        fi
+        
         return 1
     fi
 }
@@ -844,33 +1104,10 @@ stop_services() {
             done
         fi
         
-        # También intentar con docker compose down (puede que algunos servicios no tengan perfiles)
-        print_info "🧹 Limpiando con 'docker compose down --remove-orphans'..."
-        local down_output=$($DOCKER_CMD compose down --remove-orphans 2>&1)
-        if [ $? -eq 0 ]; then
-            if echo "$down_output" | grep -qE "(Removing|Stopping|Network|Container)"; then
-                echo "$down_output" | grep -E "(Removing|Stopping|Network|Container)" | while read line; do
-                    print_info "   $line"
-                done
-                print_success "✅ Limpieza con docker compose down completada"
-            else
-                print_info "✅ No había recursos adicionales para limpiar con docker compose down"
-            fi
-        else
-            print_warning "⚠️  Algunos recursos no se pudieron limpiar con docker compose down"
-        fi
-        
-        # Limpiar redes huérfanas después de detener
-        print_info "🌐 Limpiando redes huérfanas con 'docker network prune'..."
-        local prune_output=$($DOCKER_CMD network prune -f 2>&1)
-        if echo "$prune_output" | grep -qE "(Deleted|Total)"; then
-            echo "$prune_output" | grep -E "(Deleted|Total)" | while read line; do
-                print_info "   $line"
-            done
-            print_success "✅ Redes huérfanas eliminadas"
-        else
-            print_info "✅ No se encontraron redes huérfanas"
-        fi
+        # IMPORTANTE: NO usar 'docker compose down' porque elimina las redes del proyecto
+        # NO usar 'docker network prune' porque elimina redes que el proyecto necesita
+        # Solo detenemos contenedores manualmente para conservar redes y volúmenes
+        print_info "✅ Contenedores detenidos (redes y volúmenes conservados)"
     else
         local expanded_profiles=()
         for profile in "${profiles[@]}"; do
@@ -886,46 +1123,27 @@ stop_services() {
         local unique_profiles=($(printf '%s\n' "${expanded_profiles[@]}" | sort -u))
         print_info "Deteniendo perfiles: ${unique_profiles[*]}"
         
-        print_info "🧹 Ejecutando 'docker compose down --remove-orphans' con perfiles: ${unique_profiles[*]}"
-        local cmd=$(build_compose_command down "${unique_profiles[@]}")
-        local down_output=$(eval "$cmd --remove-orphans" 2>&1)
-        if [ $? -eq 0 ]; then
-            if echo "$down_output" | grep -qE "(Removing|Stopping|Network|Container)"; then
-                echo "$down_output" | grep -E "(Removing|Stopping|Network|Container)" | while read line; do
-                    print_info "   $line"
-                done
-            fi
-        fi
-        
-        # NO usar 'docker network prune' - eliminaría redes que el proyecto necesita
-        # Solo limpiar redes específicas del proyecto que estén vacías
-        print_info "🌐 Verificando redes del proyecto vacías..."
-        local project_networks=("genai-network" "frontend-network" "backend-network" "security-network" "monitoring-network")
-        local empty_networks=()
-        for network in "${project_networks[@]}"; do
-            if $DOCKER_CMD network inspect "$network" >/dev/null 2>&1; then
-                local containers_in_network=$($DOCKER_CMD network inspect "$network" --format '{{range .Containers}}{{.Name}}{{end}}' 2>/dev/null | tr -d '[:space:]')
-                if [ -z "$containers_in_network" ]; then
-                    empty_networks+=("$network")
-                fi
-            fi
-        done
-        
-        if [ ${#empty_networks[@]} -gt 0 ]; then
-            print_info "Redes del proyecto vacías encontradas: ${#empty_networks[@]}"
-            for network in "${empty_networks[@]}"; do
-                if $DOCKER_CMD network rm "$network" >/dev/null 2>&1; then
-                    print_success "   ✅ Eliminada: $network"
-                else
-                    print_warning "   ⚠️  No se pudo eliminar: $network"
-                fi
-            done
+        # IMPORTANTE: NO usar 'docker compose down' porque elimina las redes del proyecto
+        # Solo detenemos contenedores de los perfiles especificados
+        print_info "Deteniendo contenedores de perfiles: ${unique_profiles[*]}"
+        local cmd=$(build_compose_command stop "${unique_profiles[@]}")
+        if eval "$cmd" 2>&1; then
+            print_success "✅ Contenedores detenidos (redes y volúmenes conservados)"
         else
-            print_info "✅ No se encontraron redes del proyecto vacías"
+            print_warning "⚠️  Algunos contenedores no se pudieron detener"
         fi
+        
+        # IMPORTANTE: NO eliminar redes del proyecto en 'stop'
+        # Las redes se conservan para el próximo 'start'
+        # Solo se eliminan explícitamente con 'clean networks' o 'clean all'
+        print_info "✅ Redes del proyecto conservadas (listas para el próximo start)"
     fi
     
     print_success "Servicios detenidos"
+    
+    # Generar reporte de recursos disponibles
+    echo ""
+    generate_stop_report
 }
 
 # Función para reiniciar servicios

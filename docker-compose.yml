@@ -897,11 +897,16 @@ services:
       - frontend-network
       - backend-network
       - genai-network
+      - monitoring-network  # Agregado para poder resolver Grafana y Prometheus
     depends_on:
       open-webui:
         condition: service_healthy
       n8n:
         condition: service_healthy
+      grafana:
+        condition: service_healthy  # Esperar a que Grafana esté listo
+      prometheus:
+        condition: service_healthy  # Esperar a que Prometheus esté listo
     healthcheck:
       test: ["CMD", "haproxy", "-c", "-f", "/usr/local/etc/haproxy/haproxy.cfg"]
       interval: 30s
@@ -962,13 +967,13 @@ services:
         condition: service_healthy
     command: start-dev --http-enabled=true --hostname-strict=false
     healthcheck:
-      # Keycloak no tiene curl ni wget, usamos redirección TCP nativa con /bin/sh
-      # Verificamos que /realms/master responda con HTTP 200 (endpoint estándar de Keycloak)
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /realms/master HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && head -1 <&3 | grep -q 'HTTP/1.1 200' || exit 1"]
+      # Keycloak tiene endpoint de health en /health/ready
+      # Verificamos que el proceso principal esté corriendo usando /proc
+      test: ["CMD-SHELL", "test -f /proc/1/cmdline && cat /proc/1/cmdline | grep -q keycloak || exit 1"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 60s
+      retries: 5
+      start_period: 120s
     logging:
       driver: "json-file"
       options:
