@@ -148,7 +148,7 @@ x-ollama: &service-ollama
   volumes:
     - ollama_storage:/root/.ollama # Almacena modelos descargados
   healthcheck:                    # Verifica que el servicio esté funcionando
-    test: ["CMD", "curl", "-f", "http://localhost:11434"]
+    test: ["CMD-SHELL", "pgrep -f ollama || exit 1"]
     interval: 10s                 # Verifica cada 10 segundos
     timeout: 5s                   # Timeout de 5 segundos
     retries: 5                    # Reintenta 5 veces antes de marcar como unhealthy
@@ -316,6 +316,7 @@ services:
   open-webui:
     image: ghcr.io/open-webui/open-webui:0.6.41 # Versión más reciente - probando mejoras OIDC
     container_name: open-webui
+    profiles: ["chat-ai"]          # Perfil de chat con IA (requiere --profile security para Keycloak)
     ports:
       - "${PORT_OPEN_WEBUI_HOST:-3000}:${PORT_OPEN_WEBUI_CONTAINER:-8080}"
     environment:
@@ -357,6 +358,11 @@ services:
       #- /mnt/e/docker/app/open-webui/backend/data:/app/backend/data  # Montaje local (comentado)
     networks:
       - genai-network
+    depends_on:
+      keycloak:
+        condition: service_healthy     # Espera a que Keycloak esté listo (requiere --profile security)
+      # NOTA: Ollama está en perfiles (ollama-gpu, ollama-cpu, etc.) - no puede depender explícitamente
+      # Open WebUI puede iniciar sin Ollama, pero no funcionará completamente hasta que esté listo
     healthcheck:                   # Verifica que Open WebUI esté funcionando
       test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
       interval: 10s
@@ -388,7 +394,6 @@ services:
     container_name: n8n-import
     networks: ['genai-network']
     entrypoint: /bin/sh            # Usa shell para ejecutar comandos de importación
-    environment:
     command:
       - "-c"
       - "n8n import:credentials --separate --input=/data/credentials && n8n import:workflow --separate --input=/data/workflows"
@@ -408,6 +413,7 @@ services:
     <<: *service-n8n               # Usa la plantilla n8n
     hostname: n8n
     container_name: n8n
+    profiles: ["automation"]        # Perfil de automatización (requiere --profile security para Keycloak)
     restart: unless-stopped
     ports:
       - "${PORT_N8N_HOST:-5678}:${PORT_N8N_CONTAINER:-5678}"
@@ -435,6 +441,8 @@ services:
         condition: service_healthy     # Espera a que PostgreSQL esté listo
       n8n-import:
         condition: service_completed_successfully  # Espera a que termine la importación
+      keycloak:
+        condition: service_healthy     # Espera a que Keycloak esté listo (requiere --profile security)
     healthcheck:                       # Verifica que n8n esté funcionando
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5678/healthz || exit 1"]
       interval: 10s
@@ -453,7 +461,7 @@ services:
     volumes:
       - qdrant_storage:/qdrant/storage  # Datos persistentes
     healthcheck:                   # Verifica que Qdrant esté funcionando
-      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      test: ["CMD-SHELL", "for pid in /proc/*/comm; do [ -f \"$$pid\" ] && grep -q qdrant \"$$pid\" 2>/dev/null && exit 0; done; exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -616,7 +624,10 @@ services:
       - monitoring-network
       - genai-network
     depends_on:
-      - prometheus
+      prometheus:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
       interval: 30s
@@ -814,7 +825,8 @@ services:
       - monitoring-network
       - genai-network  # Necesario para conectarse a PostgreSQL
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9187/metrics"]
       interval: 30s
@@ -884,9 +896,12 @@ services:
     networks:
       - frontend-network
       - backend-network
+      - genai-network
     depends_on:
-      - open-webui
-      - n8n
+      open-webui:
+        condition: service_healthy
+      n8n:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "haproxy", "-c", "-f", "/usr/local/etc/haproxy/haproxy.cfg"]
       interval: 30s
@@ -1037,13 +1052,22 @@ services:
     container_name: jenkins
     profiles: ["ci-cd"]
     ports:
-      - "${PORT_JENKINS_HOST:-8081}:${PORT_JENKINS_CONTAINER:-8080}"
+      - "${PORT_JENKINS_HOST:-8081}:8082"
       - "${PORT_JENKINS_AGENT_HOST:-50000}:${PORT_JENKINS_AGENT_CONTAINER:-50000}"
     volumes:
       - jenkins_data:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - JENKINS_OPTS=--httpPort=${JENKINS_HTTP_PORT:-8080}
+      - JENKINS_OPTS=--httpPort=8082
+      # Variables para script de inicialización OIDC
+      - JENKINS_URL_PUBLIC=${JENKINS_URL_PUBLIC:-http://localhost:8081}
+      - JENKINS_ADMIN_USER=${JENKINS_ADMIN_USER:-admin}
+      - JENKINS_ADMIN_PASSWORD=${JENKINS_ADMIN_PASSWORD:-admin}
+      - JENKINS_OIDC_CLIENT_ID=${JENKINS_OIDC_CLIENT_ID:-jenkins}
+      - JENKINS_OIDC_CLIENT_SECRET=${JENKINS_OIDC_CLIENT_SECRET:-}
+      - JENKINS_OIDC_SCOPES=${JENKINS_OIDC_SCOPES:-openid email profile}
+      - KEYCLOAK_URL_PUBLIC=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}
+      - KEYCLOAK_REALM=${KEYCLOAK_REALM:-master}
     networks:
       - backend-network
     healthcheck:

@@ -70,6 +70,7 @@ USO:
 OPCIONES:
     start [perfiles]     Levantar servicios con perfiles especificados
     stop [perfiles]      Detener servicios con perfiles especificados
+    stop --clean         Detener servicios y limpiar recursos huérfanos del proyecto
     restart [perfiles]   Reiniciar servicios con perfiles especificados
     status               Mostrar estado de todos los servicios
     info                 Mostrar información de URLs y servicios disponibles
@@ -79,6 +80,14 @@ OPCIONES:
     test                 Probar cambios recientes (ModSecurity, Prometheus, etc.)
     init-volumes         Inicializar volúmenes con configuraciones por defecto
     monitor              Monitorear descarga de modelos Ollama
+    clean [tipo]         Limpiar recursos del proyecto (requiere que todo esté detenido)
+                         Tipos: all, containers, networks, storage, (vacío=default)
+                         Ejemplos:
+                           ./scripts/stack-manager.sh clean          # Default: recursos huérfanos (SEGURO)
+                           ./scripts/stack-manager.sh clean all      # Todo: contenedores, redes, almacenamiento, imágenes
+                           ./scripts/stack-manager.sh clean containers
+                           ./scripts/stack-manager.sh clean networks
+                           ./scripts/stack-manager.sh clean storage
     help                 Mostrar esta ayuda
 
 PERFILES DISPONIBLES:
@@ -91,17 +100,18 @@ PERFILES DISPONIBLES:
         monitoring       Prometheus, Grafana, AlertManager, exporters, backup
         infrastructure   Redis, HAProxy
         security         Keycloak, ModSecurity
-        automation       Watchtower, Sync
+        automation       n8n, Watchtower, Sync
+        chat-ai          Open WebUI
         ci-cd            Jenkins
         testing          Test Runner
         debug            Debug Tools
         dev              Development Tools
 
 PRESETS (combinaciones predefinidas):
-    default              gpu-nvidia + monitoring + infrastructure + security
+    default              gpu-nvidia + monitoring + infrastructure + security + automation + chat-ai
     minimal              Solo servicios base (sin perfiles)
     dev                  cpu + dev + testing
-    production           gpu-nvidia + monitoring + infrastructure + security + automation
+    production           gpu-nvidia + monitoring + infrastructure + security + automation + chat-ai
     full                 Todos los perfiles (¡cuidado con recursos!)
 
 EJEMPLOS:
@@ -130,7 +140,7 @@ NOTAS:
     - Si no especificas perfiles, se usa el preset 'default'
     - Los perfiles se pueden combinar libremente
     - Usa 'validate' antes de 'start' para verificar configuración
-    - El preset 'default' incluye: gpu-nvidia + monitoring + infrastructure + security
+    - El preset 'default' incluye: gpu-nvidia + monitoring + infrastructure + security + automation + chat-ai
 
 HELP_EOF
 }
@@ -168,7 +178,7 @@ expand_preset() {
     local preset=$1
     case "$preset" in
         default)
-            echo "gpu-nvidia monitoring infrastructure security"
+            echo "gpu-nvidia monitoring infrastructure security automation chat-ai"
             ;;
         minimal)
             echo ""
@@ -177,10 +187,10 @@ expand_preset() {
             echo "cpu dev testing"
             ;;
         production)
-            echo "gpu-nvidia monitoring infrastructure security automation"
+            echo "gpu-nvidia monitoring infrastructure security automation chat-ai"
             ;;
         full)
-            echo "gpu-nvidia monitoring infrastructure security automation ci-cd testing debug dev"
+            echo "gpu-nvidia monitoring infrastructure security automation chat-ai ci-cd testing debug dev"
             ;;
         *)
             echo "$preset"  # Si no es un preset, devolverlo tal cual
@@ -226,23 +236,504 @@ build_compose_command() {
     echo "$cmd"
 }
 
+# Función para verificar que todos los contenedores estén detenidos
+check_all_containers_stopped() {
+    local project_dir=$(pwd)
+    local running_containers=$($DOCKER_CMD ps --filter "label=com.docker.compose.project.working_dir=$project_dir" --format "{{.Names}}" 2>/dev/null)
+    
+    if [ -n "$running_containers" ]; then
+        print_error "❌ Hay contenedores corriendo. Debes detenerlos primero."
+        print_warning "Contenedores corriendo:"
+        while IFS= read -r container; do
+            if [ -n "$container" ]; then
+                echo "   - $container"
+            fi
+        done <<< "$running_containers"
+        echo ""
+        print_info "Ejecuta primero: ./scripts/stack-manager.sh stop"
+        return 1
+    fi
+    
+    return 0
+}
+
+# Función para limpiar recursos del proyecto
+# IMPORTANTE: Esta función solo debe llamarse explícitamente (clean o stop --clean)
+# NO debe llamarse automáticamente porque los contenedores detenidos del proyecto
+# NO son huérfanos - pertenecen al proyecto y se reutilizarán
+# Parámetro: tipo de limpieza (all, containers, networks, storage, o vacío para default)
+cleanup_orphaned_resources() {
+    local clean_type=${1:-"default"}
+    local project_dir=$(pwd)
+    local found_any=0
+    local cleaned_items=()
+    local failed_items=()
+    
+    # Verificar que todos los contenedores estén detenidos
+    if ! check_all_containers_stopped; then
+        return 1
+    fi
+    
+    # Para 'clean all', mostrar un resumen completo y pedir una sola confirmación
+    if [ "$clean_type" = "all" ]; then
+        print_warning "⚠️  LIMPIEZA COMPLETA - OPERACIÓN MUY DESTRUCTIVA"
+        print_info "Se eliminará TODO del proyecto:"
+        echo ""
+        
+        # Contenedores
+        local stopped_containers=$($DOCKER_CMD ps -a --filter "label=com.docker.compose.project.working_dir=$project_dir" --filter "status=exited" --format "{{.Names}}" 2>/dev/null)
+        local created_containers=$($DOCKER_CMD ps -a --filter "label=com.docker.compose.project.working_dir=$project_dir" --filter "status=created" --format "{{.Names}}" 2>/dev/null)
+        if [ -n "$stopped_containers" ] || [ -n "$created_containers" ]; then
+            print_info "📦 Contenedores:"
+            if [ -n "$stopped_containers" ]; then
+                echo "$stopped_containers" | while read container; do [ -n "$container" ] && echo "   - $container (detenido)"; done
+            fi
+            if [ -n "$created_containers" ]; then
+                echo "$created_containers" | while read container; do [ -n "$container" ] && echo "   - $container (creado)"; done
+            fi
+        fi
+        
+        # Redes
+        local project_networks=("genai-network" "frontend-network" "backend-network" "security-network" "monitoring-network")
+        local empty_networks=()
+        for network in "${project_networks[@]}"; do
+            if $DOCKER_CMD network inspect "$network" >/dev/null 2>&1; then
+                local containers_in_network=$($DOCKER_CMD network inspect "$network" --format '{{range .Containers}}{{.Name}}{{end}}' 2>/dev/null | tr -d '[:space:]')
+                if [ -z "$containers_in_network" ]; then
+                    empty_networks+=("$network")
+                fi
+            fi
+        done
+        if [ ${#empty_networks[@]} -gt 0 ]; then
+            print_info "🌐 Redes:"
+            for network in "${empty_networks[@]}"; do
+                echo "   - $network"
+            done
+        fi
+        
+        # Volúmenes
+        local project_volumes=("n8n_storage" "postgres_storage" "qdrant_storage" "pgvector_data" "open_webui_storage" "n8n_data" "shared_data" "prometheus_data" "grafana_data" "alertmanager_data" "backup_data" "redis_data" "jenkins_data" "haproxy_data" "keycloak_data" "modsecurity_data" "cadvisor_data" "node_exporter_data" "postgres_exporter_data" "config_data" "ssl_certs_data" "logs_data" "grafana_provisioning_data" "prometheus_rules_data")
+        local existing_volumes=()
+        for volume in "${project_volumes[@]}"; do
+            if $DOCKER_CMD volume inspect "$volume" >/dev/null 2>&1; then
+                existing_volumes+=("$volume")
+            fi
+        done
+        if [ ${#existing_volumes[@]} -gt 0 ]; then
+            print_info "💾 Volúmenes (${#existing_volumes[@]}):"
+            for volume in "${existing_volumes[@]}"; do
+                echo "   - $volume"
+            done
+        fi
+        
+        # Imágenes
+        local compose_images=$($DOCKER_CMD compose config --images 2>/dev/null || echo "")
+        if [ -n "$compose_images" ]; then
+            print_info "🖼️  Imágenes:"
+            echo "$compose_images" | while read image; do [ -n "$image" ] && echo "   - $image"; done
+        fi
+        
+        echo ""
+        print_warning "⚠️  ADVERTENCIA: Esto eliminará TODOS los recursos del proyecto"
+        print_warning "⚠️  Esto incluye: contenedores, redes, volúmenes (datos persistentes) e imágenes"
+        print_warning "⚠️  Esta operación NO se puede deshacer"
+        echo ""
+        read -p "¿Estás ABSOLUTAMENTE seguro de que quieres continuar? (escribe 'SI' para confirmar): " -r
+        echo
+        if [ "$REPLY" != "SI" ]; then
+            print_info "Operación cancelada"
+            return 0
+        fi
+        print_info "Procediendo con la limpieza completa..."
+        echo ""
+    fi
+    
+    print_info "Buscando recursos del proyecto para limpiar (tipo: $clean_type)..."
+    
+    # Limpiar contenedores huérfanos (solo si clean_type es "default")
+    # Contenedores huérfanos = contenedores creados pero no iniciados (pueden tener referencias a redes corruptas)
+    if [ "$clean_type" = "default" ]; then
+        # Solo limpiar contenedores creados pero no iniciados (estos SÍ pueden ser problemáticos)
+        local created_containers=$($DOCKER_CMD ps -a --filter "label=com.docker.compose.project.working_dir=$project_dir" --filter "status=created" --format "{{.Names}}" 2>/dev/null)
+        if [ -n "$created_containers" ]; then
+            found_any=1
+            print_info "📦 Contenedores huérfanos (creados pero no iniciados) encontrados:"
+            while IFS= read -r container; do
+                if [ -n "$container" ]; then
+                    echo "   - $container"
+                    if $DOCKER_CMD rm -f "$container" >/dev/null 2>&1; then
+                        print_success "   ✅ Eliminado: $container"
+                        cleaned_items+=("contenedor huérfano: $container")
+                    else
+                        print_warning "   ⚠️  No se pudo eliminar: $container"
+                        failed_items+=("contenedor huérfano: $container")
+                    fi
+                fi
+            done <<< "$created_containers"
+        fi
+    fi
+    
+    # Limpiar contenedores del proyecto (si clean_type es "all" o "containers")
+    # NOTA: "default" NO limpia contenedores del proyecto, solo huérfanos
+    if [ "$clean_type" = "all" ] || [ "$clean_type" = "containers" ]; then
+        # Buscar contenedores a eliminar
+        local stopped_containers=$($DOCKER_CMD ps -a --filter "label=com.docker.compose.project.working_dir=$project_dir" --filter "status=exited" --format "{{.Names}}" 2>/dev/null)
+        local created_containers=$($DOCKER_CMD ps -a --filter "label=com.docker.compose.project.working_dir=$project_dir" --filter "status=created" --format "{{.Names}}" 2>/dev/null)
+        
+        if [ -n "$stopped_containers" ] || [ -n "$created_containers" ]; then
+            found_any=1
+            print_warning "⚠️  LIMPIEZA DE CONTENEDORES - OPERACIÓN DESTRUCTIVA"
+            print_info "Contenedores que se eliminarán:"
+            
+            if [ -n "$stopped_containers" ]; then
+                print_info "📦 Contenedores detenidos:"
+                while IFS= read -r container; do
+                    if [ -n "$container" ]; then
+                        echo "   - $container"
+                    fi
+                done <<< "$stopped_containers"
+            fi
+            
+            if [ -n "$created_containers" ]; then
+                print_info "📦 Contenedores creados (no iniciados):"
+                while IFS= read -r container; do
+                    if [ -n "$container" ]; then
+                        echo "   - $container"
+                    fi
+                done <<< "$created_containers"
+            fi
+            
+            echo ""
+            print_warning "⚠️  ADVERTENCIA: Esto eliminará los contenedores del proyecto"
+            echo ""
+            read -p "¿Estás seguro de que quieres continuar? (escribe 'SI' para confirmar): " -r
+            echo
+            if [ "$REPLY" != "SI" ]; then
+                print_info "Operación cancelada"
+                return 0
+            fi
+            
+            # Eliminar contenedores detenidos
+            if [ -n "$stopped_containers" ]; then
+                print_info "Eliminando contenedores detenidos..."
+                while IFS= read -r container; do
+                    if [ -n "$container" ]; then
+                        if $DOCKER_CMD rm -f "$container" >/dev/null 2>&1; then
+                            print_success "   ✅ Eliminado: $container"
+                            cleaned_items+=("contenedor detenido: $container")
+                        else
+                            print_warning "   ⚠️  No se pudo eliminar: $container"
+                            failed_items+=("contenedor detenido: $container")
+                        fi
+                    fi
+                done <<< "$stopped_containers"
+            fi
+            
+            # Eliminar contenedores creados
+            if [ -n "$created_containers" ]; then
+                print_info "Eliminando contenedores creados..."
+                while IFS= read -r container; do
+                    if [ -n "$container" ]; then
+                        if $DOCKER_CMD rm -f "$container" >/dev/null 2>&1; then
+                            print_success "   ✅ Eliminado: $container"
+                            cleaned_items+=("contenedor creado: $container")
+                        else
+                            print_warning "   ⚠️  No se pudo eliminar: $container"
+                            failed_items+=("contenedor creado: $container")
+                        fi
+                    fi
+                done <<< "$created_containers"
+            fi
+        fi
+    fi
+    
+    # NO limpiar redes huérfanas del sistema con 'docker network prune'
+    # Esto eliminaría redes que el proyecto necesita
+    # Solo limpiaremos redes específicas del proyecto que estén vacías (ver más abajo)
+    
+    # Limpiar redes (si clean_type es "all" o "networks" o "default")
+    if [ "$clean_type" = "all" ] || [ "$clean_type" = "networks" ] || [ "$clean_type" = "default" ]; then
+        # Verificar y limpiar redes específicas del proyecto que puedan estar corruptas o vacías
+        local project_networks=("genai-network" "frontend-network" "backend-network" "security-network" "monitoring-network")
+        local empty_networks=()
+        for network in "${project_networks[@]}"; do
+            if $DOCKER_CMD network inspect "$network" >/dev/null 2>&1; then
+                # Verificar si la red tiene contenedores activos
+                local containers_in_network=$($DOCKER_CMD network inspect "$network" --format '{{range .Containers}}{{.Name}}{{end}}' 2>/dev/null | tr -d '[:space:]')
+                if [ -z "$containers_in_network" ]; then
+                    empty_networks+=("$network")
+                fi
+            fi
+        done
+        
+        if [ ${#empty_networks[@]} -gt 0 ]; then
+            found_any=1
+            
+            # Solo pedir confirmación si NO es 'clean all' (ya se pidió antes)
+            if [ "$clean_type" != "all" ]; then
+                print_warning "⚠️  LIMPIEZA DE REDES - OPERACIÓN DESTRUCTIVA"
+                print_info "Redes del proyecto que se eliminarán:"
+                for network in "${empty_networks[@]}"; do
+                    echo "   - $network"
+                done
+                echo ""
+                print_warning "⚠️  ADVERTENCIA: Esto eliminará las redes del proyecto"
+                echo ""
+                read -p "¿Estás seguro de que quieres continuar? (escribe 'SI' para confirmar): " -r
+                echo
+                if [ "$REPLY" != "SI" ]; then
+                    print_info "Operación cancelada"
+                    return 0
+                fi
+            fi
+            
+            print_info "Eliminando redes..."
+            for network in "${empty_networks[@]}"; do
+                if $DOCKER_CMD network rm "$network" >/dev/null 2>&1; then
+                    print_success "   ✅ Eliminada: $network"
+                    cleaned_items+=("red del proyecto: $network")
+                else
+                    print_warning "   ⚠️  No se pudo eliminar: $network"
+                    failed_items+=("red del proyecto: $network")
+                fi
+            done
+        fi
+    fi
+    
+    # Limpiar almacenamiento/volúmenes (si clean_type es "all" o "storage")
+    if [ "$clean_type" = "all" ] || [ "$clean_type" = "storage" ]; then
+        print_warning "⚠️  LIMPIEZA DE ALMACENAMIENTO - ESTO ELIMINARÁ DATOS PERSISTENTES"
+        print_info "Volúmenes del proyecto que se eliminarán:"
+        local project_volumes=("n8n_storage" "postgres_storage" "qdrant_storage" "pgvector_data" "open_webui_storage" "n8n_data" "shared_data" "prometheus_data" "grafana_data" "alertmanager_data" "backup_data" "redis_data" "jenkins_data" "haproxy_data" "keycloak_data" "modsecurity_data" "cadvisor_data" "node_exporter_data" "postgres_exporter_data" "config_data" "ssl_certs_data" "logs_data" "grafana_provisioning_data" "prometheus_rules_data")
+        
+        local existing_volumes=()
+        for volume in "${project_volumes[@]}"; do
+            if $DOCKER_CMD volume inspect "$volume" >/dev/null 2>&1; then
+                existing_volumes+=("$volume")
+                echo "   - $volume"
+            fi
+        done
+        
+        if [ ${#existing_volumes[@]} -gt 0 ]; then
+            found_any=1
+            
+            # Solo pedir confirmación si NO es 'clean all' (ya se pidió antes)
+            if [ "$clean_type" != "all" ]; then
+                echo ""
+                print_warning "⚠️  ADVERTENCIA: Esto eliminará TODOS los datos persistentes del proyecto"
+                print_warning "⚠️  Esto incluye: bases de datos, configuraciones, logs, backups, etc."
+                echo ""
+                read -p "¿Estás seguro de que quieres continuar? (escribe 'SI' para confirmar): " -r
+                echo
+                if [ "$REPLY" != "SI" ]; then
+                    print_info "Operación cancelada"
+                    return 0
+                fi
+            fi
+            
+            print_info "Eliminando volúmenes..."
+            for volume in "${existing_volumes[@]}"; do
+                if $DOCKER_CMD volume rm "$volume" >/dev/null 2>&1; then
+                    print_success "   ✅ Eliminado: $volume"
+                    cleaned_items+=("volumen: $volume")
+                else
+                    print_warning "   ⚠️  No se pudo eliminar: $volume"
+                    failed_items+=("volumen: $volume")
+                fi
+            done
+        else
+            print_info "✅ No se encontraron volúmenes del proyecto para eliminar"
+        fi
+    fi
+    
+    # Limpiar imágenes (solo si clean_type es "all")
+    if [ "$clean_type" = "all" ]; then
+        print_info "🖼️  Buscando imágenes del proyecto..."
+        # Obtener imágenes usadas por los servicios del proyecto
+        local project_images=()
+        local compose_images=$($DOCKER_CMD compose config --images 2>/dev/null || echo "")
+        
+        if [ -n "$compose_images" ]; then
+            while IFS= read -r image; do
+                if [ -n "$image" ]; then
+                    project_images+=("$image")
+                fi
+            done <<< "$compose_images"
+        fi
+        
+        if [ ${#project_images[@]} -gt 0 ]; then
+            found_any=1
+            
+            # Solo pedir confirmación si NO es 'clean all' (ya se pidió antes)
+            if [ "$clean_type" != "all" ]; then
+                print_info "Imágenes del proyecto encontradas:"
+                for image in "${project_images[@]}"; do
+                    echo "   - $image"
+                done
+                echo ""
+                print_warning "⚠️  ADVERTENCIA: Esto eliminará las imágenes del proyecto"
+                print_warning "⚠️  Tendrás que descargarlas nuevamente en el próximo start"
+                echo ""
+                read -p "¿Estás seguro de que quieres continuar? (escribe 'SI' para confirmar): " -r
+                echo
+                if [ "$REPLY" != "SI" ]; then
+                    print_info "Operación cancelada"
+                    return 0
+                fi
+            fi
+            
+            print_info "Eliminando imágenes..."
+            for image in "${project_images[@]}"; do
+                if $DOCKER_CMD rmi "$image" >/dev/null 2>&1; then
+                    print_success "   ✅ Eliminada: $image"
+                    cleaned_items+=("imagen: $image")
+                else
+                    print_warning "   ⚠️  No se pudo eliminar: $image (puede estar en uso por otros proyectos)"
+                    failed_items+=("imagen: $image")
+                fi
+            done
+        else
+            print_info "✅ No se encontraron imágenes del proyecto para eliminar"
+        fi
+    fi
+    
+    # Mostrar resumen final
+    echo ""
+    if [ $found_any -eq 0 ]; then
+        print_info "✅ No se encontraron recursos huérfanos para limpiar"
+    elif [ ${#cleaned_items[@]} -gt 0 ] && [ ${#failed_items[@]} -eq 0 ]; then
+        print_success "✅ Limpieza completada exitosamente"
+        print_info "📋 Recursos limpiados (${#cleaned_items[@]}):"
+        for item in "${cleaned_items[@]}"; do
+            echo "   ✅ $item"
+        done
+    elif [ ${#cleaned_items[@]} -eq 0 ] && [ ${#failed_items[@]} -gt 0 ]; then
+        print_warning "❌ No se pudo limpiar ningún recurso huérfano"
+        print_warning "📋 Recursos que fallaron (${#failed_items[@]}):"
+        for item in "${failed_items[@]}"; do
+            echo "   ❌ $item"
+        done
+    else
+        print_warning "⚠️  Limpieza parcial: algunos recursos se limpiaron, otros fallaron"
+        print_info "📋 Recursos limpiados exitosamente (${#cleaned_items[@]}):"
+        for item in "${cleaned_items[@]}"; do
+            echo "   ✅ $item"
+        done
+        echo ""
+        print_warning "📋 Recursos que fallaron (${#failed_items[@]}):"
+        for item in "${failed_items[@]}"; do
+            echo "   ❌ $item"
+        done
+    fi
+}
+
+# Función para analizar estado de servicios antes de levantar
+analyze_services_before_start() {
+    local profiles=("$@")
+    local cmd="$DOCKER_CMD compose"
+    
+    # Agregar perfiles al comando
+    for profile in "${profiles[@]}"; do
+        cmd="$cmd --profile $profile"
+    done
+    
+    local running_healthy=0
+    local running_unhealthy=0
+    local stopped=0
+    local unhealthy_services=()
+    
+    # Obtener estado de servicios (sin jq, usando formato de tabla)
+    local services_info=$($cmd ps --format "{{.Name}}|{{.State}}|{{.Health}}" 2>/dev/null || echo "")
+    
+    if [ -z "$services_info" ]; then
+        print_info "No hay servicios corriendo con estos perfiles"
+        return 0
+    fi
+    
+    # Usar process substitution para evitar subshell
+    while IFS='|' read -r name state health; do
+        if [ -z "$name" ] || [ "$name" = "NAME" ]; then
+            continue
+        fi
+        
+        # Normalizar health (puede estar vacío o tener espacios)
+        health=$(echo "$health" | xargs)
+        if [ -z "$health" ]; then
+            health="none"
+        fi
+        
+        case "$state" in
+            running|Up*)
+                if [ "$health" = "healthy" ]; then
+                    running_healthy=$((running_healthy + 1))
+                    print_info "✅ $name: Ya está corriendo y healthy"
+                elif [ "$health" = "unhealthy" ]; then
+                    running_unhealthy=$((running_unhealthy + 1))
+                    unhealthy_services+=("$name")
+                    print_warning "⚠️  $name: Está corriendo pero UNHEALTHY"
+                elif echo "$health" | grep -q "starting"; then
+                    print_info "⏳ $name: Está iniciando..."
+                else
+                    running_healthy=$((running_healthy + 1))
+                    print_info "ℹ️  $name: Ya está corriendo (sin healthcheck o estado: $health)"
+                fi
+                ;;
+            *)
+                stopped=$((stopped + 1))
+                ;;
+        esac
+    done < <(echo "$services_info")
+    
+    # Si hay servicios unhealthy, mostrar advertencia
+    if [ ${#unhealthy_services[@]} -gt 0 ]; then
+        echo ""
+        print_warning "Servicios unhealthy detectados:"
+        for service in "${unhealthy_services[@]}"; do
+            echo "  - $service"
+        done
+        echo ""
+        print_info "Puedes revisar los logs con: ./scripts/stack-manager.sh logs <servicio>"
+        echo ""
+        return 1  # Hay servicios unhealthy
+    fi
+    
+    return 0  # Todo OK
+}
+
 # Función para levantar servicios
 start_services() {
     local profiles=("$@")
     
     # Si no hay perfiles, usar preset default
     if [ ${#profiles[@]} -eq 0 ]; then
+        print_header "USANDO PRESET 'default'"
         print_info "No se especificaron perfiles, usando preset 'default'"
         local preset_profiles=$(expand_preset default)
         read -ra profiles <<< "$preset_profiles"
+        echo ""
+        print_info "📋 Perfiles que se van a levantar:"
+        for profile in "${profiles[@]}"; do
+            echo "   ✅ $profile"
+        done
+        echo ""
+        print_info "📦 Servicios incluidos en este preset:"
+        print_info "   • GPU: Ollama con NVIDIA"
+        print_info "   • Monitoring: Prometheus, Grafana, AlertManager, exporters"
+        print_info "   • Infrastructure: Redis, HAProxy"
+        print_info "   • Security: Keycloak, ModSecurity"
+        print_info "   • Automation: n8n, Watchtower, Sync"
+        print_info "   • Chat-AI: Open WebUI"
+        echo ""
     fi
     
     # Expandir presets si alguno es un preset
     local expanded_profiles=()
+    local preset_used=""
     for profile in "${profiles[@]}"; do
         local expanded=$(expand_preset "$profile")
         if [ "$expanded" != "$profile" ]; then
             # Es un preset, expandirlo
+            preset_used="$profile"
             read -ra preset_array <<< "$expanded"
             expanded_profiles+=("${preset_array[@]}")
         else
@@ -255,7 +746,28 @@ start_services() {
     local unique_profiles=($(printf '%s\n' "${expanded_profiles[@]}" | sort -u))
     
     print_header "LEVANTANDO SERVICIOS"
-    print_info "Perfiles: ${unique_profiles[*]}"
+    if [ -n "$preset_used" ]; then
+        print_info "Preset usado: '$preset_used'"
+    fi
+    print_info "Perfiles activos: ${unique_profiles[*]}"
+    echo ""
+    
+    # NO limpiar automáticamente recursos huérfanos al iniciar
+    # Los contenedores detenidos del proyecto NO son huérfanos - pertenecen al proyecto
+    # Solo limpiar si el usuario lo solicita explícitamente con 'clean' o 'stop --clean'
+    
+    # Verificar estado de servicios antes de levantar
+    echo ""
+    print_info "Verificando estado de servicios existentes..."
+    if ! analyze_services_before_start "${unique_profiles[@]}"; then
+        echo ""
+        read -p "¿Continuar levantando servicios? (s/n) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Ss]$ ]]; then
+            print_info "Operación cancelada"
+            exit 0
+        fi
+    fi
     
     # Validar antes de levantar
     if ! validate_before_start; then
@@ -300,13 +812,65 @@ start_services() {
 
 # Función para detener servicios
 stop_services() {
-    local profiles=("$@")
+    local profiles=()
+    local clean_mode=false
+    
+    # Procesar argumentos
+    for arg in "$@"; do
+        if [ "$arg" = "--clean" ]; then
+            clean_mode=true
+        else
+            profiles+=("$arg")
+        fi
+    done
     
     print_header "DETENIENDO SERVICIOS"
     
     if [ ${#profiles[@]} -eq 0 ]; then
-        print_info "Deteniendo todos los servicios..."
-        $DOCKER_CMD compose down
+        print_info "Deteniendo todos los servicios (incluyendo todos los perfiles)..."
+        # Detener todos los contenedores del proyecto directamente usando el directorio de trabajo
+        local project_dir=$(pwd)
+        print_info "Deteniendo contenedores del proyecto en: $project_dir"
+        
+        # Obtener todos los contenedores del proyecto usando el label del directorio de trabajo
+        local containers=$($DOCKER_CMD ps --filter "label=com.docker.compose.project.working_dir=$project_dir" --format "{{.Names}}" 2>/dev/null)
+        
+        if [ -n "$containers" ]; then
+            echo "$containers" | while read container; do
+                if [ -n "$container" ]; then
+                    print_info "Deteniendo: $container"
+                    $DOCKER_CMD stop "$container" 2>/dev/null || true
+                fi
+            done
+        fi
+        
+        # También intentar con docker compose down (puede que algunos servicios no tengan perfiles)
+        print_info "🧹 Limpiando con 'docker compose down --remove-orphans'..."
+        local down_output=$($DOCKER_CMD compose down --remove-orphans 2>&1)
+        if [ $? -eq 0 ]; then
+            if echo "$down_output" | grep -qE "(Removing|Stopping|Network|Container)"; then
+                echo "$down_output" | grep -E "(Removing|Stopping|Network|Container)" | while read line; do
+                    print_info "   $line"
+                done
+                print_success "✅ Limpieza con docker compose down completada"
+            else
+                print_info "✅ No había recursos adicionales para limpiar con docker compose down"
+            fi
+        else
+            print_warning "⚠️  Algunos recursos no se pudieron limpiar con docker compose down"
+        fi
+        
+        # Limpiar redes huérfanas después de detener
+        print_info "🌐 Limpiando redes huérfanas con 'docker network prune'..."
+        local prune_output=$($DOCKER_CMD network prune -f 2>&1)
+        if echo "$prune_output" | grep -qE "(Deleted|Total)"; then
+            echo "$prune_output" | grep -E "(Deleted|Total)" | while read line; do
+                print_info "   $line"
+            done
+            print_success "✅ Redes huérfanas eliminadas"
+        else
+            print_info "✅ No se encontraron redes huérfanas"
+        fi
     else
         local expanded_profiles=()
         for profile in "${profiles[@]}"; do
@@ -322,8 +886,43 @@ stop_services() {
         local unique_profiles=($(printf '%s\n' "${expanded_profiles[@]}" | sort -u))
         print_info "Deteniendo perfiles: ${unique_profiles[*]}"
         
+        print_info "🧹 Ejecutando 'docker compose down --remove-orphans' con perfiles: ${unique_profiles[*]}"
         local cmd=$(build_compose_command down "${unique_profiles[@]}")
-        eval "$cmd"
+        local down_output=$(eval "$cmd --remove-orphans" 2>&1)
+        if [ $? -eq 0 ]; then
+            if echo "$down_output" | grep -qE "(Removing|Stopping|Network|Container)"; then
+                echo "$down_output" | grep -E "(Removing|Stopping|Network|Container)" | while read line; do
+                    print_info "   $line"
+                done
+            fi
+        fi
+        
+        # NO usar 'docker network prune' - eliminaría redes que el proyecto necesita
+        # Solo limpiar redes específicas del proyecto que estén vacías
+        print_info "🌐 Verificando redes del proyecto vacías..."
+        local project_networks=("genai-network" "frontend-network" "backend-network" "security-network" "monitoring-network")
+        local empty_networks=()
+        for network in "${project_networks[@]}"; do
+            if $DOCKER_CMD network inspect "$network" >/dev/null 2>&1; then
+                local containers_in_network=$($DOCKER_CMD network inspect "$network" --format '{{range .Containers}}{{.Name}}{{end}}' 2>/dev/null | tr -d '[:space:]')
+                if [ -z "$containers_in_network" ]; then
+                    empty_networks+=("$network")
+                fi
+            fi
+        done
+        
+        if [ ${#empty_networks[@]} -gt 0 ]; then
+            print_info "Redes del proyecto vacías encontradas: ${#empty_networks[@]}"
+            for network in "${empty_networks[@]}"; do
+                if $DOCKER_CMD network rm "$network" >/dev/null 2>&1; then
+                    print_success "   ✅ Eliminada: $network"
+                else
+                    print_warning "   ⚠️  No se pudo eliminar: $network"
+                fi
+            done
+        else
+            print_info "✅ No se encontraron redes del proyecto vacías"
+        fi
     fi
     
     print_success "Servicios detenidos"
@@ -484,6 +1083,31 @@ main() {
             ;;
         stop)
             stop_services "$@"
+            ;;
+        clean)
+            local clean_type=${1:-"default"}
+            print_header "LIMPIEZA DE RECURSOS DEL PROYECTO"
+            
+            # Validar tipo de limpieza
+            case "$clean_type" in
+                all|containers|networks|storage|default)
+                    ;;
+                *)
+                    print_error "Tipo de limpieza inválido: $clean_type"
+                    echo ""
+                    print_info "Tipos válidos:"
+                    echo "  - all        : Elimina contenedores, redes, almacenamiento e imágenes"
+                    echo "  - containers : Solo elimina contenedores detenidos/creados"
+                    echo "  - networks   : Solo elimina redes vacías del proyecto"
+                    echo "  - storage    : Solo elimina volúmenes/almacenamiento del proyecto"
+                    echo "  - (vacío)    : Limpieza de recursos huérfanos (redes vacías, contenedores creados) - SEGURO"
+                    echo ""
+                    print_info "Ejemplo: ./scripts/stack-manager.sh clean all"
+                    exit 1
+                    ;;
+            esac
+            
+            cleanup_orphaned_resources "$clean_type"
             ;;
         restart)
             restart_services "$@"

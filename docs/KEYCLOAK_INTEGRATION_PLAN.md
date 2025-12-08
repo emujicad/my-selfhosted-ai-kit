@@ -553,18 +553,93 @@ environment:
 
 ---
 
-## ⏳ Jenkins + Keycloak
+## ✅ Jenkins + Keycloak
 
-### Estado: Pendiente
+### Estado: Configurado - Listo para usar
 
-Jenkins requiere plugin de Keycloak para autenticación.
+Jenkins está configurado para usar Keycloak como proveedor OIDC mediante el plugin "OpenId Connect Authentication".
 
-### Plan de Implementación
+### Configuración Automática
 
-1. Instalar plugin "Keycloak Authentication" en Jenkins
-2. Configurar plugin con datos de Keycloak
-3. Crear cliente "jenkins" en Keycloak
-4. Probar login
+**Script de inicialización:**
+```bash
+./scripts/init-jenkins-oidc.sh
+```
+
+Este script:
+1. ✅ Verifica que Jenkins y Keycloak estén corriendo
+2. ✅ Instala el plugin "OpenId Connect Authentication" si no está instalado
+3. ✅ Configura OIDC con Keycloak automáticamente
+4. ✅ Reinicia Jenkins si es necesario
+
+### Variables en .env
+
+```bash
+# Jenkins Configuration
+JENKINS_URL_PUBLIC=http://localhost:8081
+JENKINS_ADMIN_USER=admin
+JENKINS_ADMIN_PASSWORD=admin
+JENKINS_OIDC_CLIENT_ID=jenkins
+JENKINS_OIDC_CLIENT_SECRET=<client_secret_from_keycloak>
+JENKINS_OIDC_SCOPES=openid email profile
+```
+
+### Pasos para Configurar
+
+1. **Crear cliente en Keycloak:**
+   ```bash
+   ./scripts/recreate-keycloak-clients.sh
+   ```
+   Esto creará el cliente `jenkins` en Keycloak y mostrará el Client Secret.
+
+2. **Actualizar Client Secret en .env:**
+   ```bash
+   JENKINS_OIDC_CLIENT_SECRET=<el_secret_mostrado>
+   ```
+
+3. **Levantar Jenkins:**
+   ```bash
+   docker compose --profile ci-cd up -d jenkins
+   ```
+
+4. **Ejecutar script de inicialización:**
+   ```bash
+   ./scripts/init-jenkins-oidc.sh
+   ```
+
+5. **Probar login:**
+   - Abre Jenkins: http://localhost:8081
+   - Deberías ser redirigido a Keycloak para autenticarte
+
+### Cliente en Keycloak
+
+**Configuración automática:**
+- Client ID: `jenkins`
+- Client authentication: On (confidential)
+- Standard flow: Enabled
+- Valid redirect URIs: `http://localhost:8081/securityRealm/finishLogin`
+- Web origins: `http://localhost:8081`
+- fullScopeAllowed: false
+
+### Troubleshooting
+
+**Error: "Plugin no instalado"**
+- El script instalará el plugin automáticamente
+- Si falla, instálalo manualmente desde Jenkins UI: Manage Jenkins → Manage Plugins → Available → "OpenId Connect Authentication"
+
+**Error: "Invalid redirect URI"**
+- Verifica que el Redirect URI en Keycloak sea exactamente: `http://localhost:8081/securityRealm/finishLogin`
+- Verifica que `JENKINS_URL_PUBLIC` en `.env` sea correcto
+
+**Error: "Client authentication failed"**
+- Verifica el Client Secret en Keycloak
+- Verifica que `JENKINS_OIDC_CLIENT_SECRET` en `.env` sea correcto
+- Recrea el cliente si es necesario: `./scripts/recreate-keycloak-clients.sh`
+
+**Jenkins no reinicia después de instalar plugin**
+- Espera 2-3 minutos
+- Verifica logs: `docker compose --profile ci-cd logs jenkins --tail 50`
+- Reinicia manualmente: `docker compose --profile ci-cd restart jenkins`
 
 ---
 

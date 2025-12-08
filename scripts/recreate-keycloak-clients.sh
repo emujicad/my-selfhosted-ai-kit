@@ -3,7 +3,7 @@
 # =============================================================================
 # Script para recrear automáticamente los clientes de Keycloak
 # =============================================================================
-# Este script recrea los clientes de Grafana, n8n y Open WebUI en Keycloak
+# Este script recrea los clientes de Grafana, n8n, Open WebUI y Jenkins en Keycloak
 # usando la API de administración (kcadm.sh)
 # =============================================================================
 
@@ -36,6 +36,8 @@ KEYCLOAK_REALM="${KEYCLOAK_REALM:-master}"
 GRAFANA_URL="${GRAFANA_URL_PUBLIC:-http://localhost:3001}"
 N8N_URL="${N8N_URL_PUBLIC:-http://localhost:5678}"
 OPEN_WEBUI_URL="${OPEN_WEBUI_URL_PUBLIC:-http://localhost:3000}"
+JENKINS_URL="${JENKINS_URL_PUBLIC:-http://localhost:8081}"
+JENKINS_URL="${JENKINS_URL_PUBLIC:-http://localhost:8081}"
 
 echo -e "${BLUE}=============================================================================${NC}"
 echo -e "${BLUE}Recrear Clientes de Keycloak - My Self-Hosted AI Kit${NC}"
@@ -252,6 +254,63 @@ create_openwebui_client() {
     echo ""
 }
 
+# Función para crear cliente Jenkins
+create_jenkins_client() {
+    echo "📋 Creando cliente 'jenkins'..."
+    
+    # Verificar si el cliente ya existe
+    if docker exec keycloak /opt/keycloak/bin/kcadm.sh get clients \
+        -r "$KEYCLOAK_REALM" \
+        -q clientId=jenkins 2>/dev/null | grep -q "jenkins"; then
+        echo -e "${YELLOW}   ⚠️  Cliente 'jenkins' ya existe, eliminándolo primero...${NC}"
+        CLIENT_ID=$(docker exec keycloak /opt/keycloak/bin/kcadm.sh get clients \
+            -r "$KEYCLOAK_REALM" \
+            -q clientId=jenkins 2>/dev/null | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
+        if [ -n "$CLIENT_ID" ]; then
+            docker exec keycloak /opt/keycloak/bin/kcadm.sh delete clients/"$CLIENT_ID" \
+                -r "$KEYCLOAK_REALM" > /dev/null 2>&1 || true
+        fi
+    fi
+    
+    # Crear cliente Jenkins
+    docker exec keycloak /opt/keycloak/bin/kcadm.sh create clients \
+        -r "$KEYCLOAK_REALM" \
+        -s clientId=jenkins \
+        -s name=jenkins \
+        -s protocol=openid-connect \
+        -s publicClient=false \
+        -s standardFlowEnabled=true \
+        -s directAccessGrantsEnabled=false \
+        -s fullScopeAllowed=false \
+        -s "redirectUris=[\"${JENKINS_URL}/securityRealm/finishLogin\"]" \
+        -s "webOrigins=[\"${JENKINS_URL}\"]" \
+        > /dev/null 2>&1
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}   ✅ Cliente 'jenkins' creado${NC}"
+        
+        # Obtener Client ID
+        CLIENT_ID=$(docker exec keycloak /opt/keycloak/bin/kcadm.sh get clients \
+            -r "$KEYCLOAK_REALM" \
+            -q clientId=jenkins 2>/dev/null | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
+        
+        if [ -n "$CLIENT_ID" ]; then
+            # Obtener Client Secret
+            CLIENT_SECRET=$(docker exec keycloak /opt/keycloak/bin/kcadm.sh get clients/"$CLIENT_ID"/client-secret \
+                -r "$KEYCLOAK_REALM" 2>/dev/null | grep -o '"value":"[^"]*"' | head -1 | cut -d'"' -f4)
+            
+            if [ -n "$CLIENT_SECRET" ]; then
+                echo "   🔑 Client Secret: $CLIENT_SECRET"
+                echo "   💡 Actualiza JENKINS_OIDC_CLIENT_SECRET en .env con este valor"
+            fi
+        fi
+    else
+        echo -e "${RED}   ❌ Error al crear cliente 'jenkins'${NC}"
+        return 1
+    fi
+    echo ""
+}
+
 # Ejecutar creación de clientes
 echo "🔄 Recreando clientes de Keycloak..."
 echo ""
@@ -259,6 +318,7 @@ echo ""
 create_grafana_client
 create_n8n_client
 create_openwebui_client
+create_jenkins_client
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
@@ -267,12 +327,13 @@ echo ""
 echo "📋 Próximos pasos:"
 echo "   1. Actualiza los Client Secrets en .env con los valores mostrados arriba"
 echo "   2. Reinicia los servicios si es necesario:"
-echo "      docker compose restart grafana n8n open-webui"
+echo "      docker compose restart grafana n8n open-webui jenkins"
 echo "   3. Prueba el login en cada servicio"
 echo ""
 echo "🌐 URLs de servicios:"
 echo "   - Grafana: $GRAFANA_URL"
 echo "   - n8n: $N8N_URL"
 echo "   - Open WebUI: $OPEN_WEBUI_URL"
+echo "   - Jenkins: $JENKINS_URL"
 echo ""
 
