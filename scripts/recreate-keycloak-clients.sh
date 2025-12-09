@@ -132,7 +132,16 @@ create_grafana_client() {
             
             if [ -n "$CLIENT_SECRET" ]; then
                 echo "   🔑 Client Secret: $CLIENT_SECRET"
-                echo "   💡 Actualiza GRAFANA_OAUTH_CLIENT_SECRET en .env con este valor"
+                # Actualizar automáticamente en .env
+                if [ -f .env ]; then
+                    if grep -q "^GRAFANA_OAUTH_CLIENT_SECRET=" .env; then
+                        sed -i "s|^GRAFANA_OAUTH_CLIENT_SECRET=.*|GRAFANA_OAUTH_CLIENT_SECRET=\"$CLIENT_SECRET\"|" .env
+                        echo -e "${GREEN}   ✅ Actualizado GRAFANA_OAUTH_CLIENT_SECRET en .env${NC}"
+                    else
+                        echo "GRAFANA_OAUTH_CLIENT_SECRET=\"$CLIENT_SECRET\"" >> .env
+                        echo -e "${GREEN}   ✅ Agregado GRAFANA_OAUTH_CLIENT_SECRET en .env${NC}"
+                    fi
+                fi
             fi
         fi
     else
@@ -188,7 +197,16 @@ create_n8n_client() {
             
             if [ -n "$CLIENT_SECRET" ]; then
                 echo "   🔑 Client Secret: $CLIENT_SECRET"
-                echo "   💡 Actualiza N8N_OIDC_CLIENT_SECRET en .env con este valor"
+                # Actualizar automáticamente en .env
+                if [ -f .env ]; then
+                    if grep -q "^N8N_OIDC_CLIENT_SECRET=" .env; then
+                        sed -i "s|^N8N_OIDC_CLIENT_SECRET=.*|N8N_OIDC_CLIENT_SECRET=\"$CLIENT_SECRET\"|" .env
+                        echo -e "${GREEN}   ✅ Actualizado N8N_OIDC_CLIENT_SECRET en .env${NC}"
+                    else
+                        echo "N8N_OIDC_CLIENT_SECRET=\"$CLIENT_SECRET\"" >> .env
+                        echo -e "${GREEN}   ✅ Agregado N8N_OIDC_CLIENT_SECRET en .env${NC}"
+                    fi
+                fi
             fi
         fi
     else
@@ -244,7 +262,16 @@ create_openwebui_client() {
             
             if [ -n "$CLIENT_SECRET" ]; then
                 echo "   🔑 Client Secret: $CLIENT_SECRET"
-                echo "   💡 Actualiza OPEN_WEBUI_OPENID_CLIENT_SECRET en .env con este valor"
+                # Actualizar automáticamente en .env
+                if [ -f .env ]; then
+                    if grep -q "^OPEN_WEBUI_OPENID_CLIENT_SECRET=" .env; then
+                        sed -i "s|^OPEN_WEBUI_OPENID_CLIENT_SECRET=.*|OPEN_WEBUI_OPENID_CLIENT_SECRET=\"$CLIENT_SECRET\"|" .env
+                        echo -e "${GREEN}   ✅ Actualizado OPEN_WEBUI_OPENID_CLIENT_SECRET en .env${NC}"
+                    else
+                        echo "OPEN_WEBUI_OPENID_CLIENT_SECRET=\"$CLIENT_SECRET\"" >> .env
+                        echo -e "${GREEN}   ✅ Agregado OPEN_WEBUI_OPENID_CLIENT_SECRET en .env${NC}"
+                    fi
+                fi
             fi
         fi
     else
@@ -301,7 +328,16 @@ create_jenkins_client() {
             
             if [ -n "$CLIENT_SECRET" ]; then
                 echo "   🔑 Client Secret: $CLIENT_SECRET"
-                echo "   💡 Actualiza JENKINS_OIDC_CLIENT_SECRET en .env con este valor"
+                # Actualizar automáticamente en .env
+                if [ -f .env ]; then
+                    if grep -q "^JENKINS_OIDC_CLIENT_SECRET=" .env; then
+                        sed -i "s|^JENKINS_OIDC_CLIENT_SECRET=.*|JENKINS_OIDC_CLIENT_SECRET=\"$CLIENT_SECRET\"|" .env
+                        echo -e "${GREEN}   ✅ Actualizado JENKINS_OIDC_CLIENT_SECRET en .env${NC}"
+                    else
+                        echo "JENKINS_OIDC_CLIENT_SECRET=\"$CLIENT_SECRET\"" >> .env
+                        echo -e "${GREEN}   ✅ Agregado JENKINS_OIDC_CLIENT_SECRET en .env${NC}"
+                    fi
+                fi
             fi
         fi
     else
@@ -325,7 +361,7 @@ echo ""
 echo -e "${GREEN}✅ Clientes recreados exitosamente${NC}"
 echo ""
 echo "📋 Próximos pasos:"
-echo "   1. Actualiza los Client Secrets en .env con los valores mostrados arriba"
+echo "   1. ✅ Client Secrets actualizados automáticamente en .env"
 echo "   2. Reinicia los servicios si es necesario:"
 echo "      docker compose restart grafana n8n open-webui jenkins"
 echo "   3. Prueba el login en cada servicio"
