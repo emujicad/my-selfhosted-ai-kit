@@ -1,6 +1,6 @@
 # 📊 Estado del Proyecto - My Self-Hosted AI Kit
 
-**Última actualización**: 2025-01-07 (revisado y actualizado)
+**Última actualización**: 2025-12-12 (revisado y actualizado)
 
 ## ✅ Completado
 
@@ -55,6 +55,7 @@
    - ⏳ n8n con OIDC (configuración lista en docker-compose.yml, pendiente probar)
    - ⏳ Jenkins con OIDC (script de inicialización listo: `init-jenkins-oidc.sh`, pendiente probar)
    - ✅ Script consolidado: `keycloak-manager.sh`
+   - ✅ Solución de problemas: Corregida propagación de secretos para clientes OIDC (Grafana, n8n, etc.)
    - ✅ Documentación completa: `docs/KEYCLOAK_INTEGRATION_PLAN.md`
 
 3. **HTTPS/SSL** (Prioridad Alta)

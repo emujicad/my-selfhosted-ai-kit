@@ -529,6 +529,13 @@ sudo netstat -tulpn | grep :3000
 # Change port in docker-compose.yml
 ```
 
+### Problem: Keycloak Login Failed ("Failed to get token")
+This usually means Keycloak client secrets don't match.
+```bash
+# Force update of client secrets
+docker compose up -d keycloak-init
+```
+
 ### Problem: Very large logs
 ```bash
 # Logs are configured to rotate automatically

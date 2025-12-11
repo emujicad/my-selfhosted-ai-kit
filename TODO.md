@@ -14,8 +14,8 @@ Stack actual: Ollama (LLMs) + Open WebUI (chat) + n8n (automatización) + Postgr
   - [x] Script consolidado: `scripts/keycloak-manager.sh`
   - [x] Documentación completa: `docs/KEYCLOAK_INTEGRATION_PLAN.md`
   - [ ] Integrar Open WebUI con Keycloak (limitación conocida documentada)
-  - [ ] Integrar n8n con Keycloak (configuración lista, puede requerir Enterprise)
-  - [ ] Integrar Jenkins con Keycloak
+  - [ ] Integrar n8n con Keycloak (configuración lista y secretos corregidos, pendiente validación)
+  - [ ] Integrar Jenkins con Keycloak (secretos corregidos, pendiente validación)
   - [ ] Configurar roles y permisos básicos
 
 - [ ] **Configurar HTTPS/SSL**

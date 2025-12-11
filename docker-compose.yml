@@ -1086,6 +1086,11 @@ services:
       - N8N_URL_PUBLIC=${N8N_URL_PUBLIC:-http://localhost:5678}
       - OPEN_WEBUI_URL_PUBLIC=${OPEN_WEBUI_URL_PUBLIC:-http://localhost:3000}
       - JENKINS_URL_PUBLIC=${JENKINS_URL_PUBLIC:-http://localhost:8081}
+      # Secrets para clientes OIDC
+      - GRAFANA_OAUTH_CLIENT_SECRET=${GRAFANA_OAUTH_CLIENT_SECRET}
+      - N8N_OIDC_CLIENT_SECRET=${N8N_OIDC_CLIENT_SECRET}
+      - OPEN_WEBUI_OAUTH_CLIENT_SECRET=${OPEN_WEBUI_OAUTH_CLIENT_SECRET}
+      - JENKINS_OIDC_CLIENT_SECRET=${JENKINS_OIDC_CLIENT_SECRET}
     entrypoint: /bin/sh
     command:
       - "-c"
@@ -1162,26 +1167,45 @@ services:
         echo "   ✅ Credenciales configuradas"
         echo ""
         
-        # Función auxiliar para crear cliente si no existe
-        create_client_if_not_exists() {
+        # Función auxiliar para crear O ACTUALIZAR cliente
+        create_or_update_client() {
           local CLIENT_ID=$$1
           local CLIENT_NAME=$$2
           local REDIRECT_URI=$$3
           local WEB_ORIGIN=$$4
+          local CLIENT_SECRET=$$5
+          
+          echo "   Processing client '$$CLIENT_ID'..."
           
           # Verificar si existe
           if docker exec keycloak /opt/keycloak/bin/kcadm.sh get clients \
             -r "$${KEYCLOAK_REALM}" \
             -q clientId="$$CLIENT_ID" 2>/dev/null | grep -q "$$CLIENT_ID"; then
-            echo "   ✅ Cliente '$$CLIENT_ID' ya existe"
+            echo "      Client exists. Updating configuration and secret..."
+            # Obtener ID interno (UUID)
+            local UUID=$$(docker exec keycloak /opt/keycloak/bin/kcadm.sh get clients -r "$${KEYCLOAK_REALM}" -q clientId="$$CLIENT_ID" --fields id --format csv --noquotes)
+             
+            if [ -n "$$UUID" ]; then
+                 docker exec keycloak /opt/keycloak/bin/kcadm.sh update clients/$$UUID \
+                    -r "$${KEYCLOAK_REALM}" \
+                    -s secret="$$CLIENT_SECRET" \
+                    -s "redirectUris=[\"$$REDIRECT_URI\"]" \
+                    -s "webOrigins=[\"$$WEB_ORIGIN\"]" \
+                    -s enabled=true \
+                    > /dev/null 2>&1 && echo "      ✅ Client updated successfully" || echo "      ⚠️ Error updating client"
+            else
+                echo "      ⚠️ Error finding UUID for update"
+            fi
             return 0
           fi
           
           # Crear cliente
+          echo "      Creating new client..."
           docker exec keycloak /opt/keycloak/bin/kcadm.sh create clients \
             -r "$${KEYCLOAK_REALM}" \
             -s clientId="$$CLIENT_ID" \
             -s name="$$CLIENT_NAME" \
+            -s secret="$$CLIENT_SECRET" \
             -s protocol=openid-connect \
             -s publicClient=false \
             -s standardFlowEnabled=true \
@@ -1189,17 +1213,17 @@ services:
             -s fullScopeAllowed=false \
             -s "redirectUris=[\"$$REDIRECT_URI\"]" \
             -s "webOrigins=[\"$$WEB_ORIGIN\"]" \
-            > /dev/null 2>&1 && echo "   ✅ Cliente '$$CLIENT_ID' creado" || echo "   ⚠️ Error al crear '$$CLIENT_ID'"
+            > /dev/null 2>&1 && echo "      ✅ Client '$$CLIENT_ID' created" || echo "      ⚠️ Error creating '$$CLIENT_ID'"
         }
         
-        # Crear clientes si no existen
-        create_client_if_not_exists "grafana" "grafana" "$${GRAFANA_URL_PUBLIC}/login/generic_oauth" "$${GRAFANA_URL_PUBLIC}"
-        create_client_if_not_exists "n8n" "n8n" "$${N8N_URL_PUBLIC}/rest/oauth2-credential/callback" "$${N8N_URL_PUBLIC}"
-        create_client_if_not_exists "open-webui" "open-webui" "$${OPEN_WEBUI_URL_PUBLIC}/oauth/oidc/callback" "$${OPEN_WEBUI_URL_PUBLIC}"
-        create_client_if_not_exists "jenkins" "jenkins" "$${JENKINS_URL_PUBLIC}/securityRealm/finishLogin" "$${JENKINS_URL_PUBLIC}"
+        # Crear o actualizar clientes
+        create_or_update_client "grafana" "grafana" "$${GRAFANA_URL_PUBLIC}/login/generic_oauth" "$${GRAFANA_URL_PUBLIC}" "$${GRAFANA_OAUTH_CLIENT_SECRET}"
+        create_or_update_client "n8n" "n8n" "$${N8N_URL_PUBLIC}/rest/oauth2-credential/callback" "$${N8N_URL_PUBLIC}" "$${N8N_OIDC_CLIENT_SECRET}"
+        create_or_update_client "open-webui" "open-webui" "$${OPEN_WEBUI_URL_PUBLIC}/oauth/oidc/callback" "$${OPEN_WEBUI_URL_PUBLIC}" "$${OPEN_WEBUI_OAUTH_CLIENT_SECRET}"
+        create_or_update_client "jenkins" "jenkins" "$${JENKINS_URL_PUBLIC}/securityRealm/finishLogin" "$${JENKINS_URL_PUBLIC}" "$${JENKINS_OIDC_CLIENT_SECRET}"
         
         echo ""
-        echo "✅ Clientes OIDC verificados/creados"
+        echo "✅ Clientes OIDC procesados"
     depends_on:
       keycloak:
         condition: service_healthy
