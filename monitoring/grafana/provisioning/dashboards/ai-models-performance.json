@@ -11,12 +11,12 @@
   "panels": [
     {
       "id": 1,
-      "title": "Ollama Container Status",
+      "title": "Ollama Status",
       "type": "stat",
       "targets": [
         {
-          "expr": "count(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"})",
-          "legendFormat": "Ollama Containers",
+          "expr": "ollama_up",
+          "legendFormat": "Ollama Up",
           "refId": "A"
         }
       ],
@@ -28,7 +28,21 @@
           "custom": {
             "displayMode": "basic"
           },
-          "mappings": [],
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "text": "Down"
+                },
+                "1": {
+                  "color": "green",
+                  "text": "Up"
+                }
+              },
+              "type": "value"
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -51,7 +65,125 @@
         "x": 0,
         "y": 0
       },
-      "description": "Number of running Docker containers. Ollama will appear in the list below."
+      "description": "Ollama service availability from Ollama exporter"
+    },
+    {
+      "id": 13,
+      "title": "Total Models",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "ollama_models_total",
+          "legendFormat": "Models",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "displayMode": "basic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "description": "Total number of models available in Ollama"
+    },
+    {
+      "id": 14,
+      "title": "Total Models Size",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "ollama_total_size_bytes / 1024 / 1024 / 1024",
+          "legendFormat": "Total Size (GB)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "displayMode": "basic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "decgbytes"
+        }
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "description": "Total size of all models in GB"
+    },
+    {
+      "id": 15,
+      "title": "Model Sizes",
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "ollama_model_size_bytes / 1024 / 1024 / 1024",
+          "legendFormat": "{{model}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "displayMode": "gradient",
+            "orientation": "horizontal",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                }
+              ]
+            }
+          },
+          "unit": "decgbytes"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "description": "Size of each model in GB"
     },
     {
       "id": 2,

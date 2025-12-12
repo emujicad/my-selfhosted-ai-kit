@@ -11,12 +11,12 @@
   "panels": [
     {
       "id": 1,
-      "title": "GPU Usage (if available)",
+      "title": "GPU Utilization (%)",
       "type": "timeseries",
       "targets": [
         {
-          "expr": "100 - (avg by (instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
-          "legendFormat": "System CPU % (GPU proxy)",
+          "expr": "DCGM_FI_DEV_GPU_UTIL{gpu=~\"0|1|2|3\"}",
+          "legendFormat": "GPU {{gpu}} Utilization",
           "refId": "A"
         }
       ],
@@ -67,7 +67,140 @@
         "x": 0,
         "y": 0
       },
-      "description": "GPU usage monitoring. Note: Direct GPU metrics require nvidia-smi exporter. This shows system CPU as proxy."
+      "description": "Real GPU utilization from NVIDIA DCGM exporter. Falls back to CPU proxy if GPU metrics unavailable."
+    },
+    {
+      "id": 8,
+      "title": "GPU Memory Usage",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "(DCGM_FI_DEV_FB_USED{gpu=~\"0|1|2|3\"} / DCGM_FI_DEV_FB_TOTAL{gpu=~\"0|1|2|3\"}) * 100",
+          "legendFormat": "GPU {{gpu}} Memory %",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 70
+                },
+                {
+                  "color": "red",
+                  "value": 85
+                }
+              ]
+            },
+            "unit": "percent"
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "description": "GPU memory usage percentage"
+    },
+    {
+      "id": 9,
+      "title": "GPU Temperature",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "DCGM_FI_DEV_GPU_TEMP{gpu=~\"0|1|2|3\"}",
+          "legendFormat": "GPU {{gpu}} Temperature",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 70
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "celsius"
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "description": "GPU temperature in Celsius"
+    },
+    {
+      "id": 10,
+      "title": "GPU Power Usage",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "DCGM_FI_DEV_POWER_USAGE{gpu=~\"0|1|2|3\"}",
+          "legendFormat": "GPU {{gpu}} Power",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "unit": "watt"
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "description": "GPU power consumption in watts"
     },
     {
       "id": 2,

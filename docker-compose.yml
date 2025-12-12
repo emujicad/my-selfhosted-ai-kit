@@ -878,6 +878,75 @@ services:
           cpus: '0.1'
           memory: 64M
 
+  # NVIDIA GPU Exporter - Métricas de GPU NVIDIA
+  nvidia-exporter:
+    image: nvidia/dcgm-exporter:latest
+    container_name: nvidia-exporter
+    profiles: ["monitoring", "gpu-nvidia"]  # Solo se activa con monitoring y gpu-nvidia
+    ports:
+      - "${PORT_NVIDIA_EXPORTER_HOST:-9400}:${PORT_NVIDIA_EXPORTER_CONTAINER:-9400}"
+    networks:
+      - monitoring-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9400/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # Ollama Exporter - Métricas específicas de Ollama
+  ollama-exporter:
+    image: python:3.11-alpine
+    container_name: ollama-exporter
+    profiles: ["monitoring"]
+    ports:
+      - "${PORT_OLLAMA_EXPORTER_HOST:-9888}:${PORT_OLLAMA_EXPORTER_CONTAINER:-9888}"
+    volumes:
+      - ./scripts/ollama-exporter.py:/app/ollama-exporter.py:ro
+    networks:
+      - monitoring-network
+      - genai-network  # Necesario para conectarse a Ollama
+    environment:
+      - OLLAMA_HOST=${OLLAMA_HOST_INTERNAL:-ollama}:${OLLAMA_PORT_INTERNAL:-11434}
+      - EXPORTER_PORT=9888
+      - SCRAPE_INTERVAL=15
+    command: python3 /app/ollama-exporter.py
+    # Depende de cualquier servicio Ollama que esté activo (gpu-nvidia o cpu)
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9888/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
   # =============================================================================
   # SERVICIOS DE INFRAESTRUCTURA
   # =============================================================================

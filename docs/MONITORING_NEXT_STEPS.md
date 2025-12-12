@@ -9,10 +9,11 @@
 1. **Dashboards de Grafana** ✅
    - ✅ System Overview Dashboard
    - ✅ Ollama AI Models Dashboard
-   - ✅ GPU/CPU Performance Dashboard ⭐ **NUEVO**
+   - ✅ GPU/CPU Performance Dashboard ⭐ **ACTUALIZADO** - Ahora con métricas reales de GPU NVIDIA
    - ✅ Users & Sessions Dashboard ⭐ **NUEVO**
    - ✅ Cost Estimation Dashboard ⭐ **NUEVO**
-   - ✅ AI Models Performance Dashboard ⭐ **NUEVO**
+   - ✅ AI Models Performance Dashboard ⭐ **ACTUALIZADO** - Ahora con métricas específicas de Ollama
+   - ✅ Executive Summary Dashboard ⭐ **NUEVO** - Dashboard ejecutivo con KPIs principales
    - ✅ Todas las queries corregidas y funcionando
 
 2. **Infraestructura de Monitoreo** ✅
@@ -22,6 +23,8 @@
    - ✅ node-exporter (métricas del sistema)
    - ✅ cAdvisor (métricas de contenedores)
    - ✅ postgres-exporter (métricas de PostgreSQL)
+   - ✅ nvidia-exporter (métricas de GPU NVIDIA) ⭐ **NUEVO**
+   - ✅ ollama-exporter (métricas específicas de Ollama) ⭐ **NUEVO**
 
 3. **Alertas Básicas** ✅
    - ✅ Reglas de alertas en Prometheus (`monitoring/prometheus/alerts.yml`)
@@ -62,36 +65,27 @@
 
 ---
 
-#### 2. Métricas de GPU Reales ⭐ **IMPORTANTE SI TIENES GPU**
+#### 2. Métricas de GPU Reales ✅ **COMPLETADO**
 
-**Estado**: Actualmente se usa CPU como proxy para GPU
+**Estado**: ✅ Implementado con NVIDIA DCGM Exporter
 
-**Tareas**:
-- [ ] Instalar y configurar nvidia-smi exporter (para GPU NVIDIA)
-  - Alternativa: DCGM Exporter para métricas más avanzadas
-- [ ] Agregar servicio al `docker-compose.yml`:
-  ```yaml
-  nvidia-exporter:
-    image: nvidia/dcgm-exporter:latest
-    # o usar: prom/node-exporter con nvidia-smi
-  ```
-- [ ] Configurar Prometheus para scrapear métricas de GPU:
-  - Agregar job en `monitoring/prometheus.yml`
-- [ ] Actualizar dashboard "GPU/CPU Performance":
-  - Reemplazar métricas proxy con métricas reales de GPU
-  - Agregar paneles para: GPU utilization, temperatura, memoria GPU
-- [ ] Agregar alertas para GPU:
-  - GPU usage > 90%
-  - Temperatura GPU > 80°C
-  - Memoria GPU casi llena
+**Tareas completadas**:
+- ✅ Instalado y configurado NVIDIA DCGM Exporter
+- ✅ Agregado servicio `nvidia-exporter` al `docker-compose.yml` con perfil `monitoring` y `gpu-nvidia`
+- ✅ Configurado Prometheus para scrapear métricas de GPU (job `nvidia-exporter`)
+- ✅ Actualizado dashboard "GPU/CPU Performance" con métricas reales:
+  - GPU Utilization (%) - métricas reales de DCGM
+  - GPU Memory Usage (%) - uso de memoria GPU
+  - GPU Temperature (°C) - temperatura de GPU
+  - GPU Power Usage (W) - consumo de energía
+- ⏳ Pendiente: Agregar alertas para GPU (siguiente paso)
 
-**Beneficio**: Métricas precisas de GPU, no estimaciones
+**Beneficio**: Métricas precisas de GPU NVIDIA RTX 5060 Ti, no estimaciones
 
-**Recursos**:
-- [NVIDIA DCGM Exporter](https://github.com/NVIDIA/dcgm-exporter)
-- [nvidia-smi exporter](https://github.com/NVIDIA/node_exporter)
-
-**Tiempo estimado**: 3-4 horas
+**Archivos modificados**:
+- `docker-compose.yml` - Servicio nvidia-exporter agregado
+- `monitoring/prometheus.yml` - Job nvidia-exporter agregado
+- `monitoring/grafana/provisioning/dashboards/gpu-cpu-performance.json` - Paneles de GPU actualizados
 
 **Nota**: Solo aplica si tienes GPU NVIDIA. Para GPU AMD, usar ROCm exporter.
 
@@ -99,34 +93,39 @@
 
 ### ⚡ Prioridad Media (Implementar Después)
 
-#### 3. Métricas Específicas de Ollama
+#### 3. Métricas Específicas de Ollama ✅ **COMPLETADO**
 
-**Estado**: Actualmente se usan métricas de contenedores (estimaciones)
+**Estado**: ✅ Implementado con exporter personalizado
 
-**Tareas**:
-- [ ] Investigar exporters disponibles para Ollama:
-  - Ollama no expone métricas Prometheus nativas
-  - Opciones: crear exporter personalizado o usar logs
-- [ ] Implementar solución para métricas reales:
-  - **Opción A**: Crear exporter personalizado que consulte Ollama API
-  - **Opción B**: Usar Loki para parsear logs de Ollama y extraer métricas
-  - **Opción C**: Instrumentar Ollama directamente (requiere modificar código)
-- [ ] Métricas a obtener:
-  - Tokens por segundo (real, no estimado)
-  - Latencia real de requests
-  - Requests activos
-  - Modelos cargados en memoria
-  - Uso de memoria por modelo
-- [ ] Actualizar dashboard "AI Models Performance" con métricas reales
-- [ ] Agregar paneles por modelo individual
+**Tareas completadas**:
+- ✅ Creado exporter personalizado (`scripts/ollama-exporter.py`) que consulta Ollama API
+- ✅ Agregado servicio `ollama-exporter` al `docker-compose.yml` con perfil `monitoring`
+- ✅ Configurado Prometheus para scrapear métricas de Ollama (job `ollama-exporter`)
+- ✅ Métricas implementadas:
+  - `ollama_up` - Estado del servicio Ollama (0/1)
+  - `ollama_models_total` - Total de modelos disponibles
+  - `ollama_total_size_bytes` - Tamaño total de todos los modelos
+  - `ollama_model_size_bytes{model="..."}` - Tamaño por modelo individual
+- ✅ Actualizado dashboard "AI Models Performance" con métricas reales:
+  - Ollama Status - estado del servicio
+  - Total Models - número de modelos disponibles
+  - Total Models Size - tamaño total en GB
+  - Model Sizes - gráfico de barras por modelo
 
-**Beneficio**: Métricas precisas de rendimiento de modelos, no estimaciones
+**Beneficio**: Métricas precisas de Ollama, incluyendo modelos disponibles y tamaños
 
-**Recursos**:
-- [Ollama API Documentation](https://github.com/ollama/ollama/blob/main/docs/api.md)
-- [Prometheus Client Libraries](https://prometheus.io/docs/instrumenting/clientlibs/)
+**Archivos creados/modificados**:
+- `scripts/ollama-exporter.py` - Exporter personalizado de Ollama (Python)
+- `docker-compose.yml` - Servicio ollama-exporter agregado
+- `monitoring/prometheus.yml` - Job ollama-exporter agregado
+- `monitoring/grafana/provisioning/dashboards/ai-models-performance.json` - Paneles actualizados
 
-**Tiempo estimado**: 4-6 horas (depende de la solución elegida)
+**Nota**: El exporter consulta la API de Ollama cada 15 segundos (configurable via `SCRAPE_INTERVAL`)
+
+**Próximos pasos** (opcional):
+- ⏳ Agregar métricas de tokens por segundo (requiere monitoreo de requests activos)
+- ⏳ Agregar métricas de latencia real (requiere instrumentación de requests)
+- ⏳ Agregar paneles por modelo individual con uso de memoria
 
 ---
 
@@ -235,30 +234,36 @@
 
 ---
 
-#### 7. Dashboard de Resumen Ejecutivo
+#### 7. Dashboard de Resumen Ejecutivo ✅ **COMPLETADO**
 
-**Estado**: Dashboards específicos creados
+**Estado**: ✅ Dashboard creado y funcionando
 
-**Tareas**:
-- [ ] Crear dashboard "Executive Summary":
-  - KPIs principales en un vistazo
-  - Uptime de servicios críticos
-  - Uso de recursos (CPU, memoria, disco)
-  - Servicios activos/inactivos
-  - Costos estimados del día/mes
-  - Alertas activas
-- [ ] Configurar para visualización en pantallas grandes:
-  - Layout optimizado para TV/monitor grande
+**Tareas completadas**:
+- ✅ Creado dashboard "Executive Summary" con KPIs principales:
+  - System Uptime - tiempo de actividad del sistema
+  - CPU Usage - uso de CPU en tiempo real
+  - Memory Usage - uso de memoria en tiempo real
+  - Disk Usage - uso de disco del sistema
+  - GPU Utilization - utilización de GPU (si disponible)
+  - Ollama Status - estado del servicio Ollama
+  - Ollama Models - número de modelos disponibles
+  - Active Containers - número de contenedores activos
+  - Resource Usage Trends (24h) - tendencias de CPU, memoria y GPU
+  - Service Status Overview - tabla de estado de servicios de monitoreo
+  - Estimated Daily Cost - costo estimado diario
+  - Network I/O (24h) - tráfico de red
+- ✅ Configurado para visualización:
   - Auto-refresh cada 30 segundos
-  - Tema claro/oscuro según preferencia
-- [ ] Agregar gráficos de tendencias:
-  - Uso de recursos en las últimas 24 horas
-  - Costos acumulados del mes
-  - Servicios más utilizados
+  - Tema oscuro por defecto
+  - Layout optimizado para pantallas grandes
+  - Gráficos de tendencias de 24 horas
 
-**Beneficio**: Vista rápida del estado general del sistema
+**Beneficio**: Vista rápida del estado general del sistema con todos los KPIs principales
 
-**Tiempo estimado**: 2-3 horas
+**Archivos creados**:
+- `monitoring/grafana/provisioning/dashboards/executive-summary.json` - Dashboard ejecutivo completo
+
+**Tiempo estimado**: ✅ Completado
 
 ---
 
@@ -422,4 +427,5 @@
 **Nota**: Este documento se actualizará conforme se implementen las mejoras. Cada sección completada será marcada con ✅ y se agregará fecha de completación.
 
 *Última actualización: 2025-12-12*
+
 

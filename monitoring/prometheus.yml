@@ -68,4 +68,15 @@ scrape_configs:
   - job_name: 'keycloak'
     static_configs:
       - targets: ['keycloak:8080']
+    metrics_path: '/metrics'
+
+  # Monitorear NVIDIA GPU Exporter
+  - job_name: 'nvidia-exporter'
+    static_configs:
+      - targets: ['nvidia-exporter:9400']
+
+  # Monitorear Ollama Exporter (métricas específicas)
+  - job_name: 'ollama-exporter'
+    static_configs:
+      - targets: ['ollama-exporter:9888']
     metrics_path: '/metrics' 
