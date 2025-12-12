@@ -8,6 +8,7 @@
 2. **[ESTADO_PROYECTO.md](../ESTADO_PROYECTO.md)** - Estado actual del proyecto y tareas completadas
 3. **[TODO.md](../TODO.md)** - Tareas pendientes y próximos pasos
 4. **[PROXIMOS_PASOS.md](../PROXIMOS_PASOS.md)** - ⭐ **NUEVO** - Plan de acción detallado con próximos pasos recomendados
+5. **[PROXIMOS_PASOS_DETALLADO.md](PROXIMOS_PASOS_DETALLADO.md)** - ⭐ **NUEVO** - Próximos pasos detallados con tareas, prioridades y plan de implementación completo
 
 ### Configuración y Setup
 
@@ -203,6 +204,7 @@ Los siguientes archivos fueron eliminados porque su información fue consolidada
 - ESTADO_PROYECTO.md
 - TODO.md
 - PROXIMOS_PASOS.md - ⭐ **NUEVO** - Plan de acción detallado con próximos pasos recomendados
+- docs/PROXIMOS_PASOS_DETALLADO.md - ⭐ **NUEVO** - Próximos pasos detallados con tareas, prioridades y plan de implementación completo
 
 ### Configuración
 - docs/KEYCLOAK_INTEGRATION_PLAN.md (TODO Keycloak)
