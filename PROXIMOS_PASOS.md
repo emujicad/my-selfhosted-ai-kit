@@ -1,6 +1,6 @@
 # 🚀 Próximos Pasos - My Self-Hosted AI Kit
 
-**Fecha de análisis**: 2025-01-07
+**Fecha de análisis**: 2025-12-12
 
 ## 📊 Resumen del Estado Actual
 
@@ -43,6 +43,24 @@
    - Opciones de balanceo mejoradas
    - Sticky sessions (opcional, comentado por defecto)
    - Backup de configuración original creado
+
+7. **Mejoras de Dashboards de Grafana** ✅
+   - Dashboard de Modelos de IA mejorado (tokens/s, latencia percentiles, uso memoria por modelo, comparación modelos)
+   - Dashboard de GPU/CPU mejorado (GPU durante inferencia, memoria GPU, temperatura, CPU por modelo, comparación GPU vs CPU)
+   - Dashboard de Usuarios y Sesiones mejorado (sesiones activas tiempo real, actividad por hora/día, usuarios concurrentes máximos, tiempo promedio sesión, tendencias 24h)
+   - Dashboard de Costos Estimados mejorado (costos por modelo, costos por usuario/sesión, proyección 7 días, análisis de tendencias)
+   - Métricas adicionales de servicios (n8n, Open WebUI, Qdrant) agregadas
+   - Executive Summary Dashboard creado (KPIs principales del sistema)
+   - Ollama Optimization Monitoring Dashboard creado (monitoreo de optimizaciones)
+
+8. **Optimizaciones de Ollama** ✅ **PARCIALMENTE COMPLETADO**
+   - Variables de optimización configuradas (OLLAMA_MAX_LOADED_MODELS=2, OLLAMA_NUM_THREAD=8, OLLAMA_KEEP_ALIVE=10m)
+   - Shared memory configurado (shm_size=2g)
+   - Límites de recursos configurados (CPU: 6 cores, RAM: 32GB)
+   - Dashboard de monitoreo de optimizaciones creado
+   - Scripts de testing creados (test-ollama-quick.sh, test-ollama-performance.sh, test-ollama-advanced.sh)
+   - Documentación de optimizaciones creada (docs/TESTING_OLLAMA_OPTIMIZATIONS.md, docs/OLLAMA_OPTIMIZATION_MONITORING.md)
+   - Implementar queue de requests (pendiente)
 
 ### ⚠️ Limitaciones Conocidas
 
@@ -164,28 +182,47 @@
 
 ### Fase 2: Monitoreo y Optimización (Semanas 3-4)
 
-#### 2.1 Mejorar Dashboards de Grafana 📊
+#### 2.1 Mejorar Dashboards de Grafana 📊 ✅ **COMPLETADO**
 
-**Tareas:**
-1. **Dashboard de Modelos de IA**
-   - Métricas de tokens por segundo
-   - Latencia de respuestas
-   - Uso de memoria por modelo
-   - Tiempo de respuesta promedio
+**Tareas completadas:**
+1. ✅ **Dashboard de Modelos de IA** (`ai-models-performance.json`)
+   - ✅ Métricas de tokens por segundo (estimado basado en CPU)
+   - ✅ Latencia de respuestas (percentiles p50, p95, p99)
+   - ✅ Uso de memoria por modelo (tamaño de modelos)
+   - ✅ Tiempo de respuesta promedio
+   - ✅ Comparación de modelos (tabla con métricas)
 
-2. **Dashboard de GPU/CPU**
-   - Uso de GPU por modelo
-   - Uso de CPU por servicio
-   - Temperatura y rendimiento
+2. ✅ **Dashboard de GPU/CPU** (`gpu-cpu-performance.json`)
+   - ✅ Uso de GPU durante inferencia de modelos
+   - ✅ Memoria GPU por actividad de modelo
+   - ✅ Temperatura GPU durante inferencia (monitoreo de sobrecalentamiento)
+   - ✅ CPU por actividad de modelo
+   - ✅ Comparación GPU vs CPU
 
-3. **Dashboard de Usuarios Activos**
-   - Sesiones activas
-   - Usuarios por servicio
-   - Actividad por hora/día
+3. ✅ **Dashboard de Usuarios Activos** (`users-sessions.json`)
+   - ✅ Sesiones activas en tiempo real (estimado)
+   - ✅ Usuarios por servicio (actividad basada en CPU)
+   - ✅ Actividad por hora/día (tendencias)
+   - ✅ Usuarios concurrentes máximos (últimas 24h)
+   - ✅ Tiempo promedio de sesión
+   - ✅ Tendencias de actividad (24h)
+
+4. ✅ **Dashboard de Costos Estimados** (`cost-estimation.json`)
+   - ✅ Costos por modelo (desglose por contenedor)
+   - ✅ Costos por usuario/sesión (estimado)
+   - ✅ Proyección de costos (próximos 7 días)
+   - ✅ Análisis de tendencias de costos (horario y diario)
+
+5. ✅ **Métricas Adicionales de Servicios** (`additional-services.json`)
+   - ✅ Estado de salud de n8n y Open WebUI
+   - ✅ Uso de recursos de n8n (CPU y memoria)
+   - ✅ Uso de recursos de Open WebUI (CPU y memoria)
+   - ✅ Queries por segundo de Qdrant (estimado)
+   - ✅ Resumen de actividad de servicios
 
 **Recursos:**
 - `docs/GRAFANA_MONITORING_GUIDE.md` - Guía de monitoreo
-- Dashboards existentes en `monitoring/grafana/provisioning/dashboards/`
+- Dashboards mejorados en `monitoring/grafana/provisioning/dashboards/`
 
 #### 2.2 Implementar Redis 💾
 
@@ -233,10 +270,14 @@
 #### 3.1 Optimizaciones de Rendimiento ⚡
 
 **Tareas:**
-1. **Optimizar Ollama**
-   - Configurar cache de modelos
-   - Implementar queue de requests
-   - Optimizar configuración de GPU
+1. ~~**Optimizar Ollama**~~ ✅ **PARCIALMENTE COMPLETADO**
+   - ✅ Configurar cache de modelos (OLLAMA_MAX_LOADED_MODELS=2, OLLAMA_KEEP_ALIVE=10m)
+   - ✅ Optimizar configuración de GPU (shm_size=2g, límites de recursos configurados)
+   - ✅ Optimizar threads de CPU (OLLAMA_NUM_THREAD=8)
+   - ✅ Monitorear uso de memoria por modelo (dashboard de optimización creado)
+   - ✅ Scripts de testing creados (test-ollama-quick.sh, test-ollama-performance.sh, test-ollama-advanced.sh)
+   - ✅ Documentación de optimizaciones creada (docs/TESTING_OLLAMA_OPTIMIZATIONS.md, docs/OLLAMA_OPTIMIZATION_MONITORING.md)
+   - ⏳ Implementar queue de requests (pendiente)
 
 2. ~~**Mejorar HAProxy**~~ ✅ **COMPLETADO**
    - ✅ Health checks avanzados (inter 3s, fall 3, rise 2)
@@ -319,5 +360,5 @@
 
 ---
 
-**Última actualización**: 2025-01-07
+**Última actualización**: 2025-12-12
 

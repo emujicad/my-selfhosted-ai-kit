@@ -31,11 +31,12 @@ Stack actual: Ollama (LLMs) + Open WebUI (chat) + n8n (automatización) + Postgr
   - [ ] Documentar acceso a secretos
 
 ### 📊 Monitoreo Mejorado
-- [ ] **Mejorar dashboards de Grafana**
-  - [ ] Dashboard específico para modelos de IA (tokens/s, latencia)
-  - [ ] Dashboard de uso de GPU/CPU por modelo
-  - [ ] Dashboard de usuarios activos y sesiones
-  - [ ] Dashboard de costos estimados por uso
+- [x] **Mejorar dashboards de Grafana** ✅ **COMPLETADO**
+  - [x] Dashboard específico para modelos de IA (tokens/s, latencia) - Mejorado con paneles de tokens/s, latencia percentiles (p50/p95/p99), uso memoria por modelo, comparación modelos
+  - [x] Dashboard de uso de GPU/CPU por modelo - Mejorado con paneles de GPU durante inferencia, memoria GPU, temperatura, CPU por modelo, comparación GPU vs CPU
+  - [x] Dashboard de usuarios activos y sesiones - Mejorado con sesiones activas tiempo real, actividad por hora/día, usuarios concurrentes máximos, tiempo promedio sesión, usuarios por servicio, tendencias 24h
+  - [x] Dashboard de costos estimados por uso - Mejorado con costos por modelo, costos por usuario/sesión, proyección 7 días, análisis de tendencias
+  - [x] Métricas adicionales de servicios (n8n, Open WebUI, Qdrant) - Agregadas métricas de salud, recursos y actividad
   - [ ] Alertas inteligentes para fallos de servicios
 
 - [ ] **Implementar logging centralizado**
@@ -66,11 +67,12 @@ Stack actual: Ollama (LLMs) + Open WebUI (chat) + n8n (automatización) + Postgr
 ## ⚡ PRIORIDAD MEDIA (Implementar Después)
 
 ### 🚀 Rendimiento y Escalabilidad
-- [ ] **Optimizar rendimiento de Ollama**
-  - [ ] Configurar cache de modelos
-  - [ ] Implementar queue de requests
-  - [ ] Optimizar configuración de GPU
-  - [ ] Monitorear uso de memoria por modelo
+- [x] **Optimizar rendimiento de Ollama** ✅ **PARCIALMENTE COMPLETADO**
+  - [x] Configurar cache de modelos (OLLAMA_MAX_LOADED_MODELS=2, OLLAMA_KEEP_ALIVE=10m)
+  - [x] Optimizar configuración de GPU (shm_size=2g, límites de recursos configurados)
+  - [x] Optimizar threads de CPU (OLLAMA_NUM_THREAD=8)
+  - [x] Monitorear uso de memoria por modelo (dashboard de optimización creado)
+  - [ ] Implementar queue de requests (pendiente)
 
 - [ ] **Implementar Redis para cache**
   - [ ] Cache de sesiones de usuario
@@ -198,9 +200,9 @@ Stack actual: Ollama (LLMs) + Open WebUI (chat) + n8n (automatización) + Postgr
 
 ### 🎯 Orden Recomendado
 1. **Semana 1-2**: Seguridad básica (Keycloak + SSL)
-2. **Semana 3-4**: Monitoreo mejorado (ELK + dashboards)
-3. **Semana 5-6**: Backup y recuperación
-4. **Semana 7-8**: Rendimiento (Redis + optimizaciones)
+2. **Semana 3-4**: Monitoreo mejorado (ELK + dashboards) - ✅ Dashboards completados
+3. **Semana 5-6**: Backup y recuperación - ✅ Completado
+4. **Semana 7-8**: Rendimiento (Redis + optimizaciones) - ✅ Optimizaciones de Ollama parcialmente completadas
 5. **Semana 9-10**: Panel de administración
 6. **Semana 11-12**: CI/CD básico
 7. **Semana 13+**: Mejoras avanzadas

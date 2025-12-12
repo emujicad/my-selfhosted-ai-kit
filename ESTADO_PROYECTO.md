@@ -1,6 +1,6 @@
 # 📊 Estado del Proyecto - My Self-Hosted AI Kit
 
-**Última actualización**: 2025-12-12 (revisado y actualizado con servicios automáticos keycloak-db-init, keycloak-init y mejoras de HAProxy)
+**Última actualización**: 2025-12-12 (revisado y actualizado con servicios automáticos keycloak-db-init, keycloak-init, mejoras de HAProxy y mejoras de dashboards de Grafana)
 
 ## ✅ Completado
 
@@ -21,6 +21,10 @@
    - ✅ Alertas Prometheus configuradas
    - ✅ Grafana funcionando
    - ✅ Grafana OAuth con Keycloak configurado
+   - ✅ nvidia-exporter configurado (métricas reales de GPU NVIDIA)
+   - ✅ ollama-exporter configurado (métricas específicas de Ollama)
+   - ✅ n8n-exporter configurado (métricas de n8n)
+   - ✅ openwebui-exporter configurado (métricas de Open WebUI)
 
 4. **Actualizaciones**
    - ✅ n8n actualizado: 1.101.2 → 1.122.5 (21 versiones)
@@ -51,6 +55,24 @@
    - ✅ Sticky sessions (opcional, comentado por defecto)
    - ✅ Backup de configuración original creado
 
+8. **Mejoras de Dashboards de Grafana** ✅
+   - ✅ Dashboard de Modelos de IA mejorado (tokens/s, latencia percentiles, uso memoria, comparación modelos)
+   - ✅ Dashboard de GPU/CPU mejorado (GPU durante inferencia, memoria GPU, temperatura, CPU por modelo, comparación GPU vs CPU)
+   - ✅ Dashboard de Usuarios y Sesiones mejorado (sesiones activas, actividad por hora/día, usuarios concurrentes, tiempo promedio sesión, tendencias 24h)
+   - ✅ Dashboard de Costos Estimados mejorado (costos por modelo, costos por usuario/sesión, proyección 7 días, análisis de tendencias)
+   - ✅ Métricas adicionales de servicios (n8n, Open WebUI, Qdrant) agregadas
+   - ✅ Executive Summary Dashboard creado (KPIs principales del sistema)
+   - ✅ Ollama Optimization Monitoring Dashboard creado (monitoreo de optimizaciones implementadas)
+
+9. **Optimizaciones de Ollama** ✅ **PARCIALMENTE COMPLETADO**
+   - ✅ Variables de optimización configuradas (OLLAMA_MAX_LOADED_MODELS=2, OLLAMA_NUM_THREAD=8, OLLAMA_KEEP_ALIVE=10m)
+   - ✅ Shared memory configurado (shm_size=2g)
+   - ✅ Límites de recursos configurados (CPU: 6 cores, RAM: 32GB)
+   - ✅ Dashboard de monitoreo de optimizaciones creado
+   - ✅ Scripts de testing creados (test-ollama-quick.sh, test-ollama-performance.sh, test-ollama-advanced.sh)
+   - ✅ Documentación de optimizaciones creada (docs/TESTING_OLLAMA_OPTIMIZATIONS.md, docs/OLLAMA_OPTIMIZATION_MONITORING.md)
+   - ⏳ Implementar queue de requests (pendiente)
+
 ## 📝 Pendiente
 
 1. ~~**Scripts de Backup**~~ ✅ **COMPLETADO**
@@ -79,13 +101,20 @@
    - ⏳ Redirección HTTP a HTTPS
    - ⏳ Renovación automática de certificados
 
-4. **Dashboards Grafana** (Prioridad Media)
+4. **Dashboards Grafana** (Prioridad Media) ✅ **COMPLETADO**
    - ✅ System Overview Dashboard (completado)
    - ✅ Ollama AI Models Dashboard (completado)
-   - ⏳ Dashboard específico para modelos de IA (tokens/s, latencia)
-   - ⏳ Dashboard de uso de GPU/CPU por modelo
-   - ⏳ Dashboard de usuarios activos y sesiones
-   - ⏳ Dashboard de costos estimados por uso
+   - ✅ GPU/CPU Performance Dashboard (completado con métricas reales de GPU NVIDIA)
+   - ✅ Users & Sessions Dashboard (completado)
+   - ✅ Cost Estimation Dashboard (completado)
+   - ✅ AI Models Performance Dashboard (completado y mejorado con métricas específicas de Ollama)
+   - ✅ Executive Summary Dashboard (completado - dashboard ejecutivo con KPIs principales)
+   - ✅ Additional Services Dashboard (completado - métricas de n8n, Open WebUI, Qdrant)
+   - ✅ Ollama Optimization Monitoring Dashboard (completado - monitoreo de optimizaciones de Ollama)
+   - ✅ Dashboard específico para modelos de IA mejorado (tokens/s, latencia percentiles, uso memoria por modelo, comparación modelos)
+   - ✅ Dashboard de uso de GPU/CPU por modelo mejorado (GPU durante inferencia, memoria GPU, temperatura, CPU por modelo, comparación GPU vs CPU)
+   - ✅ Dashboard de usuarios activos y sesiones mejorado (sesiones activas, actividad por hora/día, usuarios concurrentes, tiempo promedio sesión, tendencias 24h)
+   - ✅ Dashboard de costos estimados por uso mejorado (costos por modelo, costos por usuario/sesión, proyección 7 días, análisis de tendencias)
 
 5. **Redis** (Prioridad Media)
    - ⏳ Cache de sesiones de usuario
@@ -117,10 +146,12 @@
 
 ### ⚡ Prioridad Media
 
-4. **Mejorar Dashboards de Grafana**
-   - Dashboard específico para modelos de IA (tokens/s, latencia)
-   - Dashboard de uso de GPU/CPU por modelo
-   - Dashboard de usuarios activos y sesiones
+4. ~~**Mejorar Dashboards de Grafana**~~ ✅ **COMPLETADO**
+   - ✅ Dashboard específico para modelos de IA (tokens/s, latencia) - Mejorado
+   - ✅ Dashboard de uso de GPU/CPU por modelo - Mejorado
+   - ✅ Dashboard de usuarios activos y sesiones - Mejorado
+   - ✅ Dashboard de costos estimados por uso - Mejorado
+   - ✅ Métricas adicionales de servicios (n8n, Open WebUI, Qdrant) - Agregadas
 
 5. **Implementar Redis**
    - Cache de sesiones de usuario
@@ -134,10 +165,12 @@
 
 ### 🎯 Prioridad Baja
 
-7. **Optimizaciones de Rendimiento**
-   - Optimizar configuración de Ollama
-   - Implementar queue de requests
-   - Monitorear uso de memoria por modelo
+7. ~~**Optimizaciones de Rendimiento de Ollama**~~ ✅ **PARCIALMENTE COMPLETADO**
+   - ✅ Configurar cache de modelos (OLLAMA_MAX_LOADED_MODELS=2, OLLAMA_KEEP_ALIVE=10m)
+   - ✅ Optimizar configuración de GPU (shm_size=2g, límites de recursos)
+   - ✅ Optimizar threads de CPU (OLLAMA_NUM_THREAD=8)
+   - ✅ Monitorear uso de memoria por modelo (dashboard de optimización creado)
+   - ⏳ Implementar queue de requests (pendiente)
 
 8. **Panel de Administración Unificado**
    - Dashboard principal con estado de servicios
