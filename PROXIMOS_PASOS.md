@@ -33,6 +33,17 @@
    - Actualizado de 1.101.2 a 1.122.5
    - Estrategia documentada en `docs/N8N_UPDATE_STRATEGY.md`
 
+6. **Mejoras de HAProxy** ✅
+   - Health checks avanzados (inter 3s, fall 3, rise 2)
+   - Rate limiting (100 req/10s por IP) - Protección DDoS
+   - Routing mejorado por paths (backends específicos por servicio)
+   - Timeouts optimizados
+   - Logging mejorado (captura de headers, httplog, forwardfor)
+   - Estadísticas mejoradas (socket habilitado, admin, refresh automático)
+   - Opciones de balanceo mejoradas
+   - Sticky sessions (opcional, comentado por defecto)
+   - Backup de configuración original creado
+
 ### ⚠️ Limitaciones Conocidas
 
 1. **Open WebUI + Keycloak** ⚠️
@@ -227,10 +238,15 @@
    - Implementar queue de requests
    - Optimizar configuración de GPU
 
-2. **Mejorar HAProxy**
-   - Health checks avanzados
-   - Rate limiting
-   - Sticky sessions
+2. ~~**Mejorar HAProxy**~~ ✅ **COMPLETADO**
+   - ✅ Health checks avanzados (inter 3s, fall 3, rise 2)
+   - ✅ Rate limiting (100 req/10s por IP)
+   - ✅ Sticky sessions (opcional, comentado por defecto)
+   - ✅ Routing mejorado por paths
+   - ✅ Timeouts optimizados
+   - ✅ Logging mejorado
+   - ✅ Estadísticas mejoradas
+   - ✅ Opciones de balanceo mejoradas
 
 #### 3.2 Panel de Administración Unificado 🎨
 

@@ -425,7 +425,13 @@ Todos los datos se almacenan en volúmenes persistentes de Docker:
 
 ### Infraestructura (perfil `infrastructure`)
 - **Redis**: Cache en memoria para mejorar rendimiento
-- **HAProxy**: Load balancer para distribuir carga entre servicios
+- **HAProxy**: Load balancer con características avanzadas:
+  - Health checks avanzados (inter 3s, fall 3, rise 2)
+  - Rate limiting (100 req/10s por IP) - Protección DDoS
+  - Routing basado en paths (backends específicos por servicio)
+  - Timeouts optimizados
+  - Logging y estadísticas mejoradas
+  - Opciones de balanceo mejoradas
 
 ### Monitoreo (perfil `monitoring`)
 - **Prometheus**: Recolector de métricas

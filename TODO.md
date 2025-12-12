@@ -78,11 +78,15 @@ Stack actual: Ollama (LLMs) + Open WebUI (chat) + n8n (automatización) + Postgr
   - [ ] Cache de embeddings
   - [ ] Configurar persistencia de Redis
 
-- [ ] **Mejorar HAProxy**
-  - [ ] Configurar health checks avanzados
-  - [ ] Implementar rate limiting
-  - [ ] Configurar sticky sessions
-  - [ ] Monitoreo de HAProxy
+- [x] **Mejorar HAProxy** ✅ **COMPLETADO**
+  - [x] Configurar health checks avanzados (inter 3s, fall 3, rise 2)
+  - [x] Implementar rate limiting (100 req/10s por IP)
+  - [x] Configurar sticky sessions (opcional, comentado por defecto)
+  - [x] Routing mejorado por paths
+  - [x] Timeouts optimizados
+  - [x] Logging mejorado
+  - [x] Estadísticas mejoradas
+  - [x] Opciones de balanceo mejoradas
 
 ### 🎨 Experiencia de Usuario
 - [ ] **Panel de administración unificado**

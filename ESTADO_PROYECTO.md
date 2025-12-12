@@ -1,6 +1,6 @@
 # 📊 Estado del Proyecto - My Self-Hosted AI Kit
 
-**Última actualización**: 2025-12-12 (revisado y actualizado con servicios automáticos keycloak-db-init y keycloak-init)
+**Última actualización**: 2025-12-12 (revisado y actualizado con servicios automáticos keycloak-db-init, keycloak-init y mejoras de HAProxy)
 
 ## ✅ Completado
 
@@ -39,6 +39,17 @@
    - ✅ Guía completa de monitoreo con Grafana
    - ✅ Guía de validación completa
    - ✅ Guía de variables de entorno dinámicas
+
+7. **Mejoras de HAProxy** ✅
+   - ✅ Health checks avanzados (inter 3s, fall 3, rise 2)
+   - ✅ Rate limiting (100 req/10s por IP) - Protección DDoS
+   - ✅ Routing mejorado por paths (backends específicos por servicio)
+   - ✅ Timeouts optimizados (http-request, http-keep-alive, queue, tarpit)
+   - ✅ Logging mejorado (captura de headers, httplog, forwardfor)
+   - ✅ Estadísticas mejoradas (socket habilitado, admin, refresh automático)
+   - ✅ Opciones de balanceo mejoradas (http-server-close, redispatch, retries)
+   - ✅ Sticky sessions (opcional, comentado por defecto)
+   - ✅ Backup de configuración original creado
 
 ## 📝 Pendiente
 
