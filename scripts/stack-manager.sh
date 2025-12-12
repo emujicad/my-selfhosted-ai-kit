@@ -622,13 +622,27 @@ cleanup_orphaned_resources() {
         fi
         
         # Volúmenes
-        local project_volumes=("n8n_storage" "postgres_storage" "qdrant_storage" "pgvector_data" "open_webui_storage" "n8n_data" "shared_data" "prometheus_data" "grafana_data" "alertmanager_data" "backup_data" "redis_data" "jenkins_data" "haproxy_data" "keycloak_data" "modsecurity_data" "cadvisor_data" "node_exporter_data" "postgres_exporter_data" "config_data" "ssl_certs_data" "logs_data" "grafana_provisioning_data" "prometheus_rules_data")
+        local project_volumes=("n8n_storage" "postgres_storage" "qdrant_storage" "pgvector_data" "open_webui_storage" "n8n_data" "shared_data" "prometheus_data" "grafana_data" "alertmanager_data" "backup_data" "redis_data" "jenkins_data" "haproxy_data" "keycloak_data" "modsecurity_data" "cadvisor_data" "node_exporter_data" "postgres_exporter_data" "config_data" "ssl_certs_data" "logs_data" "grafana_provisioning_data" "prometheus_rules_data" "ollama_storage")
         local existing_volumes=()
+        
+        # Obtener nombre del proyecto para prefijos
+        local project_name=""
+        if $DOCKER_CMD compose config >/dev/null 2>&1; then
+             project_name=$($DOCKER_CMD compose config 2>/dev/null | grep -E "^name:" | head -1 | awk '{print $2}' || echo "")
+        fi
+        if [ -z "$project_name" ]; then
+             project_name=$(basename "$(pwd)" | tr '[:upper:]' '[:lower:]' | tr -cd '[:alnum:]-' | sed 's/--/-/g')
+        fi
+        
         for volume in "${project_volumes[@]}"; do
-            if $DOCKER_CMD volume inspect "$volume" >/dev/null 2>&1; then
+            local volume_with_prefix="${project_name}_${volume}"
+            if $DOCKER_CMD volume inspect "$volume_with_prefix" >/dev/null 2>&1; then
+                existing_volumes+=("$volume_with_prefix")
+            elif $DOCKER_CMD volume inspect "$volume" >/dev/null 2>&1; then
                 existing_volumes+=("$volume")
             fi
         done
+        
         if [ ${#existing_volumes[@]} -gt 0 ]; then
             print_info "💾 Volúmenes (${#existing_volumes[@]}):"
             for volume in "${existing_volumes[@]}"; do
@@ -714,13 +728,16 @@ cleanup_orphaned_resources() {
             fi
             
             echo ""
-            print_warning "⚠️  ADVERTENCIA: Esto eliminará los contenedores del proyecto"
-            echo ""
-            read -p "¿Estás seguro de que quieres continuar? (escribe 'SI' para confirmar): " -r
-            echo
-            if [ "$REPLY" != "SI" ]; then
-                print_info "Operación cancelada"
-                return 0
+            # Solo pedir confirmación si NO es 'clean all' (ya se pidió antes)
+            if [ "$clean_type" != "all" ]; then
+                print_warning "⚠️  ADVERTENCIA: Esto eliminará los contenedores del proyecto"
+                echo ""
+                read -p "¿Estás seguro de que quieres continuar? (escribe 'SI' para confirmar): " -r
+                echo
+                if [ "$REPLY" != "SI" ]; then
+                    print_info "Operación cancelada"
+                    return 0
+                fi
             fi
             
             # Eliminar contenedores detenidos
@@ -814,11 +831,24 @@ cleanup_orphaned_resources() {
     if [ "$clean_type" = "all" ] || [ "$clean_type" = "storage" ]; then
         print_warning "⚠️  LIMPIEZA DE ALMACENAMIENTO - ESTO ELIMINARÁ DATOS PERSISTENTES"
         print_info "Volúmenes del proyecto que se eliminarán:"
-        local project_volumes=("n8n_storage" "postgres_storage" "qdrant_storage" "pgvector_data" "open_webui_storage" "n8n_data" "shared_data" "prometheus_data" "grafana_data" "alertmanager_data" "backup_data" "redis_data" "jenkins_data" "haproxy_data" "keycloak_data" "modsecurity_data" "cadvisor_data" "node_exporter_data" "postgres_exporter_data" "config_data" "ssl_certs_data" "logs_data" "grafana_provisioning_data" "prometheus_rules_data")
+        local project_volumes=("n8n_storage" "postgres_storage" "qdrant_storage" "pgvector_data" "open_webui_storage" "n8n_data" "shared_data" "prometheus_data" "grafana_data" "alertmanager_data" "backup_data" "redis_data" "jenkins_data" "haproxy_data" "keycloak_data" "modsecurity_data" "cadvisor_data" "node_exporter_data" "postgres_exporter_data" "config_data" "ssl_certs_data" "logs_data" "grafana_provisioning_data" "prometheus_rules_data" "ollama_storage")
         
+        # Obtener nombre del proyecto para prefijos (reutilizamos la lógica)
+        local project_name=""
+        if $DOCKER_CMD compose config >/dev/null 2>&1; then
+             project_name=$($DOCKER_CMD compose config 2>/dev/null | grep -E "^name:" | head -1 | awk '{print $2}' || echo "")
+        fi
+        if [ -z "$project_name" ]; then
+             project_name=$(basename "$(pwd)" | tr '[:upper:]' '[:lower:]' | tr -cd '[:alnum:]-' | sed 's/--/-/g')
+        fi
+
         local existing_volumes=()
         for volume in "${project_volumes[@]}"; do
-            if $DOCKER_CMD volume inspect "$volume" >/dev/null 2>&1; then
+            local volume_with_prefix="${project_name}_${volume}"
+            if $DOCKER_CMD volume inspect "$volume_with_prefix" >/dev/null 2>&1; then
+                existing_volumes+=("$volume_with_prefix")
+                echo "   - $volume_with_prefix"
+            elif $DOCKER_CMD volume inspect "$volume" >/dev/null 2>&1; then
                 existing_volumes+=("$volume")
                 echo "   - $volume"
             fi
@@ -894,12 +924,24 @@ cleanup_orphaned_resources() {
             
             print_info "Eliminando imágenes..."
             for image in "${project_images[@]}"; do
-                if $DOCKER_CMD rmi "$image" >/dev/null 2>&1; then
+                # Capturar error para análisis
+                local rmi_output
+                if rmi_output=$($DOCKER_CMD rmi "$image" 2>&1); then
                     print_success "   ✅ Eliminada: $image"
                     cleaned_items+=("imagen: $image")
                 else
-                    print_warning "   ⚠️  No se pudo eliminar: $image (puede estar en uso por otros proyectos)"
-                    failed_items+=("imagen: $image")
+                    # Analizar si es error de uso (conflicto)
+                    if echo "$rmi_output" | grep -qE "conflict|reference|used by"; then
+                        print_info "   ℹ️  Omitida: $image (en uso por otro contenedor/proyecto)"
+                        # No lo agregamos a failed_items porque es un comportamiento correcto/seguro
+                    elif echo "$rmi_output" | grep -qE "No such image"; then
+                         print_success "   ✅ Ya eliminada: $image"
+                         # Considerarlo éxito (ya no está)
+                    else
+                        print_warning "   ⚠️  No se pudo eliminar: $image"
+                        echo "      Error: $rmi_output"
+                        failed_items+=("imagen: $image")
+                    fi
                 fi
             done
         else

@@ -51,6 +51,8 @@
 
 2. **Integración Keycloak**
    - ✅ Grafana con Keycloak (completado y funcionando)
+   - ✅ **Clean slate funciona automáticamente** (stop → clean all → start sin intervención manual)
+   - ✅ keycloak-init inyecta automáticamente el enlace user_auth para login OAuth
    - ⚠️ Open WebUI con OIDC (limitación conocida documentada - no funciona debido a problema con discovery document)
    - ⏳ n8n con OIDC (configuración lista en docker-compose.yml, pendiente probar)
    - ⏳ Jenkins con OIDC (script de inicialización listo: `init-jenkins-oidc.sh`, pendiente probar)
