@@ -45,6 +45,10 @@
   - Métricas específicas de Ollama
   - Logging centralizado
   - Plan de implementación por fases
+- **[DASHBOARD_VALIDATION_REPORT.md](DASHBOARD_VALIDATION_REPORT.md)** ⭐ **NUEVO** - Reporte de validación de dashboards de Grafana
+  - Validación de nombres de paneles y unidades
+  - Problemas encontrados y correcciones recomendadas
+  - Checklist de corrección
 
 #### Gestión del Stack
 - **[STACK_MANAGER_GUIDE.md](STACK_MANAGER_GUIDE.md)** - ⭐ **NUEVO** - Script maestro para gestionar perfiles Docker Compose

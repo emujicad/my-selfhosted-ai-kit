@@ -101,7 +101,7 @@
     },
     {
       "id": 3,
-      "title": "Ollama Container Memory Usage",
+      "title": "Container Memory Usage (All Docker Containers)",
       "type": "timeseries",
       "targets": [
         {
@@ -151,7 +151,7 @@
                 }
               ]
             },
-            "unit": "bytes"
+            "unit": "mbytes"
           }
         }
       },
@@ -164,7 +164,7 @@
     },
     {
       "id": 4,
-      "title": "Ollama Container Network Traffic",
+      "title": "Container Network Traffic (All Docker Containers)",
       "type": "timeseries",
       "targets": [
         {
@@ -205,7 +205,7 @@
               "tooltip": false,
               "vis": false
             },
-            "unit": "bytes"
+            "unit": "kbytes"
           }
         }
       },

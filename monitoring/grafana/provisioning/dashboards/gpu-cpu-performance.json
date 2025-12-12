@@ -75,7 +75,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "(DCGM_FI_DEV_FB_USED{gpu=~\"0|1|2|3\"} / DCGM_FI_DEV_FB_TOTAL{gpu=~\"0|1|2|3\"}) * 100",
+          "expr": "(DCGM_FI_DEV_FB_USED{gpu=~\"0|1|2|3\"} / (DCGM_FI_DEV_FB_USED{gpu=~\"0|1|2|3\"} + DCGM_FI_DEV_FB_FREE{gpu=~\"0|1|2|3\"})) * 100",
           "legendFormat": "GPU {{gpu}} Memory %",
           "refId": "A"
         }

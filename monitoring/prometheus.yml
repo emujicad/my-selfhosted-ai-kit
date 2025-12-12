@@ -27,6 +27,7 @@ scrape_configs:
       - targets: ['open-webui:8080']
     metrics_path: '/healthz'
 
+  # Qdrant health check (mantener para compatibilidad)
   - job_name: 'qdrant'
     static_configs:
       - targets: ['qdrant:6333']
@@ -79,4 +80,22 @@ scrape_configs:
   - job_name: 'ollama-exporter'
     static_configs:
       - targets: ['ollama-exporter:9888']
+    metrics_path: '/metrics'
+
+  # Monitorear n8n Exporter (métricas específicas)
+  - job_name: 'n8n-exporter'
+    static_configs:
+      - targets: ['n8n-exporter:9889']
+    metrics_path: '/metrics'
+
+  # Monitorear Open WebUI Exporter (métricas específicas)
+  - job_name: 'openwebui-exporter'
+    static_configs:
+      - targets: ['openwebui-exporter:9890']
+    metrics_path: '/metrics'
+
+  # Monitorear Qdrant (métricas nativas Prometheus)
+  - job_name: 'qdrant-metrics'
+    static_configs:
+      - targets: ['qdrant:6333']
     metrics_path: '/metrics' 

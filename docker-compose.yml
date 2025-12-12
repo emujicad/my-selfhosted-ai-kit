@@ -947,6 +947,82 @@ services:
           cpus: '0.1'
           memory: 64M
 
+  # n8n Exporter - Métricas específicas de n8n
+  n8n-exporter:
+    image: python:3.11-alpine
+    container_name: n8n-exporter
+    profiles: ["monitoring"]
+    ports:
+      - "${PORT_N8N_EXPORTER_HOST:-9889}:${PORT_N8N_EXPORTER_CONTAINER:-9889}"
+    volumes:
+      - ./scripts/n8n-exporter.py:/app/n8n-exporter.py:ro
+    networks:
+      - monitoring-network
+      - genai-network  # Necesario para conectarse a n8n
+    environment:
+      - N8N_HOST=${N8N_HOST_INTERNAL:-n8n}:${PORT_N8N_CONTAINER:-5678}
+      - EXPORTER_PORT=9889
+      - SCRAPE_INTERVAL=15
+    command: python3 /app/n8n-exporter.py
+    # No depende de n8n directamente para permitir que el exporter funcione
+    # incluso si n8n no está corriendo (simplemente reportará n8n_up=0)
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9889/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+  # Open WebUI Exporter - Métricas específicas de Open WebUI
+  openwebui-exporter:
+    image: python:3.11-alpine
+    container_name: openwebui-exporter
+    profiles: ["monitoring"]
+    ports:
+      - "${PORT_OPENWEBUI_EXPORTER_HOST:-9890}:${PORT_OPENWEBUI_EXPORTER_CONTAINER:-9890}"
+    volumes:
+      - ./scripts/openwebui-exporter.py:/app/openwebui-exporter.py:ro
+    networks:
+      - monitoring-network
+      - genai-network  # Necesario para conectarse a Open WebUI
+    environment:
+      - OPEN_WEBUI_HOST=${OPEN_WEBUI_HOST_INTERNAL:-open-webui}:${PORT_OPEN_WEBUI_CONTAINER:-8080}
+      - EXPORTER_PORT=9890
+      - SCRAPE_INTERVAL=15
+    command: python3 /app/openwebui-exporter.py
+    # No depende de open-webui directamente para permitir que el exporter funcione
+    # incluso si open-webui no está corriendo (simplemente reportará openwebui_up=0)
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9890/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
   # =============================================================================
   # SERVICIOS DE INFRAESTRUCTURA
   # =============================================================================

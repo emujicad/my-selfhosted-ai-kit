@@ -108,7 +108,7 @@ El stack incluye un sistema completo de monitoreo basado en Prometheus y Grafana
 
 ### System Overview Dashboard
 
-**Ubicación**: Grafana → Dashboards → System Overview Dashboard  
+**Ubicación**: Grafana → Dashboards → System Overview Dashboard
 **UID**: `system-overview`
 
 **Paneles incluidos**:
@@ -129,7 +129,7 @@ El stack incluye un sistema completo de monitoreo basado en Prometheus y Grafana
 
 ### Ollama AI Models Dashboard
 
-**Ubicación**: Grafana → Dashboards → Ollama AI Models Dashboard  
+**Ubicación**: Grafana → Dashboards → Ollama AI Models Dashboard
 **UID**: `ollama-dashboard`
 
 **Paneles incluidos**:

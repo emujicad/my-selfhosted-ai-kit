@@ -241,7 +241,7 @@
               "tooltip": false,
               "vis": false
             },
-            "unit": "bytes"
+            "unit": "kbytes"
           }
         }
       },
@@ -295,7 +295,7 @@
               "tooltip": false,
               "vis": false
             },
-            "unit": "bytes"
+            "unit": "kbytes"
           }
         }
       },
@@ -408,7 +408,7 @@
               "tooltip": false,
               "vis": false
             },
-            "unit": "bytes"
+            "unit": "mbytes"
           }
         }
       },

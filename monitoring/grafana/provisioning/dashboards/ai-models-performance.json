@@ -187,7 +187,7 @@
     },
     {
       "id": 2,
-      "title": "Ollama CPU Usage",
+      "title": "Total Container CPU Usage",
       "type": "stat",
       "targets": [
         {
@@ -235,7 +235,7 @@
     },
     {
       "id": 3,
-      "title": "Ollama Memory Usage",
+      "title": "Total Container Memory Usage",
       "type": "stat",
       "targets": [
         {
@@ -283,7 +283,7 @@
     },
     {
       "id": 4,
-      "title": "Ollama Network I/O",
+      "title": "Network I/O (All Docker Containers)",
       "type": "stat",
       "targets": [
         {
@@ -328,7 +328,7 @@
     },
     {
       "id": 5,
-      "title": "Ollama CPU Usage Over Time",
+      "title": "Container CPU Usage Over Time (All Docker Containers)",
       "type": "timeseries",
       "targets": [
         {
@@ -379,7 +379,7 @@
     },
     {
       "id": 6,
-      "title": "Ollama Memory Usage Over Time",
+      "title": "Container Memory Usage Over Time (All Docker Containers)",
       "type": "timeseries",
       "targets": [
         {
@@ -532,12 +532,12 @@
     },
     {
       "id": 9,
-      "title": "Open WebUI Container Status",
+      "title": "Container Status (All Docker Containers)",
       "type": "stat",
       "targets": [
         {
           "expr": "count(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"})",
-          "legendFormat": "Open WebUI Containers",
+          "legendFormat": "Containers Running",
           "refId": "A"
         }
       ],
@@ -576,7 +576,7 @@
     },
     {
       "id": 10,
-      "title": "Open WebUI CPU Usage",
+      "title": "Container CPU Usage (All Docker Containers)",
       "type": "timeseries",
       "targets": [
         {
@@ -627,7 +627,7 @@
     },
     {
       "id": 11,
-      "title": "Open WebUI Memory Usage",
+      "title": "Container Memory Usage (All Docker Containers)",
       "type": "timeseries",
       "targets": [
         {
