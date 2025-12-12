@@ -536,6 +536,24 @@ This usually means Keycloak client secrets don't match.
 docker compose up -d keycloak-init
 ```
 
+### Problem: Grafana Login Failed ("InternalError")
+This usually happens if the Keycloak user doesn't have an email address.
+```bash
+# Set email for admin user
+docker exec keycloak /opt/keycloak/bin/kcadm.sh update users/$(docker exec keycloak /opt/keycloak/bin/kcadm.sh get users -r master -q username=admin --fields id --format csv --noquotes) -r master -s email=admin@example.com -s emailVerified=true
+```
+
+### Problem: Grafana Login Failed ("User sync failed")
+This happens if Grafana is not allowed to create new users from OAuth.
+1. Edit `.env` file:
+   ```bash
+   GRAFANA_USERS_ALLOW_SIGN_UP=true
+   ```
+2. Restart Grafana:
+   ```bash
+   docker compose restart grafana
+   ```
+
 ### Problem: Very large logs
 ```bash
 # Logs are configured to rotate automatically
