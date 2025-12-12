@@ -237,5 +237,5 @@ Stack actual: Ollama (LLMs) + Open WebUI (chat) + n8n (automatización) + Postgr
 
 ---
 
-*Última actualización: $(date)*
+*Última actualización: 2025-12-12*
 *Estado del proyecto: En desarrollo activo* 

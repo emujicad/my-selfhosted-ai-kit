@@ -233,6 +233,23 @@ Los siguientes scripts se mantienen separados porque tienen funcionalidades espe
 
 - **`backup-manager.sh`** - Gestión consolidada de backups (crear, restaurar, listar) - Reemplaza `backup.sh`, `restore.sh` y `list-backups.sh`
 - **`keycloak-manager.sh`** - Gestión completa de Keycloak (setup, verify, fix, credentials, create-user, init-db, status) - Reemplaza `setup-keycloak.sh`, `show-keycloak-credentials.sh` y `create-keycloak-user.sh`
+  - **Nota sobre `init-db`**: Este comando ejecuta manualmente `init-keycloak-db.sql`. Normalmente no es necesario porque `keycloak-db-init` (Docker Compose) crea la BD automáticamente. Úsalo solo si necesitas control manual o si `keycloak-db-init` falla.
+- **`recreate-keycloak-clients.sh`** - Crea clientes OIDC en Keycloak y actualiza automáticamente los secrets en `.env`
+
+### ⚡ Servicios Automáticos de Docker Compose
+
+Docker Compose incluye servicios automáticos que se ejecutan sin intervención manual:
+
+- **`keycloak-db-init`**: Crea automáticamente la base de datos de Keycloak si no existe (antes de que Keycloak inicie)
+- **`keycloak-init`**: Crea automáticamente los clientes OIDC (Grafana, n8n, Open WebUI, Jenkins) y actualiza automáticamente los secrets en `.env` (después de que Keycloak esté listo)
+- **`grafana-db-init`**: Crea automáticamente la base de datos de Grafana si no existe (antes de que Grafana inicie)
+
+**Esto significa que normalmente solo necesitas ejecutar:**
+```bash
+./scripts/stack-manager.sh start security monitoring automation
+```
+
+Los clientes OIDC y los secrets se configuran automáticamente. Solo necesitas ejecutar scripts manuales si quieres control total o si algo falla.
 
 ## 🎯 Flujo de Trabajo Recomendado
 

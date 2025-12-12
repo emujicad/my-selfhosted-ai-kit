@@ -16,14 +16,29 @@
 
 ## 📊 Resumen General
 
+### ⚡ Inicialización Automática
+
+El sistema incluye servicios automáticos que simplifican la configuración:
+
+- **`keycloak-db-init`**: Crea automáticamente la base de datos de Keycloak si no existe (antes de que Keycloak inicie)
+- **`keycloak-init`**: Crea automáticamente los clientes OIDC (Grafana, n8n, Open WebUI, Jenkins) y **actualiza automáticamente los secrets en `.env`** (después de que Keycloak esté listo)
+- **`grafana-db-init`**: Crea automáticamente la base de datos de Grafana si no existe
+
+**Esto significa que normalmente solo necesitas:**
+```bash
+./scripts/stack-manager.sh start security monitoring automation
+```
+
+Los clientes OIDC y los secrets se configuran automáticamente. Solo necesitas ejecutar scripts manuales si quieres control total o si algo falla.
+
 ### Estado de Integraciones
 
 | Servicio | Estado | Notas |
 |----------|--------|-------|
-| **Grafana** | ✅ Completado | Funciona perfectamente |
-| **Open WebUI** | ⚠️ Limitación conocida | No funciona debido a limitación de Open WebUI |
-| **n8n** | ⏳ Configurado | Pendiente probar |
-| **Jenkins** | ⏳ Pendiente | No iniciado |
+| **Grafana** | ✅ Completado | Funciona perfectamente. Clientes creados automáticamente por `keycloak-init` |
+| **Open WebUI** | ⚠️ Limitación conocida | No funciona debido a limitación de Open WebUI. Cliente creado automáticamente pero no funcional |
+| **n8n** | ✅ Configurado | Clientes creados automáticamente por `keycloak-init`. Pendiente probar login |
+| **Jenkins** | ✅ Configurado | Clientes creados automáticamente por `keycloak-init`. Pendiente probar login |
 
 ---
 
@@ -232,15 +247,23 @@ La [documentación oficial de Grafana](https://grafana.com/docs/grafana/latest/s
    ```bash
    ./scripts/recreate-keycloak-clients.sh
    ```
-   Este script configura todo automáticamente.
+   Este script configura todo automáticamente y **actualiza el Client Secret en `.env` automáticamente**.
 
-3. **Configurar Client Secret en docker-compose.yml**:
-   - Actualiza `GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET` con el secret copiado
+   **O simplemente levanta los servicios** (más fácil):
+   ```bash
+   ./scripts/stack-manager.sh start security monitoring
+   ```
+   El servicio `keycloak-init` creará automáticamente los clientes OIDC y actualizará los secrets en `.env`.
 
-4. **Recrear Grafana**:
+3. **Verificar Client Secret en .env** (ya actualizado automáticamente):
+   - Si usaste `recreate-keycloak-clients.sh` o `keycloak-init`, el secret ya está en `.env`
+   - Si lo hiciste manualmente, actualiza `GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET` en `.env`
+
+4. **Recrear Grafana** (si hiciste cambios manuales):
    ```bash
    docker compose --profile monitoring up -d --force-recreate grafana
    ```
+   **Nota**: Si usaste `keycloak-init`, Grafana ya debería estar configurado correctamente.
 
 ### Cómo Usar
 
@@ -513,6 +536,38 @@ environment:
 
 ### Pasos para Configurar
 
+**Opción 1: Automático (Recomendado)**
+```bash
+# Los clientes OIDC se crean automáticamente mediante keycloak-init
+# Los secrets se actualizan automáticamente en .env
+# Solo necesitas levantar los servicios:
+./scripts/stack-manager.sh start security automation
+
+# Verificar que los clientes se crearon:
+# Accede a Keycloak: http://localhost:8080/admin
+# Ve a Clients → Verifica que "n8n" existe
+
+# Verificar que el secret se actualizó en .env:
+grep N8N_OIDC_CLIENT_SECRET .env
+
+# Probar login en http://localhost:5678
+```
+
+**Opción 2: Script Manual**
+```bash
+# 1. Crear cliente y actualizar secret automáticamente:
+./scripts/recreate-keycloak-clients.sh
+# Este script actualiza automáticamente N8N_OIDC_CLIENT_SECRET en .env
+
+# 2. Recrear contenedor:
+docker compose up -d --force-recreate n8n
+
+# 3. Probar:
+# Abre n8n: http://localhost:5678
+# Deberías ver opción de login con Keycloak
+```
+
+**Opción 3: Manual (Solo si necesitas control total)**
 1. **Configurar cliente en Keycloak:**
    ```bash
    ./scripts/keycloak-manager.sh setup n8n
@@ -586,6 +641,48 @@ JENKINS_OIDC_SCOPES=openid email profile
 
 ### Pasos para Configurar
 
+**Opción 1: Automático (Recomendado)**
+```bash
+# Los clientes OIDC se crean automáticamente mediante keycloak-init
+# Los secrets se actualizan automáticamente en .env
+# Solo necesitas:
+
+# 1. Levantar servicios (keycloak-init creará clientes automáticamente):
+./scripts/stack-manager.sh start security ci-cd
+
+# 2. Verificar que los clientes se crearon:
+# Accede a Keycloak: http://localhost:8080/admin
+# Ve a Clients → Verifica que "jenkins" existe
+
+# 3. Verificar que el secret se actualizó en .env:
+grep JENKINS_OIDC_CLIENT_SECRET .env
+
+# 4. Ejecutar script de inicialización (configura plugin OIDC):
+./scripts/init-jenkins-oidc.sh
+
+# 5. Probar login:
+# Abre Jenkins: http://localhost:8081
+# Deberías ser redirigido a Keycloak para autenticarte
+```
+
+**Opción 2: Script Manual**
+```bash
+# 1. Crear cliente y actualizar secret automáticamente:
+./scripts/recreate-keycloak-clients.sh
+# Este script actualiza automáticamente JENKINS_OIDC_CLIENT_SECRET en .env
+
+# 2. Levantar Jenkins:
+docker compose --profile ci-cd up -d jenkins
+
+# 3. Ejecutar script de inicialización:
+./scripts/init-jenkins-oidc.sh
+
+# 4. Probar login:
+# Abre Jenkins: http://localhost:8081
+# Deberías ser redirigido a Keycloak para autenticarte
+```
+
+**Opción 3: Manual (Solo si necesitas control total)**
 1. **Crear cliente en Keycloak:**
    ```bash
    ./scripts/recreate-keycloak-clients.sh
@@ -691,6 +788,11 @@ JENKINS_OIDC_SCOPES=openid email profile
 ```
 
 El sistema verifica y corrige automáticamente antes de levantar Keycloak. Solo verás un mensaje si corrigió algo.
+
+**Nota sobre inicialización automática**:
+- `keycloak-db-init` crea automáticamente la base de datos de Keycloak si no existe
+- `keycloak-init` crea automáticamente los clientes OIDC y actualiza los secrets en `.env`
+- No necesitas ejecutar scripts manuales a menos que algo falle
 
 **Solución Manual (Opcional - Solo si necesitas diagnóstico detallado)**:
 ```bash

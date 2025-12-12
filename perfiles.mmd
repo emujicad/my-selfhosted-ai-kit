@@ -1,64 +1,47 @@
 flowchart TD
-    subgraph Perfiles_IA
+    subgraph Perfiles_IA["Perfiles IA"]
         CPU["cpu\nOllama (CPU)"]
         NVIDIA["gpu-nvidia\nOllama (GPU NVIDIA)"]
         AMD["gpu-amd\nOllama (GPU AMD)"]
     end
-    subgraph Servicios_Comunes
-        N8N["n8n\nAutomatización"]
+    subgraph Servicios_Base["Servicios Base (sin perfil)"]
         QDRANT["qdrant\nDB vectorial"]
         PGVECTOR["pgvector\nDB vectores"]
-        OPENWEBUI["Open WebUI\nChat IA"]
+        POSTGRES["postgres\nBase de datos"]
     end
-    subgraph Servicios_Adicionales
+    subgraph Perfiles_Servicios["Perfiles de Servicios"]
+        CHATAI["chat-ai\nOpen WebUI"]
+        AUTO["automation\nn8n, Watchtower, Sync"]
         MON["monitoring\nPrometheus, Grafana, AlertManager, backup"]
         SEC["security\nKeycloak, ModSecurity"]
         INFRA["infrastructure\nRedis, HAProxy"]
-        AUTO["automation\nWatchtower, Sync"]
         CICD["ci-cd\nJenkins"]
         TEST["testing\nTest Runner"]
         DEBUG["debug\nDebug Tools"]
         DEV["dev\nHerramientas desarrollo"]
     end
-    CPU -- cpu --> N8N
-    CPU -- cpu --> QDRANT
-    CPU -- cpu --> PGVECTOR
-    CPU -- cpu --> OPENWEBUI
-    NVIDIA -- nvidia --> N8N
-    NVIDIA -- nvidia --> QDRANT
-    NVIDIA -- nvidia --> PGVECTOR
-    NVIDIA -- nvidia --> OPENWEBUI
-    AMD -- amd --> N8N
-    AMD -- amd --> QDRANT
-    AMD -- amd --> PGVECTOR
-    AMD -- amd --> OPENWEBUI
-    N8N -- monitoring --> MON
-    QDRANT -- monitoring --> MON
-    PGVECTOR -- monitoring --> MON
-    OPENWEBUI -- monitoring --> MON
-    N8N -- security --> SEC
-    OPENWEBUI -- security --> SEC
-    N8N -- infrastructure --> INFRA
-    OPENWEBUI -- infrastructure --> INFRA
-    N8N -- automation --> AUTO
-    N8N -- ci-cd --> CICD
-    N8N -- testing --> TEST
-    N8N -- debug --> DEBUG
-    N8N -- dev --> DEV
+    CPU -.->|"Usa"| CHATAI
+    CPU -.->|"Usa"| AUTO
+    NVIDIA -.->|"Usa"| CHATAI
+    NVIDIA -.->|"Usa"| AUTO
+    AMD -.->|"Usa"| CHATAI
+    AMD -.->|"Usa"| AUTO
+    CHATAI -->|"Requiere"| SEC
+    AUTO -->|"Requiere"| SEC
+    MON -->|"Requiere"| SEC
+    CHATAI -->|"Monitorea"| MON
+    AUTO -->|"Monitorea"| MON
+    QDRANT -->|"Monitorea"| MON
+    PGVECTOR -->|"Monitorea"| MON
+    CHATAI -->|"Usa"| INFRA
+    AUTO -->|"Usa"| INFRA
+    AUTO -->|"Integra"| CICD
+    AUTO -->|"Usa"| TEST
+    AUTO -->|"Usa"| DEBUG
+    AUTO -->|"Usa"| DEV
     classDef ia fill:#e0f7fa,stroke:#00796b,stroke-width:2px;
-    classDef comunes fill:#e8f5e9,stroke:#388e3c,stroke-width:2px;
-    classDef adicionales fill:#fff3e0,stroke:#e65100,stroke-width:2px;
+    classDef base fill:#e8f5e9,stroke:#388e3c,stroke-width:2px;
+    classDef perfiles fill:#fff3e0,stroke:#e65100,stroke-width:2px;
     class Perfiles_IA ia;
-    class Servicios_Comunes comunes;
-    class Servicios_Adicionales adicionales;
-    linkStyle 0,1,2,3 stroke:#2196f3,stroke-width:3px;
-    linkStyle 4,5,6,7 stroke:#43a047,stroke-width:3px;
-    linkStyle 8,9,10,11 stroke:#fb8c00,stroke-width:3px;
-    linkStyle 12,13,14,15 stroke:#8e24aa,stroke-width:3px;
-    linkStyle 16,17 stroke:#e53935,stroke-width:3px;
-    linkStyle 18,19 stroke:#6d4c41,stroke-width:3px;
-    linkStyle 20 stroke:#00bcd4,stroke-width:3px;
-    linkStyle 21 stroke:#455a64,stroke-width:3px;
-    linkStyle 22 stroke:#cddc39,stroke-width:3px;
-    linkStyle 23 stroke:#d81b60,stroke-width:3px;
-    linkStyle 24 stroke:#ffd600,stroke-width:3px; 
+    class Servicios_Base base;
+    class Perfiles_Servicios perfiles; 

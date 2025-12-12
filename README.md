@@ -532,8 +532,12 @@ sudo netstat -tulpn | grep :3000
 ### Problem: Keycloak Login Failed ("Failed to get token")
 This usually means Keycloak client secrets don't match.
 ```bash
-# Force update of client secrets
-docker compose up -d keycloak-init
+# Force update of client secrets (keycloak-init runs automatically on start)
+# If you need to manually trigger it:
+docker compose --profile security up -d keycloak-init
+
+# Or simply restart the security profile (keycloak-init will run automatically)
+./scripts/stack-manager.sh restart security
 ```
 
 ### Problem: Grafana Login Failed ("InternalError")

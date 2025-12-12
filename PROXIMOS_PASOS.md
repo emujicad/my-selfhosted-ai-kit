@@ -56,36 +56,46 @@
 **Estado actual:**
 - ✅ Grafana: Completado y funcionando
 - ⚠️ Open WebUI: Limitación conocida (no funciona)
-- ⏳ n8n: Configuración lista, pendiente probar
-- ⏳ Jenkins: Script de inicialización listo, pendiente probar
+- ✅ n8n: Configuración lista y clientes OIDC creados automáticamente por `keycloak-init`
+- ✅ Jenkins: Script de inicialización listo y clientes OIDC creados automáticamente por `keycloak-init`
 
 **Tareas:**
 1. **Probar integración n8n con Keycloak**
    ```bash
-   # 1. Configurar cliente en Keycloak
-   ./scripts/keycloak-manager.sh setup n8n
+   # Los clientes OIDC se crean automáticamente mediante keycloak-init
+   # Los secrets se actualizan automáticamente en .env
+   # Solo necesitas:
    
-   # 2. Agregar secret a .env
-   # N8N_OIDC_CLIENT_SECRET=<secret_de_keycloak>
+   # 1. Levantar servicios (keycloak-init creará clientes automáticamente)
+   ./scripts/stack-manager.sh start security automation
    
-   # 3. Recrear n8n
-   docker compose up -d --force-recreate n8n
+   # 2. Verificar que los clientes se crearon
+   # Accede a Keycloak: http://localhost:8080/admin
+   # Ve a Clients → Verifica que "n8n" existe
+   
+   # 3. Verificar que el secret se actualizó en .env
+   grep N8N_OIDC_CLIENT_SECRET .env
    
    # 4. Probar login en http://localhost:5678
    ```
 
 2. **Probar integración Jenkins con Keycloak**
    ```bash
-   # 1. Crear cliente en Keycloak
-   ./scripts/recreate-keycloak-clients.sh
+   # Los clientes OIDC se crean automáticamente mediante keycloak-init
+   # Los secrets se actualizan automáticamente en .env
+   # Solo necesitas:
    
-   # 2. Actualizar secret en .env
-   # JENKINS_OIDC_CLIENT_SECRET=<secret_mostrado>
+   # 1. Levantar servicios (keycloak-init creará clientes automáticamente)
+   ./scripts/stack-manager.sh start security ci-cd
    
-   # 3. Levantar Jenkins
-   docker compose --profile ci-cd up -d jenkins
+   # 2. Verificar que los clientes se crearon
+   # Accede a Keycloak: http://localhost:8080/admin
+   # Ve a Clients → Verifica que "jenkins" existe
    
-   # 4. Ejecutar script de inicialización
+   # 3. Verificar que el secret se actualizó en .env
+   grep JENKINS_OIDC_CLIENT_SECRET .env
+   
+   # 4. Ejecutar script de inicialización (configura plugin OIDC)
    ./scripts/init-jenkins-oidc.sh
    
    # 5. Probar login en http://localhost:8081

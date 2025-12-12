@@ -37,6 +37,23 @@ El sistema ahora incluye **correcciones automáticas integradas** que se ejecuta
 
 **Documentación**: [KEYCLOAK_AUTO_FIX.md](KEYCLOAK_AUTO_FIX.md)
 
+### 3. Inicialización Automática de Keycloak (Docker Compose)
+
+**Cuándo se ejecuta**: Automáticamente al levantar servicios con perfil `security`
+
+**Qué hace**:
+- **`keycloak-db-init`**: Crea automáticamente la base de datos de Keycloak si no existe (antes de que Keycloak inicie)
+- **`keycloak-init`**: Crea automáticamente los clientes OIDC (Grafana, n8n, Open WebUI, Jenkins) y **actualiza automáticamente los secrets en `.env`** (después de que Keycloak esté listo)
+- **`grafana-db-init`**: Crea automáticamente la base de datos de Grafana si no existe (antes de que Grafana inicie)
+
+**Comportamiento**:
+- ✅ Se ejecuta automáticamente sin intervención manual
+- ✅ Crea clientes OIDC con configuración correcta
+- ✅ Actualiza automáticamente los secrets en `.env`
+- ✅ Inyecta enlace de usuario en base de datos de Grafana para login OAuth
+
+**Documentación**: [KEYCLOAK_INTEGRATION_PLAN.md](KEYCLOAK_INTEGRATION_PLAN.md)
+
 ## 🎯 Flujo de Trabajo
 
 ### Antes (Manual)
@@ -89,6 +106,9 @@ nano .env
 |------------|-------------------|-------|
 | Variables .env | `validate` o `start` | `validate_before_start()` |
 | Base de datos Keycloak | `start` con perfil `security` | `auto_fix_keycloak_db()` |
+| Inicialización BD Keycloak | `start` con perfil `security` | `keycloak-db-init` (Docker Compose) |
+| Inicialización BD Grafana | `start` con perfil `monitoring` | `grafana-db-init` (Docker Compose) |
+| Creación clientes OIDC | `start` con perfil `security` | `keycloak-init` (Docker Compose) |
 
 ## ✅ Resultado
 

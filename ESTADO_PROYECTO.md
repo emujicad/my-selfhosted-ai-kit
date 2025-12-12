@@ -1,6 +1,6 @@
 # 📊 Estado del Proyecto - My Self-Hosted AI Kit
 
-**Última actualización**: 2025-12-12 (revisado y actualizado)
+**Última actualización**: 2025-12-12 (revisado y actualizado con servicios automáticos keycloak-db-init y keycloak-init)
 
 ## ✅ Completado
 
@@ -52,10 +52,11 @@
 2. **Integración Keycloak**
    - ✅ Grafana con Keycloak (completado y funcionando)
    - ✅ **Clean slate funciona automáticamente** (stop → clean all → start sin intervención manual)
-   - ✅ keycloak-init inyecta automáticamente el enlace user_auth para login OAuth
+   - ✅ **keycloak-db-init**: Crea automáticamente la base de datos de Keycloak si no existe
+   - ✅ **keycloak-init**: Crea automáticamente clientes OIDC (Grafana, n8n, Open WebUI, Jenkins) y actualiza secrets en `.env`
    - ⚠️ Open WebUI con OIDC (limitación conocida documentada - no funciona debido a problema con discovery document)
-   - ⏳ n8n con OIDC (configuración lista en docker-compose.yml, pendiente probar)
-   - ⏳ Jenkins con OIDC (script de inicialización listo: `init-jenkins-oidc.sh`, pendiente probar)
+   - ✅ n8n con OIDC (configuración lista en docker-compose.yml, clientes creados automáticamente por keycloak-init)
+   - ✅ Jenkins con OIDC (script de inicialización listo: `init-jenkins-oidc.sh`, clientes creados automáticamente por keycloak-init)
    - ✅ Script consolidado: `keycloak-manager.sh`
    - ✅ Solución de problemas: Corregida propagación de secretos para clientes OIDC (Grafana, n8n, etc.)
    - ✅ Solución de problemas: Mapeo correcto de email Admin entre Keycloak y Grafana
