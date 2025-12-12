@@ -1,0 +1,3 @@
+CREATE USER grafana WITH PASSWORD 'grafana';
+CREATE DATABASE grafana WITH OWNER grafana;
+GRANT ALL PRIVILEGES ON DATABASE grafana TO grafana;
