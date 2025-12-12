@@ -56,7 +56,7 @@
    - ⏳ Jenkins con OIDC (script de inicialización listo: `init-jenkins-oidc.sh`, pendiente probar)
    - ✅ Script consolidado: `keycloak-manager.sh`
    - ✅ Solución de problemas: Corregida propagación de secretos para clientes OIDC (Grafana, n8n, etc.)
-   - ✅ Solución de problemas: Habilitada creación automática de usuarios en Grafana (User Sync Failed)
+   - ✅ Solución de problemas: Mapeo correcto de email Admin entre Keycloak y Grafana
    - ✅ Documentación completa: `docs/KEYCLOAK_INTEGRATION_PLAN.md`
 
 3. **HTTPS/SSL** (Prioridad Alta)

@@ -615,6 +615,7 @@ services:
       - grafana_provisioning_data:/var/lib/grafana/dashboards/custom:ro
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_SECURITY_ADMIN_EMAIL=${GRAFANA_ADMIN_EMAIL:-admin@example.com}
       - GF_USERS_ALLOW_SIGN_UP=${GRAFANA_USERS_ALLOW_SIGN_UP:-false}
       - GF_AUTH_GENERIC_OAUTH_ENABLED=${GRAFANA_AUTH_GENERIC_OAUTH_ENABLED:-true}
       - GF_AUTH_GENERIC_OAUTH_NAME=${GRAFANA_OAUTH_NAME:-Keycloak}

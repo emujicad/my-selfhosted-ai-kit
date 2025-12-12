@@ -544,14 +544,16 @@ docker exec keycloak /opt/keycloak/bin/kcadm.sh update users/$(docker exec keycl
 ```
 
 ### Problem: Grafana Login Failed ("User sync failed")
-This happens if Grafana is not allowed to create new users from OAuth.
-1. Edit `.env` file:
+This happens if Grafana cannot map the Keycloak user to an existing local user.
+**Ensure the Grafana admin email matches the Keycloak admin email.**
+1. Check Keycloak email (e.g., `admin@example.com`).
+2. Update `.env` to match:
    ```bash
-   GRAFANA_USERS_ALLOW_SIGN_UP=true
+   GRAFANA_ADMIN_EMAIL=admin@example.com
    ```
-2. Restart Grafana:
+3. Restart Grafana:
    ```bash
-   docker compose restart grafana
+   ./scripts/stack-manager.sh start
    ```
 
 ### Problem: Very large logs
