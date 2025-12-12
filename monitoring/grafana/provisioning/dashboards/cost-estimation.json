@@ -1,0 +1,442 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Estimated Hourly Cost (CPU)",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(rate(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"}[5m])) * 0.10",
+          "legendFormat": "CPU Cost ($/hr)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "displayMode": "basic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.5
+              },
+              {
+                "color": "red",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "currencyUSD",
+          "decimals": 4
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "description": "Estimated hourly cost based on CPU usage (assumes $0.10 per CPU-hour)"
+    },
+    {
+      "id": 2,
+      "title": "Estimated Hourly Cost (Memory)",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(container_memory_usage_bytes{id=~\"/system.slice/docker-.*\"}) / 1024 / 1024 / 1024 * 0.05",
+          "legendFormat": "Memory Cost ($/hr)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "displayMode": "basic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.5
+              },
+              {
+                "color": "red",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "currencyUSD",
+          "decimals": 4
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "description": "Estimated hourly cost based on memory usage (assumes $0.05 per GB-hour)"
+    },
+    {
+      "id": 3,
+      "title": "Total Estimated Hourly Cost",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "(sum(rate(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"}[5m])) * 0.10) + (sum(container_memory_usage_bytes{id=~\"/system.slice/docker-.*\"}) / 1024 / 1024 / 1024 * 0.05)",
+          "legendFormat": "Total Cost ($/hr)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "displayMode": "basic",
+            "fontSize": "big"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.5
+              },
+              {
+                "color": "red",
+                "value": 1.0
+              }
+            ]
+          },
+          "unit": "currencyUSD",
+          "decimals": 4
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "description": "Total estimated hourly cost (CPU + Memory)"
+    },
+    {
+      "id": 4,
+      "title": "Cost Over Time",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "(sum(rate(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"}[5m])) * 0.10) + (sum(container_memory_usage_bytes{id=~\"/system.slice/docker-.*\"}) / 1024 / 1024 / 1024 * 0.05)",
+          "legendFormat": "Total Cost ($/hr)",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"}[5m])) * 0.10",
+          "legendFormat": "CPU Cost ($/hr)",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(container_memory_usage_bytes{id=~\"/system.slice/docker-.*\"}) / 1024 / 1024 / 1024 * 0.05",
+          "legendFormat": "Memory Cost ($/hr)",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "gradientMode": "opacity",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 0.5
+                },
+                {
+                  "color": "red",
+                  "value": 1.0
+                }
+              ]
+            },
+            "unit": "currencyUSD"
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "description": "Cost breakdown over time"
+    },
+    {
+      "id": 5,
+      "title": "Cost by Service",
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "(sum(rate(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"}[5m])) by (name) * 0.10) + (sum(container_memory_usage_bytes{id=~\"/system.slice/docker-.*\"}) by (name) / 1024 / 1024 / 1024 * 0.05)",
+          "legendFormat": "{{name}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "displayMode": "gradient",
+            "orientation": "horizontal",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 0.1
+                },
+                {
+                  "color": "red",
+                  "value": 0.5
+                }
+              ]
+            },
+            "unit": "currencyUSD"
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "description": "Estimated hourly cost breakdown by service"
+    },
+    {
+      "id": 6,
+      "title": "Estimated Daily Cost",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "((sum(rate(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"}[5m])) * 0.10) + (sum(container_memory_usage_bytes{id=~\"/system.slice/docker-.*\"}) / 1024 / 1024 / 1024 * 0.05)) * 24",
+          "legendFormat": "Daily Cost ($)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "displayMode": "basic",
+            "fontSize": "big"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 10
+              },
+              {
+                "color": "red",
+                "value": 20
+              }
+            ]
+          },
+          "unit": "currencyUSD",
+          "decimals": 2
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 16
+      },
+      "description": "Estimated daily cost (hourly cost × 24)"
+    },
+    {
+      "id": 7,
+      "title": "Estimated Monthly Cost",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "((sum(rate(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"}[5m])) * 0.10) + (sum(container_memory_usage_bytes{id=~\"/system.slice/docker-.*\"}) / 1024 / 1024 / 1024 * 0.05)) * 24 * 30",
+          "legendFormat": "Monthly Cost ($)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "displayMode": "basic",
+            "fontSize": "big"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 300
+              },
+              {
+                "color": "red",
+                "value": 600
+              }
+            ]
+          },
+          "unit": "currencyUSD",
+          "decimals": 2
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 16
+      },
+      "description": "Estimated monthly cost (daily cost × 30)"
+    },
+    {
+      "id": 8,
+      "title": "Resource Usage Summary",
+      "type": "table",
+      "targets": [
+        {
+          "expr": "sum(rate(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"}[5m])) by (name) * 100",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(container_memory_usage_bytes{id=~\"/system.slice/docker-.*\"}) by (name) / 1024 / 1024 / 1024",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "description": "Resource usage summary by service (CPU % and Memory GB)"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [
+    "cost",
+    "estimation",
+    "resources",
+    "billing"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Cost Estimation Dashboard",
+  "uid": "cost-estimation",
+  "version": 1,
+  "weekStart": ""
+}
+

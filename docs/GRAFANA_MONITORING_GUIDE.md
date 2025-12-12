@@ -108,7 +108,8 @@ El stack incluye un sistema completo de monitoreo basado en Prometheus y Grafana
 
 ### System Overview Dashboard
 
-**Ubicación**: Grafana → Dashboards → System Overview Dashboard
+**Ubicación**: Grafana → Dashboards → System Overview Dashboard  
+**UID**: `system-overview`
 
 **Paneles incluidos**:
 - **System CPU Usage**: Uso de CPU del sistema
@@ -128,7 +129,8 @@ El stack incluye un sistema completo de monitoreo basado en Prometheus y Grafana
 
 ### Ollama AI Models Dashboard
 
-**Ubicación**: Grafana → Dashboards → Ollama AI Models Dashboard
+**Ubicación**: Grafana → Dashboards → Ollama AI Models Dashboard  
+**UID**: `ollama-dashboard`
 
 **Paneles incluidos**:
 - **Container Status Overview**: Resumen de contenedores activos
@@ -143,6 +145,99 @@ El stack incluye un sistema completo de monitoreo basado en Prometheus y Grafana
 **Notas**:
 - Network Traffic muestra tráfico de interfaces Docker (`br-*`), no por contenedor individual
 - Container Status Table muestra cuándo se iniciaron los contenedores (formato "hace X tiempo")
+
+### GPU/CPU Performance Dashboard ⭐ **NUEVO**
+
+**Ubicación**: Grafana → Dashboards → GPU/CPU Performance Dashboard  
+**UID**: `gpu-cpu-performance`
+
+**Paneles incluidos**:
+- **GPU Usage (if available)**: Uso de GPU (nota: requiere nvidia-smi exporter para métricas directas)
+- **Ollama Container CPU Usage**: Uso de CPU específico de contenedores Ollama
+- **Ollama Container Memory Usage**: Uso de memoria de contenedores Ollama en GB
+- **CPU Usage by Service**: Desglose de uso de CPU por servicio (bar chart)
+- **System Load Average**: Carga promedio del sistema (1m, 5m, 15m)
+- **Memory Usage by Service**: Desglose de uso de memoria por servicio (bar chart)
+- **Total System Memory Usage**: Uso total de memoria del sistema
+
+**Características**:
+- Métricas específicas de GPU/CPU para modelos de IA
+- Visualización clara de recursos por servicio
+- Alertas visuales con umbrales (verde/amarillo/rojo)
+
+### Users & Sessions Dashboard ⭐ **NUEVO**
+
+**Ubicación**: Grafana → Dashboards → Users & Sessions Dashboard  
+**UID**: `users-sessions`
+
+**Paneles incluidos**:
+- **PostgreSQL Active Connections**: Conexiones activas por base de datos
+- **Total PostgreSQL Connections**: Total de conexiones activas
+- **PostgreSQL Transactions**: Tasas de commit y rollback
+- **Active Connections Over Time**: Conexiones activas a lo largo del tiempo
+- **Keycloak Container Status**: Estado de contenedores Keycloak
+- **Keycloak Container CPU**: Uso de CPU de Keycloak
+- **Grafana Container Status**: Estado de contenedores Grafana
+- **Grafana Container CPU**: Uso de CPU de Grafana
+- **PostgreSQL Cache Hit Ratio**: Ratio de aciertos de cache (target: >95%)
+- **Service Container Status**: Tabla con estado de todos los contenedores de servicios
+
+**Características**:
+- Monitoreo de usuarios activos y sesiones
+- Métricas de autenticación (Keycloak, Grafana)
+- Métricas de base de datos (PostgreSQL)
+- Indicadores de salud de servicios de autenticación
+
+### Cost Estimation Dashboard ⭐ **NUEVO**
+
+**Ubicación**: Grafana → Dashboards → Cost Estimation Dashboard  
+**UID**: `cost-estimation`
+
+**Paneles incluidos**:
+- **Estimated Hourly Cost (CPU)**: Costo estimado por hora basado en CPU ($0.10/CPU-hr)
+- **Estimated Hourly Cost (Memory)**: Costo estimado por hora basado en memoria ($0.05/GB-hr)
+- **Total Estimated Hourly Cost**: Costo total por hora (CPU + Memory)
+- **Cost Over Time**: Desglose de costos a lo largo del tiempo
+- **Cost by Service**: Costo por servicio (bar chart)
+- **Estimated Daily Cost**: Costo estimado diario
+- **Estimated Monthly Cost**: Costo estimado mensual
+- **Resource Usage Summary**: Tabla resumen de uso de recursos por servicio
+
+**Características**:
+- Cálculo automático de costos basado en uso de recursos
+- Desglose por servicio para identificar servicios costosos
+- Proyecciones diarias y mensuales
+- **Nota**: Los precios son estimaciones y pueden ajustarse según tu infraestructura
+
+### AI Models Performance Dashboard ⭐ **NUEVO**
+
+**Ubicación**: Grafana → Dashboards → AI Models Performance Dashboard  
+**UID**: `ai-models-performance`
+
+**Paneles incluidos**:
+- **Ollama Container Status**: Estado de contenedores Ollama
+- **Ollama CPU Usage**: Uso de CPU de Ollama
+- **Ollama Memory Usage**: Uso de memoria de Ollama
+- **Ollama Network I/O**: I/O de red de Ollama
+- **Ollama CPU Usage Over Time**: Uso de CPU a lo largo del tiempo (indica actividad de procesamiento)
+- **Ollama Memory Usage Over Time**: Uso de memoria a lo largo del tiempo (indica carga de modelos)
+- **Estimated Throughput (Requests/Hour)**: Throughput estimado basado en actividad de CPU
+- **Estimated Latency (ms)**: Latencia estimada basada en actividad de CPU
+- **Open WebUI Container Status**: Estado de contenedores Open WebUI
+- **Open WebUI CPU Usage**: Uso de CPU de Open WebUI (indica actividad de usuarios)
+- **Open WebUI Memory Usage**: Uso de memoria de Open WebUI
+- **AI Services Summary**: Tabla resumen de servicios de IA
+
+**Características**:
+- Métricas específicas de rendimiento de modelos de IA
+- Estimaciones de throughput y latencia
+- Monitoreo de actividad de usuarios (Open WebUI)
+- Indicadores de carga de modelos (memoria)
+
+**Notas**:
+- Las métricas de throughput y latencia son **estimaciones** basadas en actividad de CPU
+- Para métricas precisas de tokens/s, se requiere integración directa con Ollama API
+- La latencia estimada es inversamente proporcional a la actividad de CPU
 
 ---
 
@@ -305,8 +400,12 @@ curl -X POST http://localhost:9090/-/reload
 ## 🔄 Actualización de Dashboards
 
 Los dashboards están provisionados automáticamente desde:
-- `monitoring/grafana/provisioning/dashboards/system-overview.json`
-- `monitoring/grafana/provisioning/dashboards/ollama-dashboard.json`
+- `monitoring/grafana/provisioning/dashboards/system-overview.json` - System Overview Dashboard
+- `monitoring/grafana/provisioning/dashboards/ollama-dashboard.json` - Ollama AI Models Dashboard
+- `monitoring/grafana/provisioning/dashboards/gpu-cpu-performance.json` - GPU/CPU Performance Dashboard ⭐ **NUEVO**
+- `monitoring/grafana/provisioning/dashboards/users-sessions.json` - Users & Sessions Dashboard ⭐ **NUEVO**
+- `monitoring/grafana/provisioning/dashboards/cost-estimation.json` - Cost Estimation Dashboard ⭐ **NUEVO**
+- `monitoring/grafana/provisioning/dashboards/ai-models-performance.json` - AI Models Performance Dashboard ⭐ **NUEVO**
 
 **Para aplicar cambios**:
 1. Edita los archivos JSON de los dashboards
@@ -314,6 +413,11 @@ Los dashboards están provisionados automáticamente desde:
 3. Refresca el dashboard en Grafana
 
 **Nota**: Los cambios se aplican automáticamente al reiniciar Grafana.
+
+**Para agregar nuevos dashboards**:
+1. Crea un archivo JSON en `monitoring/grafana/provisioning/dashboards/`
+2. Asegúrate de que tenga un `uid` único
+3. Reinicia Grafana para que se provisione automáticamente
 
 ---
 

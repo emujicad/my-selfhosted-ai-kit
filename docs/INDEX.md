@@ -39,6 +39,12 @@
   - Configuración y uso
   - Troubleshooting completo
   - Métricas disponibles
+- **[MONITORING_NEXT_STEPS.md](MONITORING_NEXT_STEPS.md)** ⭐ **NUEVO** - Próximos pasos y mejoras planificadas para el sistema de monitoreo
+  - Alertas en Grafana
+  - Métricas de GPU reales
+  - Métricas específicas de Ollama
+  - Logging centralizado
+  - Plan de implementación por fases
 
 #### Gestión del Stack
 - **[STACK_MANAGER_GUIDE.md](STACK_MANAGER_GUIDE.md)** - ⭐ **NUEVO** - Script maestro para gestionar perfiles Docker Compose
@@ -137,6 +143,14 @@
    - Configuración y uso
    - Troubleshooting completo
 
+### Si quieres mejorar el monitoreo:
+1. Lee **[MONITORING_NEXT_STEPS.md](MONITORING_NEXT_STEPS.md)** - Plan de mejoras
+   - Próximos pasos recomendados
+   - Alertas en Grafana
+   - Métricas avanzadas
+   - Logging centralizado
+   - Plan de implementación por fases
+
 ---
 
 ## 📝 Notas Importantes
@@ -197,6 +211,7 @@ Los siguientes archivos fueron eliminados porque su información fue consolidada
 
 ### Monitoreo
 - docs/GRAFANA_MONITORING_GUIDE.md
+- docs/MONITORING_NEXT_STEPS.md ⭐ **NUEVO** - Próximos pasos de monitoreo
 
 ### Validación y Testing
 - docs/VALIDATION_GUIDE.md
