@@ -243,7 +243,7 @@
         "x": 12,
         "y": 8
       },
-      "description": "Shows if containers are running. Keycloak will appear in the list of all containers below."
+      "description": "Shows if containers are running. All Docker containers will appear in the list below."
     },
     {
       "id": 6,
@@ -294,102 +294,7 @@
         "x": 18,
         "y": 8
       },
-      "description": "CPU usage for all Docker containers. Keycloak container will appear in the list. IDs are in format /system.slice/docker-<hash>.scope"
-    },
-    {
-      "id": 7,
-      "title": "Container Status (All Docker Containers)",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "count(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"}) > 0",
-          "legendFormat": "Containers Running",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "displayMode": "basic"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
-            ]
-          },
-          "unit": "short"
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 0,
-        "y": 16
-      },
-      "description": "Shows if containers are running. Grafana will appear in the list of all containers below."
-    },
-    {
-      "id": 8,
-      "title": "Container CPU Usage (All Docker Containers)",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(rate(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"}[5m])) by (id) * 100",
-          "legendFormat": "{{id}} CPU %",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "fillOpacity": 20,
-            "gradientMode": "opacity",
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                },
-                {
-                  "color": "yellow",
-                  "value": 30
-                },
-                {
-                  "color": "red",
-                  "value": 60
-                }
-              ]
-            },
-            "unit": "percent"
-          }
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 6,
-        "y": 16
-      },
-      "description": "CPU usage for all Docker containers. Grafana container will appear in the list. IDs are in format /system.slice/docker-<hash>.scope"
+      "description": "CPU usage for all Docker containers. Container IDs are in format /system.slice/docker-<hash>.scope. Identify specific services (Keycloak, Grafana, PostgreSQL) by their resource usage patterns."
     },
     {
       "id": 9,

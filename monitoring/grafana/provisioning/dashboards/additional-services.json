@@ -251,7 +251,7 @@
     },
     {
       "id": 6,
-      "title": "n8n Container CPU Usage",
+      "title": "Container CPU Usage (All Docker Containers)",
       "type": "timeseries",
       "targets": [
         {
@@ -260,7 +260,7 @@
           "refId": "A"
         }
       ],
-      "description": "CPU usage for all Docker containers. Identify n8n container by its resource usage pattern (typically moderate CPU usage). Container IDs are Docker hashes.",
+      "description": "CPU usage for all Docker containers. Container IDs are Docker hashes in format /system.slice/docker-<hash>.scope. Identify specific services (n8n, Open WebUI, Qdrant) by their resource usage patterns.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -298,21 +298,20 @@
         "w": 12,
         "x": 6,
         "y": 6
-      },
-      "description": "CPU usage for n8n container"
+      }
     },
     {
       "id": 7,
-      "title": "Open WebUI Container CPU Usage",
+      "title": "Container Memory Usage (All Docker Containers)",
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum(rate(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"}[5m])) by (id) * 100",
-          "legendFormat": "{{id}} CPU %",
+          "expr": "sum(container_memory_usage_bytes{id=~\"/system.slice/docker-.*\"}) by (id) / 1024 / 1024",
+          "legendFormat": "{{id}} Memory (MB)",
           "refId": "A"
         }
       ],
-      "description": "CPU usage for all Docker containers. Identify Open WebUI container by its resource usage pattern. Container IDs are Docker hashes.",
+      "description": "Memory usage for all Docker containers. Container IDs are Docker hashes in format /system.slice/docker-<hash>.scope. Identify specific services (n8n: typically 1-4GB, Open WebUI: variable, Qdrant: low-moderate) by their memory usage patterns.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -324,24 +323,7 @@
             "lineWidth": 2,
             "fillOpacity": 20,
             "gradientMode": "opacity",
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                },
-                {
-                  "color": "yellow",
-                  "value": 50
-                },
-                {
-                  "color": "red",
-                  "value": 80
-                }
-              ]
-            },
-            "unit": "percent"
+            "unit": "mbytes"
           }
         }
       },
@@ -349,169 +331,11 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 14
-      },
-      "description": "CPU usage for Open WebUI container"
+        "y": 22
+      }
     },
     {
       "id": 8,
-      "title": "Qdrant Container CPU Usage",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(rate(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"}[5m])) by (id) * 100",
-          "legendFormat": "{{id}} CPU %",
-          "refId": "A"
-        }
-      ],
-      "description": "CPU usage for all Docker containers. Identify Qdrant container by its resource usage pattern. Container IDs are Docker hashes.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "fillOpacity": 20,
-            "gradientMode": "opacity",
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                },
-                {
-                  "color": "yellow",
-                  "value": 50
-                },
-                {
-                  "color": "red",
-                  "value": 80
-                }
-              ]
-            },
-            "unit": "percent"
-          }
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 14
-      },
-      "description": "CPU usage for Qdrant container"
-    },
-    {
-      "id": 9,
-      "title": "n8n Container Memory Usage",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(container_memory_usage_bytes{id=~\"/system.slice/docker-.*\"}) by (id) / 1024 / 1024",
-          "legendFormat": "{{id}} Memory (MB)",
-          "refId": "A"
-        }
-      ],
-      "description": "Memory usage for all Docker containers. Identify n8n container by its memory usage (typically 1-4GB). Container IDs are Docker hashes.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "fillOpacity": 20,
-            "gradientMode": "opacity",
-            "unit": "mbytes"
-          }
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 22
-      },
-      "description": "Memory usage for n8n container"
-    },
-    {
-      "id": 10,
-      "title": "Open WebUI Container Memory Usage",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(container_memory_usage_bytes{id=~\"/system.slice/docker-.*\"}) by (id) / 1024 / 1024",
-          "legendFormat": "{{id}} Memory (MB)",
-          "refId": "A"
-        }
-      ],
-      "description": "Memory usage for all Docker containers. Identify Open WebUI container by its memory usage pattern. Container IDs are Docker hashes.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "fillOpacity": 20,
-            "gradientMode": "opacity",
-            "unit": "mbytes"
-          }
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 22
-      },
-      "description": "Memory usage for Open WebUI container"
-    },
-    {
-      "id": 11,
-      "title": "Qdrant Container Memory Usage",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(container_memory_usage_bytes{id=~\"/system.slice/docker-.*\"}) by (id) / 1024 / 1024",
-          "legendFormat": "{{id}} Memory (MB)",
-          "refId": "A"
-        }
-      ],
-      "description": "Memory usage for all Docker containers. Identify Qdrant container by its memory usage pattern. Container IDs are Docker hashes.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "fillOpacity": 20,
-            "gradientMode": "opacity",
-            "unit": "mbytes"
-          }
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 30
-      },
-      "description": "Memory usage for Qdrant container"
-    },
-    {
-      "id": 12,
       "title": "Qdrant Version",
       "type": "stat",
       "targets": [
