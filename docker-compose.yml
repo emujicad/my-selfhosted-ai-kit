@@ -147,6 +147,16 @@ x-ollama: &service-ollama
     - "${PORT_OLLAMA_HOST:-11434}:${PORT_OLLAMA_CONTAINER:-11434}"
   volumes:
     - ollama_storage:/root/.ollama # Almacena modelos descargados
+  # Variables de entorno para optimización de rendimiento
+  environment:
+    # Mantener hasta 2 modelos en memoria para acceso rápido (reduce tiempo de carga)
+    - OLLAMA_MAX_LOADED_MODELS=${OLLAMA_MAX_LOADED_MODELS:-2}
+    # Optimizar threads para CPU (8 threads para mejor balance CPU/GPU)
+    - OLLAMA_NUM_THREAD=${OLLAMA_NUM_THREAD:-8}
+    # Mantener modelos cargados 10 minutos para reducir tiempos de respuesta
+    - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-10m}
+  # Configuración de shared memory para mejor rendimiento con modelos grandes
+  shm_size: ${OLLAMA_SHM_SIZE:-2g}  # 2GB de memoria compartida (mejora rendimiento)
   healthcheck:                    # Verifica que el servicio esté funcionando
     test: ["CMD-SHELL", "pgrep -f ollama || exit 1"]
     interval: 10s                 # Verifica cada 10 segundos

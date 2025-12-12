@@ -1,0 +1,540 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Optimization Status",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "ollama_up",
+          "legendFormat": "Ollama Status",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "displayMode": "basic"
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "text": "Down"
+                },
+                "1": {
+                  "color": "green",
+                  "text": "Optimized"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "description": "Ollama service status with optimizations applied"
+    },
+    {
+      "id": 2,
+      "title": "Total Models Available",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "ollama_models_total",
+          "legendFormat": "Models",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "displayMode": "basic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "description": "Number of models available (OLLAMA_MAX_LOADED_MODELS=2 allows keeping 2 in memory)"
+    },
+    {
+      "id": 3,
+      "title": "Total Models Size",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "ollama_total_size_bytes / 1024 / 1024 / 1024",
+          "legendFormat": "Total Size",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "displayMode": "basic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "decgbytes"
+        }
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "description": "Total size of all models in GB"
+    },
+    {
+      "id": 4,
+      "title": "GPU Utilization Trend",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "DCGM_FI_DEV_GPU_UTIL",
+          "legendFormat": "GPU Utilization %",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "gradientMode": "opacity",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 50
+                },
+                {
+                  "color": "red",
+                  "value": 90
+                }
+              ]
+            },
+            "unit": "percent"
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "description": "GPU utilization over time - Higher utilization indicates better optimization (target: >80%)"
+    },
+    {
+      "id": 5,
+      "title": "GPU Memory Usage Trend",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "(DCGM_FI_DEV_FB_USED / (DCGM_FI_DEV_FB_USED + DCGM_FI_DEV_FB_FREE)) * 100",
+          "legendFormat": "GPU Memory Usage %",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "gradientMode": "opacity",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 70
+                },
+                {
+                  "color": "red",
+                  "value": 95
+                }
+              ]
+            },
+            "unit": "percent"
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "description": "GPU memory usage over time - Shows efficient use of GPU memory for model caching"
+    },
+    {
+      "id": 6,
+      "title": "Ollama Container CPU Usage Trend",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"}[5m])) by (id) * 100",
+          "legendFormat": "{{id}} CPU %",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "gradientMode": "opacity",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 50
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "percent"
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 14
+      },
+      "description": "CPU usage trend for Ollama container - OLLAMA_NUM_THREAD=8 optimizes CPU usage"
+    },
+    {
+      "id": 7,
+      "title": "Ollama Container Memory Usage Trend",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(container_memory_usage_bytes{id=~\"/system.slice/docker-.*\"}) by (id) / 1024 / 1024 / 1024",
+          "legendFormat": "{{id}} Memory (GB)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "gradientMode": "opacity",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 16
+                },
+                {
+                  "color": "red",
+                  "value": 28
+                }
+              ]
+            },
+            "unit": "decgbytes"
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 14
+      },
+      "description": "Memory usage trend - OLLAMA_MAX_LOADED_MODELS=2 keeps 2 models in memory for fast access"
+    },
+    {
+      "id": 8,
+      "title": "Performance Improvement Indicators",
+      "type": "table",
+      "targets": [
+        {
+          "expr": "ollama_up",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "A"
+        },
+        {
+          "expr": "ollama_models_total",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "B"
+        },
+        {
+          "expr": "DCGM_FI_DEV_GPU_UTIL",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
+      "description": "Key performance indicators showing optimization status"
+    },
+    {
+      "id": 9,
+      "title": "Model Size Distribution",
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "ollama_model_size_bytes / 1024 / 1024 / 1024",
+          "legendFormat": "{{model}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "displayMode": "gradient",
+            "orientation": "horizontal",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                }
+              ]
+            },
+            "unit": "decgbytes"
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 30
+      },
+      "description": "Size of each model - Models kept in memory by OLLAMA_MAX_LOADED_MODELS=2 are accessed faster"
+    },
+    {
+      "id": 10,
+      "title": "GPU Temperature Trend",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "DCGM_FI_DEV_GPU_TEMP",
+          "legendFormat": "GPU Temperature (°C)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "gradientMode": "opacity",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 70
+                },
+                {
+                  "color": "red",
+                  "value": 85
+                }
+              ]
+            },
+            "unit": "celsius"
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 30
+      },
+      "description": "GPU temperature over time - Should remain stable under optimized load"
+    },
+    {
+      "id": 11,
+      "title": "Optimization Configuration Summary",
+      "type": "text",
+      "options": {
+        "content": "## Optimization Configuration\n\n**Applied Optimizations:**\n- `OLLAMA_MAX_LOADED_MODELS=2` - Keeps 2 models in memory for fast access\n- `OLLAMA_NUM_THREAD=8` - Optimizes CPU thread usage\n- `OLLAMA_KEEP_ALIVE=10m` - Keeps models loaded for 10 minutes\n- `shm_size=2GB` - Shared memory for better performance with large models\n\n**Expected Improvements:**\n- Cache hit rate: 50-80% faster model loading\n- GPU utilization: Better utilization of RTX 5060 Ti\n- CPU efficiency: Optimized thread usage\n- Memory: Efficient model caching\n\n**Monitoring:**\n- Track GPU utilization trends (target: >80%)\n- Monitor memory usage (should stabilize with caching)\n- Watch CPU usage (should be efficient with NUM_THREAD=8)\n- Observe temperature (should remain stable)",
+        "mode": "markdown"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 38
+      }
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [
+    "ollama",
+    "optimization",
+    "performance",
+    "monitoring",
+    "gpu",
+    "cache"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Ollama Optimization Monitoring",
+  "uid": "ollama-optimization-monitoring",
+  "version": 1,
+  "weekStart": ""
+}
+
