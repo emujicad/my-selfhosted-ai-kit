@@ -216,38 +216,40 @@ x-init-ollama: &init-ollama
 
 services:
   # Inicializador de base de datos para Keycloak
-  postgres-init:
-    image: postgres:16-alpine
-    container_name: postgres-init
-    profiles: ["security"]
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-    volumes:
-      - postgres_storage:/var/lib/postgresql/data
-      - ./scripts/init-keycloak-db.sql:/docker-entrypoint-initdb.d/init-keycloak-db.sql
-    networks:
-      - genai-network
-    command: postgres -c 'max_connections=${POSTGRES_MAX_CONNECTIONS:-200}'
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    deploy:
-      resources:
-        limits:
-          cpus: '2.0'
-          memory: 4G
-        reservations:
-          cpus: '0.5'
-          memory: 1G
+  # DESHABILITADO: Causa conflicto con postgres al compartir el mismo volumen
+  # postgres ahora ejecuta el script de inicialización directamente
+  # postgres-init:
+  #   image: postgres:16-alpine
+  #   container_name: postgres-init
+  #   profiles: ["security"]
+  #   environment:
+  #     - POSTGRES_USER=${POSTGRES_USER}
+  #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+  #     - POSTGRES_DB=${POSTGRES_DB}
+  #   volumes:
+  #     - postgres_storage:/var/lib/postgresql/data
+  #     - ./scripts/init-keycloak-db.sql:/docker-entrypoint-initdb.d/init-keycloak-db.sql
+  #   networks:
+  #     - genai-network
+  #   command: postgres -c 'max_connections=${POSTGRES_MAX_CONNECTIONS:-200}'
+  #   healthcheck:
+  #     test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 10
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: '2.0'
+  #         memory: 4G
+  #       reservations:
+  #         cpus: '0.5'
+  #         memory: 1G
 
   postgres:
     image: postgres:16-alpine      # PostgreSQL 16 con Alpine Linux (más ligero)
@@ -258,11 +260,13 @@ services:
     environment:
       - POSTGRES_USER              # Usuario de BD (desde .env)
       - POSTGRES_PASSWORD          # Contraseña de BD (desde .env)
-      - POSTGRES_DB                # Nombre de BD (desde .env)
+      - POSTGRES_DB                # Nombre de BD (desde .env) - se crea automáticamente
+      - POSTGRES_HOST_AUTH_METHOD=scram-sha-256
       # Configuración para prevenir transacciones pendientes y locks
       - POSTGRES_INITDB_ARGS=-E UTF8 --locale=C
     volumes:
       - postgres_storage:/var/lib/postgresql/data  # Datos persistentes
+      - ./scripts/init-keycloak-db.sql:/docker-entrypoint-initdb.d/init-keycloak-db.sql
     # Tiempo de gracia para shutdown limpio (30 segundos)
     stop_grace_period: 30s
     # Comando con configuración para manejar mejor los shutdowns
@@ -373,8 +377,11 @@ services:
     depends_on:
       keycloak:
         condition: service_healthy     # Espera a que Keycloak esté listo (requiere --profile security)
-      # NOTA: Ollama está en perfiles (ollama-gpu, ollama-cpu, etc.) - no puede depender explícitamente
-      # Open WebUI puede iniciar sin Ollama, pero no funcionará completamente hasta que esté listo
+      keycloak-init:
+        condition: service_completed_successfully
+      # Espera a que los modelos LLM estén descargados antes de iniciar
+      ollama-pull-llama-gpu:
+        condition: service_completed_successfully
     healthcheck:                   # Verifica que Open WebUI esté funcionando
       test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
       interval: 10s
@@ -395,9 +402,6 @@ services:
         reservations:
           cpus: '0.5'
           memory: 1G
-#    depends_on:
-#      ollama-gpu:
-#        condition: service_healthy
 
   # Servicio de importación de datos para n8n (se ejecuta una vez al inicio)
   n8n-import:
@@ -455,6 +459,8 @@ services:
         condition: service_completed_successfully  # Espera a que termine la importación
       keycloak:
         condition: service_healthy     # Espera a que Keycloak esté listo (requiere --profile security)
+      keycloak-init:
+        condition: service_completed_successfully
     healthcheck:                       # Verifica que n8n esté funcionando
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5678/healthz || exit 1"]
       interval: 10s
@@ -539,11 +545,12 @@ services:
   #     - ollama-cpu                 # Espera a que ollama-cpu esté listo
 
   # Descarga de modelos para GPU NVIDIA
-  # ollama-pull-llama-gpu:
-  #   profiles: ["gpu-nvidia"]
-  #   <<: *init-ollama               # Usa la plantilla de inicialización
-  #   depends_on:
-  #     - ollama-gpu                 # Espera a que ollama-gpu esté listo
+  ollama-pull-llama-gpu:
+    profiles: ["gpu-nvidia"]
+    <<: *init-ollama               # Usa la plantilla de inicialización
+    depends_on:
+      ollama-gpu:
+        condition: service_healthy # Espera a que ollama-gpu esté healthy
 
   # Descarga de modelos para GPU AMD
   # ollama-pull-llama-gpu-amd:
@@ -552,6 +559,7 @@ services:
   #   image: ollama/ollama:rocm      # Imagen con soporte ROCm
   #   depends_on:
   #    - ollama-gpu-amd              # Espera a que ollama-gpu-amd esté listo
+
 
   # =============================================================================
   # SERVICIOS DE MONITOREO Y MANTENIMIENTO (OPCIONALES)
@@ -614,14 +622,23 @@ services:
       # Volumen para dashboards personalizados creados por usuarios
       - grafana_provisioning_data:/var/lib/grafana/dashboards/custom:ro
     environment:
+      - GF_DATABASE_TYPE=postgres
+      - GF_DATABASE_HOST=postgres:5432
+      - GF_DATABASE_NAME=${GRAFANA_DB_NAME:-grafana}
+      - GF_DATABASE_USER=${GRAFANA_DB_USER:-grafana}
+      - GF_DATABASE_PASSWORD=${GRAFANA_DB_PASSWORD:-grafana}
+      - GF_DATABASE_SSL_MODE=disable
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_LOG_LEVEL=debug
       - GF_SECURITY_ADMIN_EMAIL=${GRAFANA_ADMIN_EMAIL:-admin@example.com}
-      - GF_USERS_ALLOW_SIGN_UP=${GRAFANA_USERS_ALLOW_SIGN_UP:-false}
+      - GF_USERS_ALLOW_SIGN_UP=false
       - GF_AUTH_GENERIC_OAUTH_ENABLED=${GRAFANA_AUTH_GENERIC_OAUTH_ENABLED:-true}
       - GF_AUTH_GENERIC_OAUTH_NAME=${GRAFANA_OAUTH_NAME:-Keycloak}
       - GF_AUTH_GENERIC_OAUTH_CLIENT_ID=${GRAFANA_OAUTH_CLIENT_ID:-grafana}
       - GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET=${GRAFANA_OAUTH_CLIENT_SECRET}
       - GF_AUTH_GENERIC_OAUTH_SCOPES=${GRAFANA_OAUTH_SCOPES:-openid profile email}
+      - GF_AUTH_GENERIC_OAUTH_ALLOW_ASSIGN_GRAFANA_ADMIN=true
+      - GF_AUTH_GENERIC_OAUTH_ALLOW_OAUTH_SIGNIN_WITH_EMAIL_LOOKUP=true
       # AUTH_URL debe usar localhost porque el navegador del usuario necesita acceder
       - GF_AUTH_GENERIC_OAUTH_AUTH_URL=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/auth
       # TOKEN_URL y API_URL pueden usar keycloak:8080 porque Grafana las llama desde dentro del contenedor
@@ -641,6 +658,8 @@ services:
         condition: service_healthy
       keycloak:
         condition: service_healthy
+      grafana-db-init:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
       interval: 30s
@@ -1025,6 +1044,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB:-postgres}
       - KEYCLOAK_DB_NAME=${KEYCLOAK_DB_NAME:-keycloak}
+      - PGSSLMODE=disable
     entrypoint: /bin/sh
     command:
       - "-c"
@@ -1069,6 +1089,75 @@ services:
           cpus: '0.1'
           memory: 64M
 
+  # Inicializador de BD de Grafana - Crea BD ANTES de que Grafana inicie
+  grafana-db-init:
+    image: postgres:16-alpine
+    container_name: grafana-db-init
+    profiles: ["monitoring"]
+    networks:
+      - genai-network
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB:-postgres}
+      - GRAFANA_DB_NAME=${GRAFANA_DB_NAME:-grafana}
+      - GRAFANA_DB_USER=${GRAFANA_DB_USER:-grafana}
+      - GRAFANA_DB_PASSWORD=${GRAFANA_DB_PASSWORD:-grafana}
+      - PGSSLMODE=disable
+    entrypoint: /bin/sh
+    command:
+      - "-c"
+      - |
+        set -e
+        echo "🔧 Verificando base de datos de Grafana..."
+        echo ""
+        
+        # Esperar a que PostgreSQL esté listo
+        until PGPASSWORD="$${POSTGRES_PASSWORD}" psql -h postgres -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}" -c "SELECT 1;" > /dev/null 2>&1; do
+          echo "   ⏳ Esperando a que PostgreSQL esté listo..."
+          sleep 2
+        done
+        
+        # Verificar si el usuario existe
+        USER_EXISTS=$$(PGPASSWORD="$${POSTGRES_PASSWORD}" psql -h postgres -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}" -tAc "SELECT 1 FROM pg_roles WHERE rolname='$${GRAFANA_DB_USER}'" 2>/dev/null || echo "0")
+        
+        if [ "$$USER_EXISTS" != "1" ]; then
+           echo "   ✅ Creando usuario '$${GRAFANA_DB_USER}'..."
+           PGPASSWORD="$${POSTGRES_PASSWORD}" psql -h postgres -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}" -c "CREATE USER $${GRAFANA_DB_USER} WITH PASSWORD '$${GRAFANA_DB_PASSWORD}';" 2>/dev/null || true
+        else
+           echo "   ✅ Usuario '$${GRAFANA_DB_USER}' ya existe"
+        fi
+
+        # Verificar si la BD existe
+        DB_EXISTS=$$(PGPASSWORD="$${POSTGRES_PASSWORD}" psql -h postgres -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}" -tAc "SELECT 1 FROM pg_database WHERE datname = '$${GRAFANA_DB_NAME}';" 2>/dev/null || echo "0")
+        
+        if [ "$$DB_EXISTS" != "1" ]; then
+          echo "   ✅ Creando base de datos '$${GRAFANA_DB_NAME}'..."
+          PGPASSWORD="$${POSTGRES_PASSWORD}" psql -h postgres -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}" -c "CREATE DATABASE $${GRAFANA_DB_NAME} OWNER $${GRAFANA_DB_USER};" 2>/dev/null || true
+          echo "   ✅ Base de datos creada"
+        else
+          echo "   ✅ Base de datos '$${GRAFANA_DB_NAME}' ya existe"
+        fi
+        echo ""
+        echo "✅ Base de datos lista para Grafana"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"  # Solo se ejecuta una vez
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
   # Inicializador de clientes Keycloak - Crea clientes OIDC DESPUÉS de que Keycloak esté listo
   keycloak-init:
     image: alpine:latest
@@ -1092,6 +1181,10 @@ services:
       - N8N_OIDC_CLIENT_SECRET=${N8N_OIDC_CLIENT_SECRET}
       - OPEN_WEBUI_OAUTH_CLIENT_SECRET=${OPEN_WEBUI_OAUTH_CLIENT_SECRET}
       - JENKINS_OIDC_CLIENT_SECRET=${JENKINS_OIDC_CLIENT_SECRET}
+      # Credenciales de Postgres para inyección de user_auth en Grafana
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - GRAFANA_DB_NAME=${GRAFANA_DB_NAME:-grafana}
     entrypoint: /bin/sh
     command:
       - "-c"
@@ -1101,8 +1194,8 @@ services:
         echo ""
         
         # Instalar dependencias necesarias
-        apk add --no-cache docker-cli curl bash
-        
+        apk add --no-cache docker-cli curl bash postgresql-client
+
         # Esperar a que Keycloak esté completamente listo (healthcheck + endpoint ready)
         echo "⏳ Esperando a que Keycloak esté listo..."
         MAX_WAIT=120  # Reducido a 2 minutos (suficiente para Keycloak)
@@ -1155,66 +1248,87 @@ services:
         fi
         echo ""
         
-        # Configurar credenciales de administrador
         echo "🔐 Configurando credenciales de administrador..."
         docker exec keycloak /opt/keycloak/bin/kcadm.sh config credentials \
           --server http://localhost:8080 \
           --realm master \
           --user "$${KEYCLOAK_ADMIN_USER}" \
-          --password "$${KEYCLOAK_ADMIN_PASSWORD}" > /dev/null 2>&1 || {
-          echo "   ⚠️ No se pudieron configurar credenciales"
-          exit 1
-        }
-        echo "   ✅ Credenciales configuradas"
-        echo ""
-        
-        # Función auxiliar para crear O ACTUALIZAR cliente
+          --password "$${KEYCLOAK_ADMIN_PASSWORD}" > /dev/null 2>&1 && echo "   ✅ Credenciales configuradas" || echo "   ❌ Error configurando credenciales"
+
+        # Asegurar email del admin (Crítico para Grafana)
+        echo "📧 Configurando email del administrador..."
+        ADMIN_ID=$$(docker exec keycloak /opt/keycloak/bin/kcadm.sh get users -r master -q username="$${KEYCLOAK_ADMIN_USER}" --fields id --format csv --noquotes)
+        if [ ! -z "$$ADMIN_ID" ]; then
+           docker exec keycloak /opt/keycloak/bin/kcadm.sh update users/$$ADMIN_ID -r master -s email="admin@example.com" -s emailVerified=true > /dev/null 2>&1
+           echo "   ✅ Email del administrador configurado: admin@example.com"
+           
+           # Esperar a que la BD de Grafana tenga el usuario admin (creado al arranque de Grafana)
+           # En clean slate, Grafana puede tardar hasta 90 segundos en inicializar
+           echo "   ⏳ Esperando a que el usuario admin exista en DB Grafana..."
+           MAX_RETRIES=90
+           RETRY_COUNT=0
+           USER_READY=0
+           
+           while [ $$RETRY_COUNT -lt $$MAX_RETRIES ]; do
+              # Verificar si el usuario 'admin' o con email 'admin@example.com' existe
+              if PGPASSWORD="$${POSTGRES_PASSWORD}" psql -h postgres -U "$${POSTGRES_USER}" -d "$${GRAFANA_DB_NAME:-grafana}" -tAc "SELECT 1 FROM \"user\" WHERE email='admin@example.com' OR login='admin'" 2>/dev/null | grep -q 1; then
+                 USER_READY=1
+                 echo "      ✅ Usuario detectado después de $$((RETRY_COUNT * 2))s"
+                 break
+              fi
+              # Log cada 10 segundos
+              if [ $$((RETRY_COUNT % 5)) -eq 0 ]; then
+                 echo "      Esperando usuario... ($$((RETRY_COUNT * 2))s / 180s)"
+              fi
+              sleep 2
+              RETRY_COUNT=$$((RETRY_COUNT + 1))
+           done
+           
+           if [ $$USER_READY -eq 1 ]; then
+               # Inyectar mapeo directamente en la base de datos de Grafana
+               PGPASSWORD="$${POSTGRES_PASSWORD}" psql -h postgres -U "$${POSTGRES_USER}" -d "$${GRAFANA_DB_NAME:-grafana}" -c "
+                 INSERT INTO user_auth (user_id, auth_module, auth_id, created, o_auth_access_token, o_auth_refresh_token, o_auth_token_type, o_auth_expiry, o_auth_id_token)
+                 SELECT id, 'oauth_generic_oauth', '$$ADMIN_ID', NOW(), '', '', '', null, ''
+                 FROM \"user\" 
+                 WHERE email='admin@example.com' OR login='admin'
+                 AND NOT EXISTS (SELECT 1 FROM user_auth WHERE auth_id='$$ADMIN_ID');
+               " 2>/dev/null && echo "   ✅ Enlace de usuario inyectado en DB Grafana" || echo "   ⚠️ Error inyectando enlace"
+           else
+               echo "   ⚠️ Timeout esperando usuario admin en Grafana. El enlace manual falló."
+           fi
+
+        else
+           echo "   ⚠️ No se pudo encontrar al usuario admin para actualizar email"
+        fi
+
         create_or_update_client() {
-          local CLIENT_ID=$$1
-          local CLIENT_NAME=$$2
-          local REDIRECT_URI=$$3
-          local WEB_ORIGIN=$$4
-          local CLIENT_SECRET=$$5
+          CLIENT_ID=$$1
+          CLIENT_NAME=$$2
+          REDIRECT_URI=$$3
+          WEB_ORIGIN=$$4
+          CLIENT_SECRET=$$5
           
           echo "   Processing client '$$CLIENT_ID'..."
           
           # Verificar si existe
-          if docker exec keycloak /opt/keycloak/bin/kcadm.sh get clients \
-            -r "$${KEYCLOAK_REALM}" \
-            -q clientId="$$CLIENT_ID" 2>/dev/null | grep -q "$$CLIENT_ID"; then
-            echo "      Client exists. Updating configuration and secret..."
-            # Obtener ID interno (UUID)
-            local UUID=$$(docker exec keycloak /opt/keycloak/bin/kcadm.sh get clients -r "$${KEYCLOAK_REALM}" -q clientId="$$CLIENT_ID" --fields id --format csv --noquotes)
-             
-            if [ -n "$$UUID" ]; then
-                 docker exec keycloak /opt/keycloak/bin/kcadm.sh update clients/$$UUID \
-                    -r "$${KEYCLOAK_REALM}" \
-                    -s secret="$$CLIENT_SECRET" \
-                    -s "redirectUris=[\"$$REDIRECT_URI\"]" \
-                    -s "webOrigins=[\"$$WEB_ORIGIN\"]" \
-                    -s enabled=true \
-                    > /dev/null 2>&1 && echo "      ✅ Client updated successfully" || echo "      ⚠️ Error updating client"
-            else
-                echo "      ⚠️ Error finding UUID for update"
-            fi
-            return 0
+          if docker exec keycloak /opt/keycloak/bin/kcadm.sh get clients -r master -q clientId=$$CLIENT_ID --fields id --format csv --noquotes | grep -q .; then
+             echo "      ⚠️ Client '$$CLIENT_ID' already exists. Skipping creation."
+          else
+             echo "      Creating client '$$CLIENT_ID'..."
+             docker exec keycloak /opt/keycloak/bin/kcadm.sh create clients -r master \
+              -s clientId=$$CLIENT_ID \
+              -s name="$$CLIENT_NAME" \
+              -s enabled=true \
+              -s clientAuthenticatorType=client-secret \
+              -s secret="$$CLIENT_SECRET" \
+              -s "redirectUris=[\"$$REDIRECT_URI\"]" \
+              -s "webOrigins=[\"$$WEB_ORIGIN\"]" \
+              -s standardFlowEnabled=true \
+              -s directAccessGrantsEnabled=true \
+              -s protocol=openid-connect \
+              -s "protocolMappers=[{\"name\":\"email\",\"protocol\":\"openid-connect\",\"protocolMapper\":\"oidc-usermodel-property-mapper\",\"consentRequired\":false,\"config\":{\"user.attribute\":\"email\",\"id.token.claim\":\"true\",\"access.token.claim\":\"true\",\"claim.name\":\"email\",\"jsonType.label\":\"String\"}},{\"name\":\"username\",\"protocol\":\"openid-connect\",\"protocolMapper\":\"oidc-usermodel-property-mapper\",\"consentRequired\":false,\"config\":{\"user.attribute\":\"username\",\"id.token.claim\":\"true\",\"access.token.claim\":\"true\",\"claim.name\":\"preferred_username\",\"jsonType.label\":\"String\"}},{\"name\":\"client roles\",\"protocol\":\"openid-connect\",\"protocolMapper\":\"oidc-usermodel-client-role-mapper\",\"consentRequired\":false,\"config\":{\"multivalued\":\"true\",\"user.attribute\":\"foo\",\"id.token.claim\":\"true\",\"access.token.claim\":\"true\",\"claim.name\":\"resource_access.$${client_id}.roles\",\"jsonType.label\":\"String\"}}]" \
+              > /dev/null 2>&1 && echo "      ✅ Client '$$CLIENT_ID' created" || echo "      ❌ Error creating '$$CLIENT_ID'"
           fi
-          
-          # Crear cliente
-          echo "      Creating new client..."
-          docker exec keycloak /opt/keycloak/bin/kcadm.sh create clients \
-            -r "$${KEYCLOAK_REALM}" \
-            -s clientId="$$CLIENT_ID" \
-            -s name="$$CLIENT_NAME" \
-            -s secret="$$CLIENT_SECRET" \
-            -s protocol=openid-connect \
-            -s publicClient=false \
-            -s standardFlowEnabled=true \
-            -s directAccessGrantsEnabled=false \
-            -s fullScopeAllowed=false \
-            -s "redirectUris=[\"$$REDIRECT_URI\"]" \
-            -s "webOrigins=[\"$$WEB_ORIGIN\"]" \
-            > /dev/null 2>&1 && echo "      ✅ Client '$$CLIENT_ID' created" || echo "      ⚠️ Error creating '$$CLIENT_ID'"
         }
         
         # Crear o actualizar clientes
@@ -1328,6 +1442,11 @@ services:
       - JENKINS_OIDC_SCOPES=${JENKINS_OIDC_SCOPES:-openid email profile}
       - KEYCLOAK_URL_PUBLIC=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}
       - KEYCLOAK_REALM=${KEYCLOAK_REALM:-master}
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      keycloak-init:
+        condition: service_completed_successfully
     networks:
       - backend-network
     healthcheck:
