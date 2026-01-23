@@ -64,11 +64,10 @@
 
 ### ⚠️ Limitaciones Conocidas
 
-1. **Open WebUI + Keycloak** ✅ **SOLUCIONADO (Split Routing)**
-   - Se ha configurado manualmente para usar rutas diferentes para navegador y backend
-   - Browser: Usa `localhost:8080` (público)
-   - Backend: Usa `keycloak:8080` (interno)
-   - Auto-discovery desactivado para permitir esta configuración
+1. **Open WebUI + Keycloak** ✅ **SOLUCIONADO (Advanced Emulation)**
+   - **Problema 1 (Routing)**: Se solucionó con "Fake Discovery" (`oidc-config.json` local) que separa rutas para browser (`localhost`) y backend (`keycloak`).
+   - **Problema 2 (401 UserInfo)**: Se solucionó con "Fake UserInfo" (`userinfo.json` local) que simula la respuesta de perfil para evitar errores de validación de token interna.
+   - **Resultado**: Flujo de login completo y funcional con SSO.
 
 2. **PostgreSQL Exporter** ✅ **RESUELTO**
    - Problema solucionado: las métricas están disponibles y la conexión es correcta
