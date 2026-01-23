@@ -442,6 +442,7 @@ All data is stored in persistent Docker volumes:
 - **Node Exporter**: Host metrics
 - **cAdvisor**: Container metrics
 - **PostgreSQL Exporter**: PostgreSQL metrics
+- **Redis Exporter**: Redis metrics
 
 ### Security (profile `security`)
 - **Keycloak**: Centralized authentication and authorization
