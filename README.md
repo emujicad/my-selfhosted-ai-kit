@@ -317,6 +317,7 @@ Once the services are running, you can access:
 
 ### Open WebUI
 - **Purpose**: Modern web interface to interact with AI models
+- **Authentication**: Integrated with Keycloak via OIDC (using specialized split-horizon configuration).
 - **First use**: 
   1. Go to http://localhost:3000
   2. Create an account or sign in
