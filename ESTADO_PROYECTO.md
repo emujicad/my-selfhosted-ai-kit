@@ -15,6 +15,8 @@
    - ✅ Keycloak funcionando
    - ✅ Grafana OAuth con Keycloak funcionando
    - ✅ Login solo Keycloak (modo seguro)
+   - ✅ **Hardening de Secretos**: Eliminados valores por defecto inseguros en `docker-compose.yml`
+   - ✅ Validación estricta de variables de entorno crítica
 
 3. **Monitoreo**
    - ✅ Prometheus configurado

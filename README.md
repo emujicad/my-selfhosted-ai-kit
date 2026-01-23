@@ -495,6 +495,7 @@ docker compose --profile gpu-nvidia --profile monitoring --profile infrastructur
 2. **Don't expose ports** to the Internet without additional configuration
 3. **Use HTTPS** in production
 4. **Keep containers updated**
+5. **Environment Variables**: The system enforces strict environment variable checking. Ensure your `.env` file is populated; defaults like `admin` are disabled for security.
 
 ### Sensitive variables:
 - `POSTGRES_PASSWORD`: Database password

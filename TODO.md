@@ -153,6 +153,11 @@ Stack actual: Ollama (LLMs) + Open WebUI (chat) + n8n (automatización) + Postgr
   - [ ] Versionado de modelos
 
 ### 🔒 Seguridad Avanzada
+- [x] **Hardening de Secretos** ✅ **COMPLETADO**
+  - [x] Eliminados valores por defecto inseguros en `docker-compose.yml` (`:-admin`, `:-password`)
+  - [x] Verificación estricta de variables en `.env` implementada
+  - [x] Corrección de healthcheck en `redis-exporter`
+
 - [ ] **Protección avanzada**
   - [ ] ModSecurity WAF
   - [ ] Intrusion Detection System
