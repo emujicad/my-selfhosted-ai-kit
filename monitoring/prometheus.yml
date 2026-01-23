@@ -41,7 +41,8 @@ scrape_configs:
   # Monitorear Redis
   - job_name: 'redis'
     static_configs:
-      - targets: ['redis:6379']
+      # Prometheus no puede leer Redis directamente, usamos el exporter
+      - targets: ['redis-exporter:9121']
 
   # Monitorear Node Exporter (métricas del host)
   - job_name: 'node-exporter'

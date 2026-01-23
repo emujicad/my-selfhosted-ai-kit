@@ -69,10 +69,9 @@
    - Documentado en `docs/KEYCLOAK_INTEGRATION_PLAN.md`
    - Recomendación: Usar autenticación local por ahora
 
-2. **PostgreSQL Exporter** ⚠️
-   - Problemas de conexión con PostgreSQL
-   - Dashboard muestra "Exporter Not Connected"
-   - Requiere revisar configuración de autenticación
+2. **PostgreSQL Exporter** ✅ **RESUELTO**
+   - Problema solucionado: las métricas están disponibles y la conexión es correcta
+   - Se verificó `pg_up` = 1 y presencia de métricas de detalle
 
 ---
 

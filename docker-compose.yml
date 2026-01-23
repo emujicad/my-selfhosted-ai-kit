@@ -1081,6 +1081,40 @@ services:
           cpus: '0.25'
           memory: 512M
 
+  # Redis Exporter - Métricas de Redis para Prometheus
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: redis-exporter
+    profiles: [ "monitoring" ]
+    environment:
+      - REDIS_ADDR=redis:6379
+    ports:
+      - "${PORT_REDIS_EXPORTER_HOST:-9121}:${PORT_REDIS_EXPORTER_CONTAINER:-9121}"
+    networks:
+      - monitoring-network
+      - backend-network
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9121/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 32M
+
   # HAProxy - Load Balancer
   haproxy:
     image: haproxy:latest

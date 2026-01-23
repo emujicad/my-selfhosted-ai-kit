@@ -116,11 +116,12 @@
    - ✅ Dashboard de usuarios activos y sesiones mejorado (sesiones activas, actividad por hora/día, usuarios concurrentes, tiempo promedio sesión, tendencias 24h)
    - ✅ Dashboard de costos estimados por uso mejorado (costos por modelo, costos por usuario/sesión, proyección 7 días, análisis de tendencias)
 
-5. **Redis** (Prioridad Media)
-   - ⏳ Cache de sesiones de usuario
-   - ⏳ Cache de respuestas frecuentes
+5. **Redis** (Prioridad Media) ✅ **EN PROGRESO**
+   - ✅ Cache de sesiones de usuario (Open WebUI)
+   - ⏳ Cache de respuestas frecuentes (Próximo paso)
    - ⏳ Cache de embeddings
-   - ⏳ Integración Open WebUI
+   - ✅ Integración Open WebUI (Completado)
+   - ✅ Monitoreo de Redis (`redis-exporter`)
    - ⏳ Integración n8n
    - ⏳ Configurar persistencia de Redis
 
