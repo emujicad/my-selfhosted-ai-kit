@@ -309,7 +309,7 @@ Once the services are running, you can access:
 | **cAdvisor** | http://localhost:8082 | Container metrics (monitoring profile) |
 | **Node Exporter** | http://localhost:9100 | Host metrics (monitoring profile) |
 | **HAProxy** | http://localhost:80 | Load balancer (infrastructure profile) |
-| **Redis** | localhost:6379 | Cache and sessions (infrastructure profile) |
+| **Redis** | localhost:6379 | Cache and sessions for Open WebUI (infrastructure profile) |
 | **Keycloak** | http://localhost:8080 | Centralized authentication (security profile) |
 | **Jenkins** | http://localhost:8081 | CI/CD Pipeline (ci-cd profile) |
 

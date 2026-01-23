@@ -75,7 +75,7 @@ Stack actual: Ollama (LLMs) + Open WebUI (chat) + n8n (automatización) + Postgr
   - [ ] Implementar queue de requests (pendiente)
 
 - [ ] **Implementar Redis para cache**
-  - [ ] Cache de sesiones de usuario
+  - [x] Cache de sesiones de usuario (Open WebUI)
   - [ ] Cache de respuestas frecuentes
   - [ ] Cache de embeddings
   - [ ] Configurar persistencia de Redis

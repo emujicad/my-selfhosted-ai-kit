@@ -53,34 +53,21 @@ check_service() {
     
     echo "🔍 Verificando servicio: $SERVICE"
     
-    if [ -n "$PROFILE" ]; then
-        if $DOCKER_CMD compose --profile "$PROFILE" ps "$SERVICE" 2>/dev/null | grep -q "$SERVICE"; then
-            STATUS=$($DOCKER_CMD compose --profile "$PROFILE" ps "$SERVICE" 2>/dev/null | grep "$SERVICE" | awk '{print $4}')
-            if [ "$STATUS" = "Up" ] || [ "$STATUS" = "running" ]; then
-                echo "   ✅ $SERVICE está corriendo"
-                return 0
-            else
-                echo "   ⚠️  $SERVICE existe pero no está corriendo (Estado: $STATUS)"
-                return 1
-            fi
+    # Usar --format para obtener estado confiable
+    STATUS=$($DOCKER_CMD compose ps --format "{{.Status}}" "$SERVICE" 2>/dev/null)
+    
+    if [ -n "$STATUS" ]; then
+        # El estado puede ser "Up 2 hours", "running", "Up (healthy)", etc.
+        if [[ "$STATUS" == "Up"* ]] || [[ "$STATUS" == "running"* ]]; then
+            echo "   ✅ $SERVICE está corriendo ($STATUS)"
+            return 0
         else
-            echo "   ⚠️  $SERVICE no está corriendo (levanta con --profile $PROFILE)"
+            echo "   ⚠️  $SERVICE existe pero no está corriendo (Estado: $STATUS)"
             return 1
         fi
     else
-        if $DOCKER_CMD compose ps "$SERVICE" 2>/dev/null | grep -q "$SERVICE"; then
-            STATUS=$($DOCKER_CMD compose ps "$SERVICE" 2>/dev/null | grep "$SERVICE" | awk '{print $4}')
-            if [ "$STATUS" = "Up" ] || [ "$STATUS" = "running" ]; then
-                echo "   ✅ $SERVICE está corriendo"
-                return 0
-            else
-                echo "   ⚠️  $SERVICE existe pero no está corriendo (Estado: $STATUS)"
-                return 1
-            fi
-        else
-            echo "   ⚠️  $SERVICE no está corriendo"
-            return 1
-        fi
+        echo "   ⚠️  $SERVICE no está corriendo"
+        return 1
     fi
 }
 
@@ -91,11 +78,8 @@ check_logs() {
     
     echo "📋 Verificando logs de: $SERVICE"
     
-    if [ -n "$PROFILE" ]; then
-        LOGS=$($DOCKER_CMD compose --profile "$PROFILE" logs "$SERVICE" 2>&1 | tail -20)
-    else
-        LOGS=$($DOCKER_CMD compose logs "$SERVICE" 2>&1 | tail -20)
-    fi
+    # Nota: Ya no usamos --profile porque causa errores si faltan dependencias de otros perfiles
+    LOGS=$($DOCKER_CMD compose logs "$SERVICE" 2>&1 | tail -20)
     
     # Buscar errores críticos
     if echo "$LOGS" | grep -qi "error\|fatal\|failed\|cannot\|unable" | grep -v "INFO\|DEBUG"; then
@@ -114,13 +98,15 @@ check_endpoint() {
     local PORT=$2
     local PATH=$3
     
-    echo "🌐 Verificando endpoint: http://localhost:$PORT$PATH"
+    echo "🌐 Verificando endpoint: http://127.0.0.1:$PORT$PATH"
     
-    if curl -s -f "http://localhost:$PORT$PATH" > /dev/null 2>&1; then
+    # Usar 127.0.0.1 para evitar problemas de resolución IPv6
+    if /usr/bin/curl -s -f "http://127.0.0.1:$PORT$PATH" > /dev/null; then
         echo "   ✅ Endpoint accesible"
         return 0
     else
-        echo "   ⚠️  Endpoint no accesible (puede ser normal si el servicio no está corriendo)"
+        echo "   ⚠️  Endpoint no accesible. Salida de curl:"
+        /usr/bin/curl -v "http://127.0.0.1:$PORT$PATH" || true
         return 1
     fi
 }
@@ -174,7 +160,36 @@ if [ $? -eq 0 ]; then
 fi
 
 echo ""
-echo "3️⃣  VERIFICACIÓN DE CONFIGURACIÓN"
+echo "4️⃣  PRUEBA DE REDIS (OPEN WEBUI)"
+echo "--------------------------------"
+echo ""
+
+# Verificar Redis
+check_service "redis" "infrastructure"
+if [ $? -eq 0 ]; then
+    echo "🔍 Verificando integración Open WebUI -> Redis..."
+    
+    # 1. Variables de entorno
+    if $DOCKER_CMD exec open-webui env | grep -q "CACHE_TYPE=redis"; then
+         echo "   ✅ Variable CACHE_TYPE=redis configurada"
+    else
+         echo "   ❌ Variable CACHE_TYPE no configurada correctamente"
+         ((ERRORS++))
+    fi
+    
+    # 2. Conectividad
+    # Curl devuelve 52 (Empty reply) cuando conecta exitosamente a Redis (porque Redis no habla HTTP)
+    # O verifica "Connected to redis" en el output verbose
+    if $DOCKER_CMD exec open-webui curl -v redis:6379 2>&1 | grep -q "Connected to redis"; then
+         echo "   ✅ Open WebUI puede conectarse a Redis:6379"
+    else
+         echo "   ❌ Open WebUI NO puede conectarse a Redis"
+         ((ERRORS++))
+    fi
+fi
+
+echo ""
+echo "5️⃣  VERIFICACIÓN DE CONFIGURACIÓN"
 echo "----------------------------------"
 echo ""
 

@@ -17,8 +17,9 @@
 # CONFIGURACIÓN COMÚN Y VARIABLES DE ENTORNO
 # =============================================================================
 # Configuración compartida entre servicios para consistencia
-x-common-env: &common-env
+x-common-env:
   # Configuración de zona horaria
+  &common-env
   TZ: ${TZ:-UTC}
   # Configuración de usuario/grupo (para permisos de archivos)
   PUID: ${PUID:-1000}
@@ -43,39 +44,46 @@ x-prod-config: &prod-config
 # Los volúmenes almacenan datos de forma persistente, sobreviviendo a reinicios
 # y eliminación de contenedores. Todos los datos importantes se guardan aquí.
 volumes:
-  n8n_storage:        # Datos de n8n (workflows, credenciales, configuraciones)
-  postgres_storage:   # Base de datos PostgreSQL principal
-  ollama_storage:     # Modelos de IA descargados (¡pueden ser muy grandes!)
-  qdrant_storage:     # Base de datos vectorial Qdrant
-  pgvector_data:      # Base de datos PostgreSQL con extensión vectorial
+  n8n_storage: # Datos de n8n (workflows, credenciales, configuraciones)
+  postgres_storage: # Base de datos PostgreSQL principal
+  ollama_storage: # Modelos de IA descargados (¡pueden ser muy grandes!)
+  qdrant_storage: # Base de datos vectorial Qdrant
+  pgvector_data: # Base de datos PostgreSQL con extensión vectorial
   open_webui_storage: # Datos de Open WebUI (chats, configuraciones)
-  n8n_data:           # Datos de importación/exportación de n8n
-  shared_data:        # Datos compartidos entre servicios
-  # Nuevos volúmenes para mejoras
-  prometheus_data:    # Datos de métricas de Prometheus
-  grafana_data:       # Datos de Grafana
-  alertmanager_data:  # Datos de AlertManager
-  backup_data:        # Datos de respaldos automáticos
-  # Volúmenes para nuevas mejoras
-  redis_data:         # Cache Redis
-  jenkins_data:       # Datos de Jenkins CI/CD
-  haproxy_data:       # Configuración de HAProxy
-  keycloak_data:      # Datos de Keycloak
-  modsecurity_data:   # Reglas de ModSecurity
-  cadvisor_data:      # Datos de cAdvisor
-  node_exporter_data: # Datos de Node Exporter
-  postgres_exporter_data: # Datos de PostgreSQL Exporter
-  # Volúmenes para mejoras de persistencia
-  config_data:        # Configuraciones persistentes (Prometheus, Grafana, AlertManager, HAProxy, ModSecurity)
-  ssl_certs_data:     # Certificados SSL/TLS generados
-  logs_data:          # Logs consolidados de todos los servicios
-  grafana_provisioning_data: # Dashboards y datasources provisionados de Grafana
-  prometheus_rules_data: # Reglas de alertas personalizadas de Prometheus
+  n8n_data: # Datos de importación/exportación de n8n
+  shared_data:
+    # Datos compartidos entre servicios
+    # Nuevos volúmenes para mejoras
 
-# =============================================================================
-# REDES
-# =============================================================================
-# Define redes personalizadas para separar frontend y backend
+  prometheus_data: # Datos de métricas de Prometheus
+  grafana_data: # Datos de Grafana
+  alertmanager_data: # Datos de AlertManager
+  backup_data:
+    # Datos de respaldos automáticos
+    # Volúmenes para nuevas mejoras
+
+  redis_data: # Cache Redis
+  jenkins_data: # Datos de Jenkins CI/CD
+  haproxy_data: # Configuración de HAProxy
+  keycloak_data: # Datos de Keycloak
+  modsecurity_data: # Reglas de ModSecurity
+  cadvisor_data: # Datos de cAdvisor
+  node_exporter_data: # Datos de Node Exporter
+  postgres_exporter_data:
+    # Datos de PostgreSQL Exporter
+    # Volúmenes para mejoras de persistencia
+
+  config_data: # Configuraciones persistentes (Prometheus, Grafana, AlertManager, HAProxy, ModSecurity)
+  ssl_certs_data: # Certificados SSL/TLS generados
+  logs_data: # Logs consolidados de todos los servicios
+  grafana_provisioning_data: # Dashboards y datasources provisionados de Grafana
+  prometheus_rules_data:
+    # Reglas de alertas personalizadas de Prometheus
+
+    # =============================================================================
+    # REDES
+    # =============================================================================
+    # Define redes personalizadas para separar frontend y backend
 networks:
   genai-network:
     driver: bridge
@@ -86,7 +94,7 @@ networks:
   backend-network:
     driver: bridge
     name: backend-network
-    internal: true  # Solo comunicación interna
+    internal: true # Solo comunicación interna
   monitoring-network:
     driver: bridge
     name: monitoring-network
@@ -102,25 +110,26 @@ networks:
 # múltiples servicios para evitar duplicación de código.
 
 # Plantilla para servicios n8n (n8n es una plataforma de automatización)
-x-n8n: &service-n8n
+x-n8n:
   #image: n8nio/n8n:latest
   # NOTA: Usar versión específica en lugar de 'latest' para evitar actualizaciones inesperadas
   # Actualizar manualmente después de hacer backup y probar workflows
   # Actualización gradual completada: 1.101.2 -> 1.110.1 -> 1.122.5
-  image: docker.n8n.io/n8nio/n8n:1.122.5  # Versión más reciente (actualizado el 2025-12-07)
-  networks: ['genai-network']     # Conecta a nuestra red personalizada
+  &service-n8n
+  image: docker.n8n.io/n8nio/n8n:1.122.5 # Versión más reciente (actualizado el 2025-12-07)
+  networks: [ 'genai-network' ] # Conecta a nuestra red personalizada
   environment:
-    - DB_TYPE=${N8N_DB_TYPE:-postgresdb}          # Tipo de base de datos (PostgreSQL)
+    - DB_TYPE=${N8N_DB_TYPE:-postgresdb} # Tipo de base de datos (PostgreSQL)
     - DB_POSTGRESDB_HOST=${N8N_DB_HOST:-postgres} # Host de la base de datos
-    - DB_POSTGRESDB_USER=${POSTGRES_USER}     # Usuario de BD (desde .env)
+    - DB_POSTGRESDB_USER=${POSTGRES_USER} # Usuario de BD (desde .env)
     - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD} # Contraseña de BD (desde .env)
-    - N8N_DIAGNOSTICS_ENABLED=${N8N_DIAGNOSTICS_ENABLED:-false}           # Desactiva telemetría
-    - N8N_PERSONALIZATION_ENABLED=${N8N_PERSONALIZATION_ENABLED:-false}       # Desactiva personalización
-    - N8N_ENCRYPTION_KEY                      # Clave para encriptar datos
-    - N8N_USER_MANAGEMENT_JWT_SECRET          # Clave para tokens JWT
-    - OLLAMA_HOST=${OLLAMA_HOST_INTERNAL:-ollama}:${OLLAMA_PORT_INTERNAL:-11434}                # Conecta con Ollama
+    - N8N_DIAGNOSTICS_ENABLED=${N8N_DIAGNOSTICS_ENABLED:-false} # Desactiva telemetría
+    - N8N_PERSONALIZATION_ENABLED=${N8N_PERSONALIZATION_ENABLED:-false} # Desactiva personalización
+    - N8N_ENCRYPTION_KEY # Clave para encriptar datos
+    - N8N_USER_MANAGEMENT_JWT_SECRET # Clave para tokens JWT
+    - OLLAMA_HOST=${OLLAMA_HOST_INTERNAL:-ollama}:${OLLAMA_PORT_INTERNAL:-11434} # Conecta con Ollama
   env_file:
-    - .env                                    # Carga variables desde archivo .env
+    - .env # Carga variables desde archivo .env
   # Configuración de logging mejorada
   logging:
     driver: "json-file"
@@ -139,10 +148,10 @@ x-n8n: &service-n8n
 
 # Plantilla para servicios Ollama (servidor de modelos de IA)
 x-ollama: &service-ollama
-  image: ollama/ollama:latest     # Imagen oficial de Ollama
+  image: ollama/ollama:latest # Imagen oficial de Ollama
   container_name: ollama
-  networks: ['genai-network']
-  restart: unless-stopped         # Reinicia automáticamente si falla
+  networks: [ 'genai-network' ]
+  restart: unless-stopped # Reinicia automáticamente si falla
   ports:
     - "${PORT_OLLAMA_HOST:-11434}:${PORT_OLLAMA_CONTAINER:-11434}"
   volumes:
@@ -156,13 +165,14 @@ x-ollama: &service-ollama
     # Mantener modelos cargados 10 minutos para reducir tiempos de respuesta
     - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-10m}
   # Configuración de shared memory para mejor rendimiento con modelos grandes
-  shm_size: ${OLLAMA_SHM_SIZE:-2g}  # 2GB de memoria compartida (mejora rendimiento)
-  healthcheck:                    # Verifica que el servicio esté funcionando
-    test: ["CMD-SHELL", "pgrep -f ollama || exit 1"]
-    interval: 10s                 # Verifica cada 10 segundos
-    timeout: 5s                   # Timeout de 5 segundos
-    retries: 5                    # Reintenta 5 veces antes de marcar como unhealthy
-    start_period: 10s             # Espera 10 segundos antes de empezar healthchecks
+  shm_size: ${OLLAMA_SHM_SIZE:-2g} # 2GB de memoria compartida (mejora rendimiento)
+  healthcheck:
+    # Verifica que el servicio esté funcionando
+    test: [ "CMD-SHELL", "pgrep -f ollama || exit 1" ]
+    interval: 10s # Verifica cada 10 segundos
+    timeout: 5s # Timeout de 5 segundos
+    retries: 5 # Reintenta 5 veces antes de marcar como unhealthy
+    start_period: 10s # Espera 10 segundos antes de empezar healthchecks
   # Configuración de logging mejorada
   logging:
     driver: "json-file"
@@ -183,13 +193,13 @@ x-ollama: &service-ollama
 # Este servicio descarga automáticamente los modelos de IA al iniciar
 x-init-ollama: &init-ollama
   image: ollama/ollama:latest
-  networks: ['genai-network']
+  networks: [ 'genai-network' ]
   container_name: ollama-pull-llama
   volumes:
     - ollama_storage:/root/.ollama # Comparte el mismo volumen que ollama
-  entrypoint: /bin/sh              # Usa shell para ejecutar comandos
+  entrypoint: /bin/sh # Usa shell para ejecutar comandos
   environment:
-    - OLLAMA_HOST=${OLLAMA_HOST_INTERNAL:-ollama}:${OLLAMA_PORT_INTERNAL:-11434}     # Conecta con el servicio ollama
+    - OLLAMA_HOST=${OLLAMA_HOST_INTERNAL:-ollama}:${OLLAMA_PORT_INTERNAL:-11434} # Conecta con el servicio ollama
   command:
     - "-c"
     - |
@@ -262,33 +272,29 @@ services:
   #         memory: 1G
 
   postgres:
-    image: postgres:16-alpine      # PostgreSQL 16 con Alpine Linux (más ligero)
+    image: postgres:16-alpine # PostgreSQL 16 con Alpine Linux (más ligero)
     hostname: ${POSTGRES_HOSTNAME:-postgres}
     container_name: postgres
-    networks: ['genai-network']
+    networks: [ 'genai-network' ]
     restart: unless-stopped
     environment:
-      - POSTGRES_USER              # Usuario de BD (desde .env)
-      - POSTGRES_PASSWORD          # Contraseña de BD (desde .env)
-      - POSTGRES_DB                # Nombre de BD (desde .env) - se crea automáticamente
+      - POSTGRES_USER # Usuario de BD (desde .env)
+      - POSTGRES_PASSWORD # Contraseña de BD (desde .env)
+      - POSTGRES_DB # Nombre de BD (desde .env) - se crea automáticamente
       - POSTGRES_HOST_AUTH_METHOD=scram-sha-256
       # Configuración para prevenir transacciones pendientes y locks
       - POSTGRES_INITDB_ARGS=-E UTF8 --locale=C
     volumes:
-      - postgres_storage:/var/lib/postgresql/data  # Datos persistentes
+      - postgres_storage:/var/lib/postgresql/data # Datos persistentes
       - ./scripts/init-keycloak-db.sql:/docker-entrypoint-initdb.d/init-keycloak-db.sql
     # Tiempo de gracia para shutdown limpio (30 segundos)
     stop_grace_period: 30s
     # Comando con configuración para manejar mejor los shutdowns
     command: >
-      postgres
-      -c shared_buffers=256MB
-      -c max_connections=${POSTGRES_MAX_CONNECTIONS:-200}
-      -c statement_timeout=30000
-      -c idle_in_transaction_session_timeout=60000
-      -c lock_timeout=30000
-    healthcheck:                   # Verifica que PostgreSQL esté listo
-      test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      postgres -c shared_buffers=256MB -c max_connections=${POSTGRES_MAX_CONNECTIONS:-200} -c statement_timeout=30000 -c idle_in_transaction_session_timeout=60000 -c lock_timeout=30000
+    healthcheck:
+      # Verifica que PostgreSQL esté listo
+      test: [ 'CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}' ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -310,9 +316,9 @@ services:
 
   # Base de datos PostgreSQL con extensión vectorial (para embeddings)
   pgvector:
-    image: ankane/pgvector         # PostgreSQL con extensión pgvector
+    image: ankane/pgvector # PostgreSQL con extensión pgvector
     container_name: pgvector
-    networks: ['genai-network']
+    networks: [ 'genai-network' ]
     environment:
       POSTGRES_USER: ${PGVECTOR_USER:-user}
       POSTGRES_PASSWORD: ${PGVECTOR_PASSWORD:-password}
@@ -342,10 +348,13 @@ services:
   open-webui:
     image: ghcr.io/open-webui/open-webui:0.6.41 # Versión más reciente - probando mejoras OIDC
     container_name: open-webui
-    profiles: ["chat-ai"]          # Perfil de chat con IA (requiere --profile security para Keycloak)
+    profiles: [ "chat-ai" ] # Perfil de chat con IA (requiere --profile security para Keycloak)
     ports:
       - "${PORT_OPEN_WEBUI_HOST:-3000}:${PORT_OPEN_WEBUI_CONTAINER:-8080}"
     environment:
+      # Redis Cache Config
+      - CACHE_TYPE=${OPEN_WEBUI_CACHE_TYPE:-redis}
+      - REDIS_URL=${OPEN_WEBUI_REDIS_URL:-redis://redis:6379/0}
       # OLLAMA_BASE_URL: URL interna para conectar con Ollama desde el contenedor
       # IMPORTANTE: Si OLLAMA_URL_INTERNAL está vacía en .env, debe tener un valor o no estar definida
       # Si está definida pero vacía, Docker Compose la pasa como cadena vacía y ${VAR:-default} no funciona
@@ -353,11 +362,11 @@ services:
       - USER_AGENT=${OPEN_WEBUI_USER_AGENT:-OpenWebUI/0.6.13}
       - CORS_ALLOW_ORIGIN=${OPEN_WEBUI_URL_PUBLIC:-http://localhost:3000}
       # Configuración de usuarios y acceso
-      - ENABLE_SIGNUP=${OPEN_WEBUI_ENABLE_SIGNUP:-true}  # Permitir registro de usuarios
-      - ENABLE_LOGIN_FORM=${OPEN_WEBUI_ENABLE_LOGIN_FORM:-true}  # Permitir login con formulario
+      - ENABLE_SIGNUP=${OPEN_WEBUI_ENABLE_SIGNUP:-true} # Permitir registro de usuarios
+      - ENABLE_LOGIN_FORM=${OPEN_WEBUI_ENABLE_LOGIN_FORM:-true} # Permitir login con formulario
       # Configuración OIDC/OAuth con Keycloak
       - ENABLE_OAUTH_SSO=${OPEN_WEBUI_ENABLE_OAUTH_SSO:-true}
-      - ENABLE_OAUTH_SIGNUP=${OPEN_WEBUI_ENABLE_OAUTH_SIGNUP:-true}  # Permitir registro automático de usuarios OAuth
+      - ENABLE_OAUTH_SIGNUP=${OPEN_WEBUI_ENABLE_OAUTH_SIGNUP:-true} # Permitir registro automático de usuarios OAuth
       - OAUTH_CLIENT_ID=${OPEN_WEBUI_OAUTH_CLIENT_ID:-open-webui}
       - OAUTH_CLIENT_SECRET=${OPEN_WEBUI_OAUTH_CLIENT_SECRET}
       - OAUTH_PROVIDER_NAME=${OPEN_WEBUI_OAUTH_PROVIDER_NAME:-Keycloak}
@@ -366,9 +375,9 @@ services:
       # en lugar de las URLs explícitas (keycloak:8080), causando error 405
       # Esto es una limitación de Open WebUI que no respeta URLs explícitas
       # cuando hay un discovery document configurado
-      - OPENID_ENABLED=${OPEN_WEBUI_OAUTH_ENABLED:-true}  # OpenID usa variables OAUTH_ (consolidado según documentación)
-      - OPENID_CLIENT_ID=${OPEN_WEBUI_OAUTH_CLIENT_ID:-open-webui}  # OpenID usa variables OAUTH_ (consolidado según documentación)
-      - OPENID_CLIENT_SECRET=${OPEN_WEBUI_OAUTH_CLIENT_SECRET}  # OpenID usa variables OAUTH_ (consolidado según documentación)
+      - OPENID_ENABLED=${OPEN_WEBUI_OAUTH_ENABLED:-true} # OpenID usa variables OAUTH_ (consolidado según documentación)
+      - OPENID_CLIENT_ID=${OPEN_WEBUI_OAUTH_CLIENT_ID:-open-webui} # OpenID usa variables OAUTH_ (consolidado según documentación)
+      - OPENID_CLIENT_SECRET=${OPEN_WEBUI_OAUTH_CLIENT_SECRET} # OpenID usa variables OAUTH_ (consolidado según documentación)
       # OPENID_PROVIDER_URL necesario para que aparezca el botón
       - OPENID_PROVIDER_URL=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/.well-known/openid-configuration
       - OPENID_REDIRECT_URI=${OPEN_WEBUI_URL_PUBLIC:-http://localhost:3000}/oauth/oidc/callback
@@ -377,23 +386,24 @@ services:
       - OPENID_TOKEN_ENDPOINT=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/token
       - OPENID_USERINFO_ENDPOINT=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/userinfo
       - OPENID_ISSUER=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}
-      - OPENID_SCOPES=${OPEN_WEBUI_OAUTH_SCOPES:-openid profile email}  # OpenID usa variables OAUTH_ (consolidado según documentación)
+      - OPENID_SCOPES=${OPEN_WEBUI_OAUTH_SCOPES:-openid profile email} # OpenID usa variables OAUTH_ (consolidado según documentación)
       - OPENID_SIGN_OUT_REDIRECT_URL=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/logout
     volumes:
-      - open_webui_storage:/app/backend/data   # Datos persistentes
+      - open_webui_storage:/app/backend/data # Datos persistentes
       #- /mnt/e/docker/app/open-webui/backend/data:/app/backend/data  # Montaje local (comentado)
     networks:
       - genai-network
     depends_on:
       keycloak:
-        condition: service_healthy     # Espera a que Keycloak esté listo (requiere --profile security)
+        condition: service_healthy # Espera a que Keycloak esté listo (requiere --profile security)
       keycloak-init:
         condition: service_completed_successfully
       # Espera a que los modelos LLM estén descargados antes de iniciar
       ollama-pull-llama-gpu:
         condition: service_completed_successfully
-    healthcheck:                   # Verifica que Open WebUI esté funcionando
-      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+    healthcheck:
+      # Verifica que Open WebUI esté funcionando
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/healthz" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -415,31 +425,32 @@ services:
 
   # Servicio de importación de datos para n8n (se ejecuta una vez al inicio)
   n8n-import:
-    <<: *service-n8n               # Usa la plantilla n8n
+    <<: *service-n8n # Usa la plantilla n8n
     hostname: n8n-import
     container_name: n8n-import
-    networks: ['genai-network']
-    entrypoint: /bin/sh            # Usa shell para ejecutar comandos de importación
+    networks: [ 'genai-network' ]
+    entrypoint: /bin/sh # Usa shell para ejecutar comandos de importación
     command:
       - "-c"
       - "n8n import:credentials --separate --input=/data/credentials && n8n import:workflow --separate --input=/data/workflows"
     volumes:
-      - n8n_data:/data             # Datos de importación/exportación
+      - n8n_data:/data # Datos de importación/exportación
     depends_on:
       postgres:
         condition: service_healthy # Espera a que PostgreSQL esté listo
-    healthcheck:                   # Verifica que n8n-import esté funcionando
-      test: ["CMD", "curl", "-f", "http://n8n:5678/healthz"]
+    healthcheck:
+      # Verifica que n8n-import esté funcionando
+      test: [ "CMD", "curl", "-f", "http://n8n:5678/healthz" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
   # Servicio principal de n8n (plataforma de automatización)
   n8n:
-    <<: *service-n8n               # Usa la plantilla n8n
+    <<: *service-n8n # Usa la plantilla n8n
     hostname: n8n
     container_name: n8n
-    profiles: ["automation"]        # Perfil de automatización (requiere --profile security para Keycloak)
+    profiles: [ "automation" ] # Perfil de automatización (requiere --profile security para Keycloak)
     restart: unless-stopped
     ports:
       - "${PORT_N8N_HOST:-5678}:${PORT_N8N_CONTAINER:-5678}"
@@ -459,20 +470,21 @@ services:
       - N8N_OIDC_SCOPES=${N8N_OIDC_SCOPES:-openid profile email}
       - N8N_OIDC_DISPLAY_NAME=${N8N_OIDC_DISPLAY_NAME:-Keycloak}
     volumes:
-      - n8n_storage:/home/node/.n8n    # Datos persistentes de n8n
-      - n8n_data:/data                 # Datos de importación/exportación
-      - shared_data:/data/shared       # Datos compartidos
+      - n8n_storage:/home/node/.n8n # Datos persistentes de n8n
+      - n8n_data:/data # Datos de importación/exportación
+      - shared_data:/data/shared # Datos compartidos
     depends_on:
       postgres:
-        condition: service_healthy     # Espera a que PostgreSQL esté listo
+        condition: service_healthy # Espera a que PostgreSQL esté listo
       n8n-import:
-        condition: service_completed_successfully  # Espera a que termine la importación
+        condition: service_completed_successfully # Espera a que termine la importación
       keycloak:
-        condition: service_healthy     # Espera a que Keycloak esté listo (requiere --profile security)
+        condition: service_healthy # Espera a que Keycloak esté listo (requiere --profile security)
       keycloak-init:
         condition: service_completed_successfully
-    healthcheck:                       # Verifica que n8n esté funcionando
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5678/healthz || exit 1"]
+    healthcheck:
+      # Verifica que n8n esté funcionando
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5678/healthz || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -482,14 +494,15 @@ services:
     image: qdrant/qdrant
     hostname: qdrant
     container_name: qdrant
-    networks: ['genai-network']
+    networks: [ 'genai-network' ]
     restart: unless-stopped
     ports:
       - "${PORT_QDRANT_HOST:-6333}:${PORT_QDRANT_CONTAINER:-6333}"
     volumes:
-      - qdrant_storage:/qdrant/storage  # Datos persistentes
-    healthcheck:                   # Verifica que Qdrant esté funcionando
-      test: ["CMD-SHELL", "for pid in /proc/*/comm; do [ -f \"$$pid\" ] && grep -q qdrant \"$$pid\" 2>/dev/null && exit 0; done; exit 1"]
+      - qdrant_storage:/qdrant/storage # Datos persistentes
+    healthcheck:
+      # Verifica que Qdrant esté funcionando
+      test: [ "CMD-SHELL", "for pid in /proc/*/comm; do [ -f \"$$pid\" ] && grep -q qdrant \"$$pid\" 2>/dev/null && exit 0; done; exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -516,31 +529,29 @@ services:
 
   # Perfil CPU: Ollama usando solo CPU (más lento pero funciona en cualquier máquina)
   ollama-cpu:
-    profiles: ["cpu"]              # Solo se activa con --profile cpu
-    <<: *service-ollama            # Usa la plantilla ollama
+    profiles: [ "cpu" ] # Solo se activa con --profile cpu
+    <<: *service-ollama # Usa la plantilla ollama
 
   # Perfil GPU NVIDIA: Ollama con aceleración GPU NVIDIA
   ollama-gpu:
-    profiles: ["gpu-nvidia"]       # Solo se activa con --profile gpu-nvidia
-    <<: *service-ollama            # Usa la plantilla ollama
+    profiles: [ "gpu-nvidia" ] # Solo se activa con --profile gpu-nvidia
+    <<: *service-ollama # Usa la plantilla ollama
     deploy:
       resources:
         reservations:
           devices:
-            - driver: nvidia        # Usa driver NVIDIA
-              count: 1              # Usa 1 GPU
-              capabilities: [gpu]   # Habilita capacidades GPU
+            - driver: nvidia # Usa driver NVIDIA
+              count: 1 # Usa 1 GPU
+              capabilities: [ gpu ] # Habilita capacidades GPU
 
   # Perfil GPU AMD: Ollama con aceleración GPU AMD
   ollama-gpu-amd:
-    profiles: ["gpu-amd"]          # Solo se activa con --profile gpu-amd
+    profiles: [ "gpu-amd" ] # Solo se activa con --profile gpu-amd
     <<: *service-ollama
-    image: ollama/ollama:rocm      # Imagen con soporte ROCm (AMD)
+    image: ollama/ollama:rocm # Imagen con soporte ROCm (AMD)
     devices:
-      - "/dev/kfd"                 # Dispositivo AMD GPU
-      - "/dev/dri"                 # Dispositivo de renderizado
-
-
+      - "/dev/kfd" # Dispositivo AMD GPU
+      - "/dev/dri" # Dispositivo de renderizado
 
   # =============================================================================
   # SERVICIOS DE INICIALIZACIÓN DE MODELOS (DIFERENTES PERFILES)
@@ -556,8 +567,8 @@ services:
 
   # Descarga de modelos para GPU NVIDIA
   ollama-pull-llama-gpu:
-    profiles: ["gpu-nvidia"]
-    <<: *init-ollama               # Usa la plantilla de inicialización
+    profiles: [ "gpu-nvidia" ]
+    <<: *init-ollama # Usa la plantilla de inicialización
     depends_on:
       ollama-gpu:
         condition: service_healthy # Espera a que ollama-gpu esté healthy
@@ -580,13 +591,13 @@ services:
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
-    profiles: ["monitoring"]
+    profiles: [ "monitoring" ]
     ports:
       - "${PORT_PROMETHEUS_HOST:-9090}:${PORT_PROMETHEUS_CONTAINER:-9090}"
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
-      - prometheus_rules_data:/etc/prometheus/rules/custom:ro  # Reglas personalizadas persistentes
+      - prometheus_rules_data:/etc/prometheus/rules/custom:ro # Reglas personalizadas persistentes
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -599,7 +610,7 @@ services:
       - monitoring-network
       - genai-network
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -621,7 +632,7 @@ services:
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
-    profiles: ["monitoring"]
+    profiles: [ "monitoring" ]
     ports:
       - "${PORT_GRAFANA_HOST:-3001}:${PORT_GRAFANA_CONTAINER:-3000}"
     volumes:
@@ -654,12 +665,12 @@ services:
       # TOKEN_URL y API_URL pueden usar keycloak:8080 porque Grafana las llama desde dentro del contenedor
       - GF_AUTH_GENERIC_OAUTH_TOKEN_URL=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/token
       - GF_AUTH_GENERIC_OAUTH_API_URL=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/userinfo
-      - GF_AUTH_GENERIC_OAUTH_SKIP_ORG_ROLE_SYNC=${GRAFANA_SKIP_ORG_ROLE_SYNC:-true}  # Necesario: Keycloak devuelve realm roles del usuario admin que Grafana intenta sincronizar
+      - GF_AUTH_GENERIC_OAUTH_SKIP_ORG_ROLE_SYNC=${GRAFANA_SKIP_ORG_ROLE_SYNC:-true} # Necesario: Keycloak devuelve realm roles del usuario admin que Grafana intenta sincronizar
       # SIGNOUT_REDIRECT_URL debe usar localhost porque el navegador del usuario necesita acceder
       - GF_AUTH_SIGNOUT_REDIRECT_URL=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/logout
       - GF_SERVER_ROOT_URL=${GRAFANA_URL_PUBLIC:-http://localhost:3001}
       - GF_USERS_AUTO_LOGIN=${GRAFANA_USERS_AUTO_LOGIN:-false}
-      - GF_AUTH_DISABLE_LOGIN_FORM=${GRAFANA_AUTH_DISABLE_LOGIN_FORM:-true}  # Solo Keycloak OAuth (más seguro)
+      - GF_AUTH_DISABLE_LOGIN_FORM=${GRAFANA_AUTH_DISABLE_LOGIN_FORM:-true} # Solo Keycloak OAuth (más seguro)
     networks:
       - monitoring-network
       - genai-network
@@ -671,7 +682,7 @@ services:
       grafana-db-init:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      test: [ "CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -693,7 +704,7 @@ services:
   alertmanager:
     image: prom/alertmanager:latest
     container_name: alertmanager
-    profiles: ["monitoring"]
+    profiles: [ "monitoring" ]
     ports:
       - "${PORT_ALERTMANAGER_HOST:-9093}:${PORT_ALERTMANAGER_CONTAINER:-9093}"
     volumes:
@@ -706,7 +717,7 @@ services:
       - monitoring-network
       - genai-network
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9093/-/healthy"]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9093/-/healthy" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -728,7 +739,7 @@ services:
   backup:
     image: alpine:latest
     container_name: backup
-    profiles: ["monitoring"]       # Solo se activa con --profile monitoring
+    profiles: [ "monitoring" ] # Solo se activa con --profile monitoring
     volumes:
       - n8n_storage:/data/n8n:ro
       - postgres_storage:/data/postgres:ro
@@ -761,7 +772,7 @@ services:
   dev-tools:
     image: alpine:latest
     container_name: dev-tools
-    profiles: ["dev"]              # Solo se activa con --profile dev
+    profiles: [ "dev" ] # Solo se activa con --profile dev
     volumes:
       - .:/workspace
     working_dir: /workspace
@@ -786,7 +797,7 @@ services:
   node-exporter:
     image: prom/node-exporter:latest
     container_name: node-exporter
-    profiles: ["monitoring"]
+    profiles: [ "monitoring" ]
     ports:
       - "${PORT_NODE_EXPORTER_HOST:-9100}:${PORT_NODE_EXPORTER_CONTAINER:-9100}"
     volumes:
@@ -801,7 +812,7 @@ services:
     networks:
       - monitoring-network
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9100/metrics"]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9100/metrics" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -823,7 +834,7 @@ services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
-    profiles: ["monitoring"]
+    profiles: [ "monitoring" ]
     ports:
       - "${PORT_CADVISOR_HOST:-8082}:${PORT_CADVISOR_CONTAINER:-8080}"
     volumes:
@@ -832,11 +843,11 @@ services:
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro  # Necesario para descubrir contenedores
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Necesario para descubrir contenedores
     networks:
       - monitoring-network
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/healthz"]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/healthz" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -858,19 +869,19 @@ services:
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:latest
     container_name: postgres-exporter
-    profiles: ["monitoring"]
+    profiles: [ "monitoring" ]
     environment:
       DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
     ports:
       - "${PORT_POSTGRES_EXPORTER_HOST:-9187}:${PORT_POSTGRES_EXPORTER_CONTAINER:-9187}"
     networks:
       - monitoring-network
-      - genai-network  # Necesario para conectarse a PostgreSQL
+      - genai-network # Necesario para conectarse a PostgreSQL
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9187/metrics"]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9187/metrics" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -892,13 +903,13 @@ services:
   nvidia-exporter:
     image: nvidia/dcgm-exporter:latest
     container_name: nvidia-exporter
-    profiles: ["monitoring", "gpu-nvidia"]  # Solo se activa con monitoring y gpu-nvidia
+    profiles: [ "monitoring", "gpu-nvidia" ] # Solo se activa con monitoring y gpu-nvidia
     ports:
       - "${PORT_NVIDIA_EXPORTER_HOST:-9400}:${PORT_NVIDIA_EXPORTER_CONTAINER:-9400}"
     networks:
       - monitoring-network
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9400/metrics"]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9400/metrics" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -918,20 +929,20 @@ services:
           devices:
             - driver: nvidia
               count: all
-              capabilities: [gpu]
+              capabilities: [ gpu ]
 
   # Ollama Exporter - Métricas específicas de Ollama
   ollama-exporter:
     image: python:3.11-alpine
     container_name: ollama-exporter
-    profiles: ["monitoring"]
+    profiles: [ "monitoring" ]
     ports:
       - "${PORT_OLLAMA_EXPORTER_HOST:-9888}:${PORT_OLLAMA_EXPORTER_CONTAINER:-9888}"
     volumes:
       - ./scripts/ollama-exporter.py:/app/ollama-exporter.py:ro
     networks:
       - monitoring-network
-      - genai-network  # Necesario para conectarse a Ollama
+      - genai-network # Necesario para conectarse a Ollama
     environment:
       - OLLAMA_HOST=${OLLAMA_HOST_INTERNAL:-ollama}:${OLLAMA_PORT_INTERNAL:-11434}
       - EXPORTER_PORT=9888
@@ -939,7 +950,7 @@ services:
     command: python3 /app/ollama-exporter.py
     # Depende de cualquier servicio Ollama que esté activo (gpu-nvidia o cpu)
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9888/health"]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9888/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -961,14 +972,14 @@ services:
   n8n-exporter:
     image: python:3.11-alpine
     container_name: n8n-exporter
-    profiles: ["monitoring"]
+    profiles: [ "monitoring" ]
     ports:
       - "${PORT_N8N_EXPORTER_HOST:-9889}:${PORT_N8N_EXPORTER_CONTAINER:-9889}"
     volumes:
       - ./scripts/n8n-exporter.py:/app/n8n-exporter.py:ro
     networks:
       - monitoring-network
-      - genai-network  # Necesario para conectarse a n8n
+      - genai-network # Necesario para conectarse a n8n
     environment:
       - N8N_HOST=${N8N_HOST_INTERNAL:-n8n}:${PORT_N8N_CONTAINER:-5678}
       - EXPORTER_PORT=9889
@@ -977,7 +988,7 @@ services:
     # No depende de n8n directamente para permitir que el exporter funcione
     # incluso si n8n no está corriendo (simplemente reportará n8n_up=0)
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9889/health"]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9889/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -999,14 +1010,14 @@ services:
   openwebui-exporter:
     image: python:3.11-alpine
     container_name: openwebui-exporter
-    profiles: ["monitoring"]
+    profiles: [ "monitoring" ]
     ports:
       - "${PORT_OPENWEBUI_EXPORTER_HOST:-9890}:${PORT_OPENWEBUI_EXPORTER_CONTAINER:-9890}"
     volumes:
       - ./scripts/openwebui-exporter.py:/app/openwebui-exporter.py:ro
     networks:
       - monitoring-network
-      - genai-network  # Necesario para conectarse a Open WebUI
+      - genai-network # Necesario para conectarse a Open WebUI
     environment:
       - OPEN_WEBUI_HOST=${OPEN_WEBUI_HOST_INTERNAL:-open-webui}:${PORT_OPEN_WEBUI_CONTAINER:-8080}
       - EXPORTER_PORT=9890
@@ -1015,7 +1026,7 @@ services:
     # No depende de open-webui directamente para permitir que el exporter funcione
     # incluso si open-webui no está corriendo (simplemente reportará openwebui_up=0)
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9890/health"]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9890/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -1042,7 +1053,7 @@ services:
   redis:
     image: redis:alpine
     container_name: redis
-    profiles: ["infrastructure"]
+    profiles: [ "infrastructure" ]
     ports:
       - "${PORT_REDIS_HOST:-6379}:${PORT_REDIS_CONTAINER:-6379}"
     volumes:
@@ -1050,8 +1061,9 @@ services:
     command: redis-server --appendonly yes
     networks:
       - backend-network
+      - genai-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -1073,7 +1085,7 @@ services:
   haproxy:
     image: haproxy:latest
     container_name: haproxy
-    profiles: ["infrastructure"]
+    profiles: [ "infrastructure" ]
     ports:
       - "${PORT_HAPROXY_HTTP_HOST:-80}:${PORT_HAPROXY_HTTP_CONTAINER:-80}"
       - "${PORT_HAPROXY_HTTPS_HOST:-443}:${PORT_HAPROXY_HTTPS_CONTAINER:-443}"
@@ -1084,18 +1096,18 @@ services:
       - frontend-network
       - backend-network
       - genai-network
-      - monitoring-network  # Agregado para poder resolver Grafana y Prometheus
+      - monitoring-network # Agregado para poder resolver Grafana y Prometheus
     depends_on:
       open-webui:
         condition: service_healthy
       n8n:
         condition: service_healthy
       grafana:
-        condition: service_healthy  # Esperar a que Grafana esté listo
+        condition: service_healthy # Esperar a que Grafana esté listo
       prometheus:
-        condition: service_healthy  # Esperar a que Prometheus esté listo
+        condition: service_healthy # Esperar a que Prometheus esté listo
     healthcheck:
-      test: ["CMD", "haproxy", "-c", "-f", "/usr/local/etc/haproxy/haproxy.cfg"]
+      test: [ "CMD", "haproxy", "-c", "-f", "/usr/local/etc/haproxy/haproxy.cfg" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -1113,8 +1125,6 @@ services:
           cpus: '0.25'
           memory: 128M
 
-
-
   # =============================================================================
   # SERVICIOS DE SEGURIDAD Y AUTENTICACIÓN
   # =============================================================================
@@ -1124,7 +1134,7 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:latest
     container_name: keycloak
-    profiles: ["security"]
+    profiles: [ "security" ]
     environment:
       - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN_USER:-admin}
       - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD:-admin}
@@ -1168,7 +1178,7 @@ services:
       # 1. Que el proceso keycloak esté corriendo (verificación principal)
       # 2. Que el puerto 8080 responda a conexiones TCP (verificación secundaria)
       # Usamos verificación simple pero confiable sin dependencias externas
-      test: ["CMD-SHELL", "test -f /proc/1/cmdline && cat /proc/1/cmdline | grep -q keycloak && /bin/sh -c 'exec 3<>/dev/tcp/localhost/8080 2>/dev/null && echo -e \"GET / HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3 && head -1 <&3 | grep -q \"HTTP\"' || exit 1"]
+      test: [ "CMD-SHELL", "test -f /proc/1/cmdline && cat /proc/1/cmdline | grep -q keycloak && /bin/sh -c 'exec 3<>/dev/tcp/localhost/8080 2>/dev/null && echo -e \"GET / HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3 && head -1 <&3 | grep -q \"HTTP\"' || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -1191,7 +1201,7 @@ services:
   keycloak-db-init:
     image: postgres:16-alpine
     container_name: keycloak-db-init
-    profiles: ["security"]
+    profiles: [ "security" ]
     networks:
       - genai-network
     environment:
@@ -1207,16 +1217,16 @@ services:
         set -e
         echo "🔧 Verificando base de datos de Keycloak..."
         echo ""
-        
+
         # Esperar a que PostgreSQL esté listo
         until PGPASSWORD="$${POSTGRES_PASSWORD}" psql -h postgres -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}" -c "SELECT 1;" > /dev/null 2>&1; do
           echo "   ⏳ Esperando a que PostgreSQL esté listo..."
           sleep 2
         done
-        
+
         # Verificar si la BD existe
         DB_EXISTS=$$(PGPASSWORD="$${POSTGRES_PASSWORD}" psql -h postgres -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}" -tAc "SELECT 1 FROM pg_database WHERE datname = '$${KEYCLOAK_DB_NAME}';" 2>/dev/null || echo "0")
-        
+
         if [ "$$DB_EXISTS" != "1" ]; then
           echo "   ✅ Creando base de datos '$${KEYCLOAK_DB_NAME}'..."
           PGPASSWORD="$${POSTGRES_PASSWORD}" psql -h postgres -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}" -c "CREATE DATABASE $${KEYCLOAK_DB_NAME} OWNER $${POSTGRES_USER};" 2>/dev/null || true
@@ -1229,7 +1239,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    restart: "no"  # Solo se ejecuta una vez
+    restart: "no" # Solo se ejecuta una vez
     logging:
       driver: "json-file"
       options:
@@ -1248,7 +1258,7 @@ services:
   grafana-db-init:
     image: postgres:16-alpine
     container_name: grafana-db-init
-    profiles: ["monitoring"]
+    profiles: [ "monitoring" ]
     networks:
       - genai-network
     environment:
@@ -1266,16 +1276,16 @@ services:
         set -e
         echo "🔧 Verificando base de datos de Grafana..."
         echo ""
-        
+
         # Esperar a que PostgreSQL esté listo
         until PGPASSWORD="$${POSTGRES_PASSWORD}" psql -h postgres -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}" -c "SELECT 1;" > /dev/null 2>&1; do
           echo "   ⏳ Esperando a que PostgreSQL esté listo..."
           sleep 2
         done
-        
+
         # Verificar si el usuario existe
         USER_EXISTS=$$(PGPASSWORD="$${POSTGRES_PASSWORD}" psql -h postgres -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}" -tAc "SELECT 1 FROM pg_roles WHERE rolname='$${GRAFANA_DB_USER}'" 2>/dev/null || echo "0")
-        
+
         if [ "$$USER_EXISTS" != "1" ]; then
            echo "   ✅ Creando usuario '$${GRAFANA_DB_USER}'..."
            PGPASSWORD="$${POSTGRES_PASSWORD}" psql -h postgres -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}" -c "CREATE USER $${GRAFANA_DB_USER} WITH PASSWORD '$${GRAFANA_DB_PASSWORD}';" 2>/dev/null || true
@@ -1285,7 +1295,7 @@ services:
 
         # Verificar si la BD existe
         DB_EXISTS=$$(PGPASSWORD="$${POSTGRES_PASSWORD}" psql -h postgres -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}" -tAc "SELECT 1 FROM pg_database WHERE datname = '$${GRAFANA_DB_NAME}';" 2>/dev/null || echo "0")
-        
+
         if [ "$$DB_EXISTS" != "1" ]; then
           echo "   ✅ Creando base de datos '$${GRAFANA_DB_NAME}'..."
           PGPASSWORD="$${POSTGRES_PASSWORD}" psql -h postgres -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}" -c "CREATE DATABASE $${GRAFANA_DB_NAME} OWNER $${GRAFANA_DB_USER};" 2>/dev/null || true
@@ -1298,7 +1308,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    restart: "no"  # Solo se ejecuta una vez
+    restart: "no" # Solo se ejecuta una vez
     logging:
       driver: "json-file"
       options:
@@ -1317,7 +1327,7 @@ services:
   keycloak-init:
     image: alpine:latest
     container_name: keycloak-init
-    profiles: ["security"]
+    profiles: [ "security" ]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
@@ -1347,7 +1357,7 @@ services:
         set -e
         echo "🔧 Creando clientes OIDC de Keycloak..."
         echo ""
-        
+
         # Instalar dependencias necesarias
         apk add --no-cache docker-cli curl bash postgresql-client
 
@@ -1356,7 +1366,7 @@ services:
         MAX_WAIT=120  # Reducido a 2 minutos (suficiente para Keycloak)
         ELAPSED=0
         KEYCLOAK_READY=0
-        
+
         while [ $$ELAPSED -lt $$MAX_WAIT ]; do
           # Verificar si Keycloak está healthy
           KEYCLOAK_STATUS=$$(docker ps --filter "name=keycloak" --format "{{.Status}}" 2>/dev/null || echo "")
@@ -1396,13 +1406,13 @@ services:
             echo "   Esperando... ($${ELAPSED}s/$${MAX_WAIT}s)"
           fi
         done
-        
+
         if [ $$KEYCLOAK_READY -eq 0 ]; then
           echo "   ⚠️ Keycloak no está completamente listo después de $${MAX_WAIT}s"
           echo "   ⚠️ Intentando continuar de todas formas..."
         fi
         echo ""
-        
+
         echo "🔐 Configurando credenciales de administrador..."
         docker exec keycloak /opt/keycloak/bin/kcadm.sh config credentials \
           --server http://localhost:8080 \
@@ -1485,19 +1495,19 @@ services:
               > /dev/null 2>&1 && echo "      ✅ Client '$$CLIENT_ID' created" || echo "      ❌ Error creating '$$CLIENT_ID'"
           fi
         }
-        
+
         # Crear o actualizar clientes
         create_or_update_client "grafana" "grafana" "$${GRAFANA_URL_PUBLIC}/login/generic_oauth" "$${GRAFANA_URL_PUBLIC}" "$${GRAFANA_OAUTH_CLIENT_SECRET}"
         create_or_update_client "n8n" "n8n" "$${N8N_URL_PUBLIC}/rest/oauth2-credential/callback" "$${N8N_URL_PUBLIC}" "$${N8N_OIDC_CLIENT_SECRET}"
         create_or_update_client "open-webui" "open-webui" "$${OPEN_WEBUI_URL_PUBLIC}/oauth/oidc/callback" "$${OPEN_WEBUI_URL_PUBLIC}" "$${OPEN_WEBUI_OAUTH_CLIENT_SECRET}"
         create_or_update_client "jenkins" "jenkins" "$${JENKINS_URL_PUBLIC}/securityRealm/finishLogin" "$${JENKINS_URL_PUBLIC}" "$${JENKINS_OIDC_CLIENT_SECRET}"
-        
+
         echo ""
         echo "✅ Clientes OIDC procesados"
     depends_on:
       keycloak:
         condition: service_healthy
-    restart: "no"  # Solo se ejecuta una vez
+    restart: "no" # Solo se ejecuta una vez
     logging:
       driver: "json-file"
       options:
@@ -1516,7 +1526,7 @@ services:
   modsecurity:
     image: owasp/modsecurity-crs:nginx
     container_name: modsecurity
-    profiles: ["security"]
+    profiles: [ "security" ]
     volumes:
       - ./modsecurity/modsecurity.conf:/etc/nginx/modsecurity/modsecurity.conf:ro
       - ./modsecurity/rules:/etc/nginx/modsecurity/rules:ro
@@ -1546,12 +1556,12 @@ services:
   watchtower:
     image: containrrr/watchtower:latest
     container_name: watchtower
-    profiles: ["automation"]
+    profiles: [ "automation" ]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - WATCHTOWER_CLEANUP=${WATCHTOWER_CLEANUP:-true}
-      - WATCHTOWER_SCHEDULE=${WATCHTOWER_SCHEDULE:-0 0 2 * * *}  # Actualizar a las 2 AM
+      - WATCHTOWER_SCHEDULE=${WATCHTOWER_SCHEDULE:-0 0 2 * * *} # Actualizar a las 2 AM
       - WATCHTOWER_NOTIFICATIONS=${WATCHTOWER_NOTIFICATIONS:-email}
       - WATCHTOWER_EMAIL_FROM=${WATCHTOWER_EMAIL_FROM:-watchtower@yourdomain.com}
       - WATCHTOWER_EMAIL_TO=${WATCHTOWER_EMAIL_TO:-admin@yourdomain.com}
@@ -1579,7 +1589,7 @@ services:
   jenkins:
     image: jenkins/jenkins:lts
     container_name: jenkins
-    profiles: ["ci-cd"]
+    profiles: [ "ci-cd" ]
     ports:
       - "${PORT_JENKINS_HOST:-8081}:8082"
       - "${PORT_JENKINS_AGENT_HOST:-50000}:${PORT_JENKINS_AGENT_CONTAINER:-50000}"
@@ -1605,7 +1615,7 @@ services:
     networks:
       - backend-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/login"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/login" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -1627,7 +1637,7 @@ services:
   test-runner:
     image: alpine:latest
     container_name: test-runner
-    profiles: ["testing"]
+    profiles: [ "testing" ]
     volumes:
       - .:/workspace
     command: |
@@ -1668,7 +1678,7 @@ services:
   sync:
     image: alpine:latest
     container_name: sync
-    profiles: ["automation"]
+    profiles: [ "automation" ]
     volumes:
       - shared_data:/data
       - backup_data:/backup
@@ -1702,7 +1712,7 @@ services:
   debug-tools:
     image: alpine:latest
     container_name: debug-tools
-    profiles: ["debug"]
+    profiles: [ "debug" ]
     volumes:
       - .:/workspace
       - /var/run/docker.sock:/var/run/docker.sock
