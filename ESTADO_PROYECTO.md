@@ -89,7 +89,7 @@
    - ✅ **Clean slate funciona automáticamente** (stop → clean all → start sin intervención manual)
    - ✅ **keycloak-db-init**: Crea automáticamente la base de datos de Keycloak si no existe
    - ✅ **keycloak-init**: Crea automáticamente clientes OIDC (Grafana, n8n, Open WebUI, Jenkins) y actualiza secrets en `.env`
-   - ⚠️ Open WebUI con OIDC (limitación conocida documentada - no funciona debido a problema con discovery document)
+   - ✅ Open WebUI con OIDC (solucionado usando split routing: Auth público / Token interno)
    - ✅ n8n con OIDC (configuración lista en docker-compose.yml, clientes creados automáticamente por keycloak-init)
    - ✅ Jenkins con OIDC (script de inicialización listo: `init-jenkins-oidc.sh`, clientes creados automáticamente por keycloak-init)
    - ✅ Script consolidado: `keycloak-manager.sh`

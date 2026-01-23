@@ -64,10 +64,11 @@
 
 ### ⚠️ Limitaciones Conocidas
 
-1. **Open WebUI + Keycloak** ⚠️
-   - No funciona debido a limitación de Open WebUI con discovery document
-   - Documentado en `docs/KEYCLOAK_INTEGRATION_PLAN.md`
-   - Recomendación: Usar autenticación local por ahora
+1. **Open WebUI + Keycloak** ✅ **SOLUCIONADO (Split Routing)**
+   - Se ha configurado manualmente para usar rutas diferentes para navegador y backend
+   - Browser: Usa `localhost:8080` (público)
+   - Backend: Usa `keycloak:8080` (interno)
+   - Auto-discovery desactivado para permitir esta configuración
 
 2. **PostgreSQL Exporter** ✅ **RESUELTO**
    - Problema solucionado: las métricas están disponibles y la conexión es correcta

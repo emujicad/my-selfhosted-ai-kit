@@ -378,15 +378,14 @@ services:
       - OPENID_ENABLED=${OPEN_WEBUI_OAUTH_ENABLED:-true} # OpenID usa variables OAUTH_ (consolidado según documentación)
       - OPENID_CLIENT_ID=${OPEN_WEBUI_OAUTH_CLIENT_ID:-open-webui} # OpenID usa variables OAUTH_ (consolidado según documentación)
       - OPENID_CLIENT_SECRET=${OPEN_WEBUI_OAUTH_CLIENT_SECRET} # OpenID usa variables OAUTH_ (consolidado según documentación)
-      # OPENID_PROVIDER_URL necesario para que aparezca el botón
-      - OPENID_PROVIDER_URL=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/.well-known/openid-configuration
+      # OPENID_PROVIDER_URL comentado para evitar descubrimiento automático que rompe el enrutamiento
+      # - OPENID_PROVIDER_URL=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/.well-known/openid-configuration
       - OPENID_REDIRECT_URI=${OPEN_WEBUI_URL_PUBLIC:-http://localhost:3000}/oauth/oidc/callback
-      # URLs explícitas configuradas pero Open WebUI las ignora cuando hay discovery document
-      - OPENID_AUTHORIZATION_ENDPOINT=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/auth
-      - OPENID_TOKEN_ENDPOINT=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/token
-      - OPENID_USERINFO_ENDPOINT=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/userinfo
-      - OPENID_ISSUER=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}
-      - OPENID_SCOPES=${OPEN_WEBUI_OAUTH_SCOPES:-openid profile email} # OpenID usa variables OAUTH_ (consolidado según documentación)
+      # Configuración Manual para Routing Split (Navegador vs Backend)
+      - OAUTH_AUTH_URL=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/auth
+      - OAUTH_TOKEN_URL=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/token
+      - OAUTH_USER_INFO_URL=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/userinfo
+      - OPENID_SCOPES=${OPEN_WEBUI_OAUTH_SCOPES:-openid profile email}
       - OPENID_SIGN_OUT_REDIRECT_URL=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/logout
     volumes:
       - open_webui_storage:/app/backend/data # Datos persistentes
