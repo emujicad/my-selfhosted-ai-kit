@@ -67,13 +67,13 @@ step0_verify_env_variables() {
     
     print_info "Verificando variables críticas de .env..."
     
-    if [ -f "$SCRIPT_DIR/verify-env-variables.sh" ]; then
-        bash "$SCRIPT_DIR/verify-env-variables.sh" > /tmp/env-verification.log 2>&1
+    if [ -f "$SCRIPT_DIR/validate-system.sh" ]; then
+        bash "$SCRIPT_DIR/validate-system.sh" --env > /tmp/env-verification.log 2>&1
         ENV_VERIFICATION_EXIT=$?
         
         # Contar errores
-        ERROR_COUNT=$(grep -c "❌ ERROR" /tmp/env-verification.log | tr -d '[:space:]' || echo "0")
-        WARNING_COUNT=$(grep -c "⚠️  WARNING" /tmp/env-verification.log | tr -d '[:space:]' || echo "0")
+        ERROR_COUNT=$(grep -c "❌" /tmp/env-verification.log | tr -d '[:space:]' || echo "0")
+        WARNING_COUNT=$(grep -c "⚠️" /tmp/env-verification.log | tr -d '[:space:]' || echo "0")
         
         if [ "$ERROR_COUNT" -eq 0 ]; then
             if [ "$WARNING_COUNT" -gt 0 ]; then
@@ -85,12 +85,12 @@ step0_verify_env_variables() {
             return 0
         else
             print_error "Se encontraron errores críticos en las variables de entorno"
-            cat /tmp/env-verification.log | grep "❌ ERROR"
+            cat /tmp/env-verification.log | grep "❌"
             print_error "Por favor, corrige las variables vacías en .env antes de continuar"
             return 1
         fi
     else
-        print_warning "Script de verificación de variables no encontrado, saltando este paso"
+        print_warning "Script de validación no encontrado, saltando este paso"
         return 0
     fi
 }

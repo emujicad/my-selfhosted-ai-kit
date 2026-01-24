@@ -2,7 +2,7 @@
 
 This directory contains the comprehensive test suite for `my-selfhosted-ai-kit`.
 
-**Current Status**: 100% Coverage (12/12 Tests Passing) ✅
+**Current Status**: 100% Coverage (14/14 Consolidated Tests Passing) ✅
 
 ## 🚀 Quick Start
 
@@ -51,8 +51,6 @@ The tests are designed to be **Environment Aware**:
 
 ### Utils & Config (P2)
 - `test-recreate-keycloak-clients.sh`: Validates recovery tools.
-- `test-validate-config.sh`: Validates configuration integrity.
-- `test-verify-env-variables.sh`: Validates environment file structure.
 - `test-changes.sh`: Integration test for recent stack changes.
 
 ### Performance Benchmarking (Ollama)
@@ -61,10 +59,10 @@ The tests are designed to be **Environment Aware**:
 - `test-ollama-performance.sh`: Metrics and inference speed benchmarks.
 
 ### Initialization & Helpers (P3)
+- `test-validate-system.sh`: **Unified Validation System** (replaces old individual tests) - Validates env, config, and models.
 - `test-auto-validate.sh`: Validates the `auto-validate.sh` script logic.
 - `test-init-config-volumes.sh`: Validates configuration volume initialization logic.
 - `test-init-jenkins-oidc.sh`: Validates Jenkins OIDC configuration logic.
-- `test-verifica-modelos.sh`: Validates model verification logic.
 
 ---
 
