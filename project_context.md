@@ -64,8 +64,8 @@ my-selfhosted-ai-kit/
 │   └── open-webui-oidc/       # OIDC static config files
 ├── docker-compose.yml         # Service orchestration
 ├── .env                       # Environment variables
-├── docs/                      # Documentation (13 files, 5,474 lines)
-├── scripts/                   # Management scripts (4 core + tests & utils)
+├── docs/                      # Documentation (15 files, ~5,700 lines)
+├── scripts/                   # Management scripts (20 total: 4 core, 10 tests, 6 utils)
 │   ├── stack-manager.sh       # Main orchestration script
 │   ├── auth-manager.sh        # Identity & Security manager
 │   ├── backup-manager.sh      # Backup/restore manager
