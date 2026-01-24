@@ -395,24 +395,21 @@ docker stats
 docker system prune -a
 ```
 
-### Gestión de Keycloak:
+### 🔐 Gestión de Keycloak
+Usa el script unificado `auth-manager.sh`:
+
 ```bash
-# Configurar Keycloak para un servicio
-./scripts/keycloak-manager.sh setup grafana
-./scripts/keycloak-manager.sh setup n8n
-./scripts/keycloak-manager.sh setup openwebui
+# Configurar roles (salta automáticamente los existentes)
+./scripts/auth-manager.sh --setup-roles
 
-# Mostrar credenciales
-./scripts/keycloak-manager.sh credentials
+# Crear usuario administrador
+./scripts/auth-manager.sh --create-admin
 
-# Crear usuario
-./scripts/keycloak-manager.sh create-user
+# Corregir redirecciones de clientes
+./scripts/auth-manager.sh --fix-clients
 
-# Ver estado
-./scripts/keycloak-manager.sh status
-
-# Ver ayuda
-./scripts/keycloak-manager.sh help
+# Verificar estado
+./scripts/auth-manager.sh --status
 ```
 
 ## 📁 Estructura de volúmenes
