@@ -1,47 +1,83 @@
-flowchart TD
-    subgraph Perfiles_IA["Perfiles IA"]
-        CPU["cpu\nOllama (CPU)"]
-        NVIDIA["gpu-nvidia\nOllama (GPU NVIDIA)"]
-        AMD["gpu-amd\nOllama (GPU AMD)"]
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#e8f5e9', 'primaryTextColor':'#1b5e20', 'primaryBorderColor':'#388e3c', 'lineColor':'#424242', 'fontSize':'16px'}}}%%
+graph TB
+    subgraph "🤖 Perfiles de IA"
+        CPU["cpu<br/>Ollama (CPU)"]
+        NVIDIA["gpu-nvidia<br/>Ollama (GPU NVIDIA)"]
+        AMD["gpu-amd<br/>Ollama (GPU AMD)"]
     end
-    subgraph Servicios_Base["Servicios Base (sin perfil)"]
-        QDRANT["qdrant\nDB vectorial"]
-        PGVECTOR["pgvector\nDB vectores"]
-        POSTGRES["postgres\nBase de datos"]
+    
+    subgraph "🔧 Servicios Base (sin perfil específico)"
+        QDRANT["qdrant<br/>Base de datos vectorial"]
+        PGVECTOR["pgvector<br/>Extensión PostgreSQL"]
+        POSTGRES["postgres<br/>Base de datos relacional"]
     end
-    subgraph Perfiles_Servicios["Perfiles de Servicios"]
-        CHATAI["chat-ai\nOpen WebUI"]
-        AUTO["automation\nn8n, Watchtower, Sync"]
-        MON["monitoring\nPrometheus, Grafana, AlertManager, backup"]
-        SEC["security\nKeycloak, ModSecurity"]
-        INFRA["infrastructure\nRedis, HAProxy"]
-        CICD["ci-cd\nJenkins"]
-        TEST["testing\nTest Runner"]
-        DEBUG["debug\nDebug Tools"]
-        DEV["dev\nHerramientas desarrollo"]
+    
+    subgraph "📦 Perfiles de Aplicaciones"
+        CHATAI["chat-ai<br/>💬 Open WebUI"]
+        AUTO["automation<br/>⚙️ n8n, Watchtower, Sync"]
+        CICD["ci-cd<br/>🔧 Jenkins"]
     end
-    CPU -.->|"Usa"| CHATAI
-    CPU -.->|"Usa"| AUTO
-    NVIDIA -.->|"Usa"| CHATAI
-    NVIDIA -.->|"Usa"| AUTO
-    AMD -.->|"Usa"| CHATAI
-    AMD -.->|"Usa"| AUTO
-    CHATAI -->|"Requiere"| SEC
-    AUTO -->|"Requiere"| SEC
-    MON -->|"Requiere"| SEC
-    CHATAI -->|"Monitorea"| MON
-    AUTO -->|"Monitorea"| MON
-    QDRANT -->|"Monitorea"| MON
-    PGVECTOR -->|"Monitorea"| MON
-    CHATAI -->|"Usa"| INFRA
-    AUTO -->|"Usa"| INFRA
-    AUTO -->|"Integra"| CICD
-    AUTO -->|"Usa"| TEST
-    AUTO -->|"Usa"| DEBUG
-    AUTO -->|"Usa"| DEV
-    classDef ia fill:#e0f7fa,stroke:#00796b,stroke-width:2px;
-    classDef base fill:#e8f5e9,stroke:#388e3c,stroke-width:2px;
-    classDef perfiles fill:#fff3e0,stroke:#e65100,stroke-width:2px;
-    class Perfiles_IA ia;
-    class Servicios_Base base;
-    class Perfiles_Servicios perfiles; 
+    
+    subgraph "🏗️ Perfiles de Infraestructura"
+        SEC["security<br/>🔐 Keycloak + ModSecurity"]
+        INFRA["infrastructure<br/>💾 Redis + HAProxy"]
+        MON["monitoring<br/>📊 Prometheus + Grafana"]
+    end
+    
+    subgraph "🛠️ Perfiles de Desarrollo"
+        DEV["dev<br/>💻 Herramientas desarrollo"]
+        TEST["testing<br/>🧪 Test Runner"]
+        DEBUG["debug<br/>🐛 Debug Tools"]
+    end
+    
+    %% Dependencias de Perfiles de IA
+    CPU -.->|Opcional para| CHATAI
+    CPU -.->|Opcional para| AUTO
+    NVIDIA ==>|Requerido por| CHATAI
+    NVIDIA -.->|Opcional para| AUTO
+    AMD -.->|Alternativa GPU| CHATAI
+    
+    %% Dependencias Automáticas (stack-manager.sh)
+    CHATAI ==>|Auto-incluye| SEC
+    CHATAI ==>|Auto-incluye| INFRA
+    CHATAI ==>|Auto-incluye| NVIDIA
+    
+    AUTO ==>|Auto-incluye| SEC
+    
+    MON ==>|Auto-incluye| SEC
+    
+    CICD ==>|Auto-incluye| SEC
+    
+    %% Relaciones de uso
+    CHATAI -.->|Monitorea| MON
+    AUTO -.->|Monitorea| MON
+    POSTGRES -.->|Monitorea| MON
+    QDRANT -.->|Monitorea| MON
+    
+    AUTO -.->|Puede integrar| CICD
+    AUTO -.->|Usa en dev| TEST
+    AUTO -.->|Usa en dev| DEBUG
+    AUTO -.->|Usa en dev| DEV
+    
+    %% Servicios base usan PostgreSQL
+    QDRANT -.->|Usa| POSTGRES
+    PGVECTOR -.->|Extensión de| POSTGRES
+    
+    %% Estilos profesionales
+    classDef ia fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#1a237e
+    classDef base fill:#f3e5f5,stroke:#7b1fa2,stroke-width:3px,color:#4a148c
+    classDef apps fill:#fff9c4,stroke:#f57f17,stroke-width:3px,color:#e65100
+    classDef infra fill:#e8f5e9,stroke:#388e3c,stroke-width:3px,color:#1b5e20
+    classDef dev fill:#fce4ec,stroke:#d81b60,stroke-width:3px,color:#880e4f
+    
+    class CPU,NVIDIA,AMD ia
+    class QDRANT,PGVECTOR,POSTGRES base
+    class CHATAI,AUTO,CICD apps
+    class SEC,INFRA,MON infra
+    class DEV,TEST,DEBUG dev
+    
+    %% Leyenda
+    Note1["💡 Leyenda:<br/>══► Auto-incluido (stack-manager.sh)<br/>─ ─► Relación opcional/uso"]
+    
+    classDef legend fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100
+    class Note1 legend
