@@ -136,6 +136,78 @@ docker exec open-webui sqlite3 /app/backend/data/webui.db "SELECT * FROM user WH
 
 **See full details**: [`KEYCLOAK_GUIDE.md`](KEYCLOAK_GUIDE.md#open-webui--keycloak)
 
+**Problem: Embedding models appear in chat model list**
+
+**Symptoms**:
+- Models like `all-minilm:latest` and `nomic-embed-text:latest` appear in the chat interface
+- Selecting these models causes error: `400: "all-minilm:latest" does not support chat`
+- These are embedding models, not chat models
+
+**Why this happens**:
+- Ollama exposes all models through its `/api/tags` endpoint
+- Open WebUI lists all available models without filtering by capability
+- Embedding models are designed for text vectorization, not conversation
+
+**Solution 1: Hide models via Open WebUI Admin Panel (Recommended)**
+
+This is the **official and persistent** way to hide models:
+
+1. Access Open WebUI at `http://localhost:3000`
+2. Login as administrator (via Keycloak)
+3. Click your profile icon → **"Admin Panel"** or **"Settings"**
+4. Navigate to **"Workspace"** → **"Models"** (or **"Admin Settings"** → **"Models"**)
+5. Find the embedding models:
+   - `all-minilm:latest`
+   - `nomic-embed-text:latest`
+6. For each model, toggle **"Show in chat"** to OFF or mark as **"Hidden"**
+7. Save changes
+
+**Result**: Models will be hidden from the chat interface but remain available for embeddings/RAG functionality.
+
+**Solution 2: Remove embedding models from Ollama (Not Recommended)**
+
+Only if you don't need embeddings:
+
+```bash
+# List all models
+docker exec ollama ollama list
+
+# Remove embedding models (WARNING: This disables RAG functionality!)
+docker exec ollama ollama rm all-minilm:latest
+docker exec ollama ollama rm nomic-embed-text:latest
+```
+
+**⚠️ WARNING**: This will break RAG (Retrieval-Augmented Generation) features in Open WebUI.
+
+**Solution 3: Use Ollama model tags (Advanced)**
+
+Rename models with custom tags to differentiate them:
+
+```bash
+# Tag embedding models with 'embedding-' prefix
+docker exec ollama ollama tag all-minilm:latest embedding-minilm:latest
+docker exec ollama ollama tag nomic-embed-text:latest embedding-nomic:latest
+
+# Remove original tags
+docker exec ollama ollama rm all-minilm:latest
+docker exec ollama ollama rm nomic-embed-text:latest
+
+# Update Open WebUI embedding configuration
+# In docker-compose.yml, update:
+# - RAG_EMBEDDING_MODEL=embedding-minilm:latest
+```
+
+**Why environment variables don't work**:
+
+Open WebUI v0.7.x does **not** support the following environment variables for model filtering:
+- ❌ `ENABLE_MODEL_FILTER` (doesn't exist)
+- ❌ `MODEL_FILTER_LIST` (doesn't exist)
+- ❌ `DEFAULT_MODELS` (exists but doesn't hide models, only sets defaults)
+
+Model visibility must be configured through the **Admin Panel** or **database**.
+
+**Recommended approach**: Use **Solution 1** (Admin Panel) - it's persistent, official, and doesn't break functionality.
+
 ---
 
 ### Grafana

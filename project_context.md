@@ -143,6 +143,7 @@ my-selfhosted-ai-kit/
 2. **Ollama models not backed up**: Intentional to save space, but requires re-download on restore
 3. **Single-node deployment**: No clustering or high availability
 4. **Manual Keycloak realm config**: Requires one-time setup via UI
+5. **Open WebUI model filtering**: No environment variables to hide embedding models from chat list. Must be configured via Admin Panel UI (Settings → Workspace → Models)
 
 ## Development Workflow
 
