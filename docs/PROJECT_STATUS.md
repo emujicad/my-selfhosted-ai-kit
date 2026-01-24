@@ -78,7 +78,6 @@ This document combines the current project status with the TODO list to provide 
 - ✅ Improved statistics (socket enabled, admin, auto-refresh)
 - ✅ Improved balancing options (http-server-close, redispatch, retries)
 - ✅ Sticky sessions (optional, commented by default)
-- ✅ Original configuration backup created
 
 ### 8. **Ollama Optimizations** ✅ **PARTIALLY COMPLETE**
 - ✅ Optimization variables configured (OLLAMA_MAX_LOADED_MODELS=2, OLLAMA_NUM_THREAD=8, OLLAMA_KEEP_ALIVE=10m)
