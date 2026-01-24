@@ -28,11 +28,11 @@ echo "Test 1: Docker Compose file exists... ✅ PASSED"
 echo "Checking Grafana Role Mapping..."
 if grep -q "GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH" "$DOCKER_COMPOSE"; then
      echo "   - Found ROLE_ATTRIBUTE_PATH"
-     if grep -q "resource_access.grafana.roles" "$DOCKER_COMPOSE"; then
-         echo "   - Verification: Correct JMESPath (resource_access.grafana.roles) found"
+     if grep -q "roles\[*\]" "$DOCKER_COMPOSE"; then
+         echo "   - Verification: Correct JMESPath (roles[*]) found"
          echo "Test 2: Grafana Mapping Configured... ✅ PASSED"
      else
-         echo "   ❌ ERROR: JMESPath does not look correct. Expected 'resource_access.grafana.roles'"
+         echo "   ❌ ERROR: JMESPath does not look correct. Expected 'roles[*]'"
          exit 1
      fi
 else

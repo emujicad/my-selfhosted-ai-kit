@@ -37,6 +37,22 @@ print_header() {
     echo ""
 }
 
+print_info() {
+    echo -e "${BLUE}ℹ️  $1${NC}"
+}
+
+print_success() {
+    echo -e "${GREEN}✅ $1${NC}"
+}
+
+print_warning() {
+    echo -e "${YELLOW}⚠️  $1${NC}"
+}
+
+print_error() {
+    echo -e "${RED}❌ $1${NC}"
+}
+
 # =============================================================================
 # Configuration & Helpers
 # =============================================================================
@@ -45,7 +61,8 @@ ENV_FILE="${PROJECT_DIR}/.env"
 if [ -f "$ENV_FILE" ]; then source "$ENV_FILE"; fi
 
 KEYCLOAK_REALM="${KEYCLOAK_REALM:-master}"
-ADMIN_USER="${KEYCLOAK_ADMIN:-admin}"
+# Support both KEYCLOAK_ADMIN (standard) and KEYCLOAK_ADMIN_USER (.env variance)
+ADMIN_USER="${KEYCLOAK_ADMIN:-${KEYCLOAK_ADMIN_USER:-admin}}"
 ADMIN_PASS="${KEYCLOAK_ADMIN_PASSWORD:-}"
 
 # Function to run kcadm.sh command
