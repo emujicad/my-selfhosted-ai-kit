@@ -36,6 +36,19 @@ A complete stack of self-hosted Artificial Intelligence tools using Docker Compo
 - **Docker Engine** (not Docker Desktop)
 - **Docker Compose**
 - **Git** (to clone the repository)
+- **jq** (for processing JSON in test scripts)
+- **curl** (for API testing)
+
+**Quick Install (Ubuntu/Debian):**
+```bash
+# 1. Install Docker
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+# (Log out and back in for this to take effect)
+
+# 2. Install Tools (Git, jq, curl)
+sudo apt-get update && sudo apt-get install -y git jq curl
+```
 
 ### Recommended hardware:
 - **RAM**: Minimum 8GB, recommended 16GB+ (optimized for 96GB)

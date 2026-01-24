@@ -36,6 +36,19 @@ Un stack completo de herramientas de Inteligencia Artificial auto-hospedadas usa
 - **Docker Engine** (no Docker Desktop)
 - **Docker Compose**
 - **Git** (para clonar el repositorio)
+- **jq** (para procesar JSON en scripts de pruebas)
+- **curl** (para pruebas de API)
+
+**Instalación Rápida (Ubuntu/Debian):**
+```bash
+# 1. Instalar Docker
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+# (Cierra sesión y vuelve a entrar para aplicar cambios)
+
+# 2. Instalar Herramientas (Git, jq, curl)
+sudo apt-get update && sudo apt-get install -y git jq curl
+```
 
 ### Hardware recomendado:
 - **RAM**: Mínimo 8GB, recomendado 16GB+ (optimizado para 96GB)
