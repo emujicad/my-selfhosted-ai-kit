@@ -7,6 +7,7 @@
 1. **[README.md](../README.md)** - Project overview, installation and basic usage
 2. **[PROJECT_STATUS.md](PROJECT_STATUS.md)** - ⭐ **NEW** - Current project status and pending tasks (consolidates ESTADO_PROYECTO + TODO)
 3. **[ROADMAP.md](ROADMAP.md)** - ⭐ **NEW** - Detailed action plan with next recommended steps (consolidates PROXIMOS_PASOS + PROXIMOS_PASOS_DETALLADO)
+4. **[../scripts/tests/README.md](../scripts/tests/README.md)** - **Testing Guide** - How to run the automated test suite
 
 ### Essential Guides
 
