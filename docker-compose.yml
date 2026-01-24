@@ -482,7 +482,10 @@ services:
       - QUEUE_BULL_REDIS_DB=${N8N_REDIS_DB:-1}
       - REDIS_HOST=${N8N_REDIS_HOST:-redis} # For use in workflows via expression
       - REDIS_PORT=${N8N_REDIS_PORT:-6379} # For use in workflows via expression
-      - Redis_DB=${N8N_REDIS_DB:-1} # For use in workflows via expression
+      - Redis_DB=${N8N_REDIS_DB:-1} # For      - GENERIC_TIMEZONE=${TZ:-UTC}
+      - TZ=${TZ:-UTC}
+      # Variable para facilitar la conexión a la cola de Ollama (HAProxy)
+      - OLLAMA_QUEUE_URL=http://haproxy/ollama
     volumes:
       - n8n_storage:/home/node/.n8n # Datos persistentes de n8n
       - n8n_data:/data # Datos de importación/exportación
