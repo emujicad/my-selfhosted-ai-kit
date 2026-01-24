@@ -66,11 +66,13 @@
 - **[BACKUP_GUIDE.md](BACKUP_GUIDE.md)** - Complete backup and restore guide
 
 #### Validation and Testing
-- **[VALIDATION_GUIDE.md](VALIDATION_GUIDE.md)** - ⭐ **COMPLETE** - Automatic validation, scripts and troubleshooting
-  - Quick validation
-  - Complete automatic validation
-  - Available scripts
-  - Troubleshooting
+- **[VALIDATION_GUIDE.md](VALIDATION_GUIDE.md)** - ⭐ **COMPLETE** - Unified Validation System guide
+  - `--env` (Variables de entorno)
+  - `--config` (Validación estática)
+  - `--models` (Modelos Ollama)
+  - `--deploy-check` (Check activo de despliegue)
+  - `--all` (Validación completa)
+  - Troubleshooting y pasos de corrección
 
 ### Utilities and References
 
