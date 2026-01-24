@@ -721,9 +721,6 @@ If you have problems:
 
 ## 📚 Additional Documentation
 
-### Project Management
-- [`project_context.md`](project_context.md) - Comprehensive project overview for AI assistants and developers
-
 For more information, see:
 - **[docs/INDEX.md](docs/INDEX.md)** - Reading guide for all documentation
 - **[PROJECT_STATUS.md](docs/PROJECT_STATUS.md)** - ⭐ **NEW** - Project status and pending tasks
