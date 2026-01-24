@@ -1,0 +1,48 @@
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#fff3e0', 'primaryTextColor':'#e65100', 'primaryBorderColor':'#f57c00', 'lineColor':'#424242', 'fontSize':'16px'}}}%%
+sequenceDiagram
+    autonumber
+    
+    participant User as 👤 User<br/>Browser
+    participant OpenWebUI as 💬 Open WebUI
+    participant FakeDisc as 📄 oidc-config.json<br/>(Fake Discovery)
+    participant Keycloak as 🔐 Keycloak<br/>(Auth Server)
+    participant FakeUser as 📄 userinfo.json<br/>(Fake UserInfo)
+    participant SQLite as 🗄️ SQLite<br/>(User DB)
+    
+    rect rgb(255, 243, 224)
+    Note over User,SQLite: Phase 1: Discovery (Split-Horizon Solution)
+    User->>OpenWebUI: 1. Click "Sign in with Keycloak"
+    OpenWebUI->>FakeDisc: 2. GET /static/oidc-config.json
+    FakeDisc-->>OpenWebUI: 3. Return config<br/>auth: localhost:8080<br/>token: keycloak:8080
+    end
+    
+    rect rgb(232, 245, 233)
+    Note over User,SQLite: Phase 2: Authorization (Browser Flow)
+    OpenWebUI->>User: 4. Redirect to<br/>localhost:8080/auth
+    User->>Keycloak: 5. Access auth page<br/>(via localhost:8080)
+    Keycloak-->>User: 6. Show login form
+    User->>Keycloak: 7. Submit credentials<br/>(admin@emujicad)
+    Keycloak-->>User: 8. Redirect with code
+    end
+    
+    rect rgb(227, 242, 253)
+    Note over User,SQLite: Phase 3: Token Exchange (Backend Flow)
+    User->>OpenWebUI: 9. Callback with code
+    OpenWebUI->>Keycloak: 10. POST to keycloak:8080/token<br/>(internal network)
+    Keycloak-->>OpenWebUI: 11. Return access_token<br/>+ id_token
+    end
+    
+    rect rgb(243, 229, 245)
+    Note over User,SQLite: Phase 4: User Info (Emulated Response)
+    OpenWebUI->>FakeUser: 12. GET /static/userinfo.json
+    FakeUser-->>OpenWebUI: 13. Return profile<br/>{sub: "admin",<br/>email: "emujicad@gmail.com"}
+    end
+    
+    rect rgb(255, 235, 238)
+    Note over User,SQLite: Phase 5: User Mapping
+    OpenWebUI->>SQLite: 14. Check user by email
+    SQLite-->>OpenWebUI: 15. Found existing admin<br/>(linked to OIDC sub)
+    OpenWebUI-->>User: 16. ✅ Login successful<br/>Welcome, Ender!
+    end
+    
+    Note over User,SQLite: 🎯 Result: SSO Authentication Complete

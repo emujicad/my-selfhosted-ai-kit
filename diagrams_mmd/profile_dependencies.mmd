@@ -1,0 +1,65 @@
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#e8f5e9', 'primaryTextColor':'#1b5e20', 'primaryBorderColor':'#388e3c', 'lineColor':'#424242', 'fontSize':'16px'}}}%%
+graph TB
+    subgraph "Profile Ecosystem"
+        User(["👤 User Request"])
+    end
+    
+    subgraph "Core Profiles"
+        ChatAI["💬 chat-ai<br/>(Open WebUI + Ollama)"]
+        Automation["⚙️ automation<br/>(n8n workflows)"]
+        Monitoring["📊 monitoring<br/>(Grafana + Prometheus)"]
+        CICD["🔧 ci-cd<br/>(Jenkins)"]
+    end
+    
+    subgraph "Infrastructure Profiles"
+        Security["🔐 security<br/>(Keycloak + ModSecurity)"]
+        Infrastructure["🏗️ infrastructure<br/>(Redis + HAProxy)"]
+        GPUNV["🎮 gpu-nvidia<br/>(Ollama GPU-accelerated)"]
+    end
+    
+    subgraph "Development Profiles"
+        Dev["💻 dev<br/>(Dev tools)"]
+        Testing["🧪 testing<br/>(Test runners)"]
+        Debug["🐛 debug<br/>(Debug tools)"]
+    end
+    
+    %% User to Core Profiles
+    User -->|"./stack-manager.sh<br/>start chat-ai"| ChatAI
+    User -->|"./stack-manager.sh<br/>start automation"| Automation
+    
+    %% Auto-Dependency Resolution
+    ChatAI -.->|"Auto-includes"| Security
+    ChatAI -.->|"Auto-includes"| Infrastructure
+    ChatAI -.->|"Auto-includes"| GPUNV
+    
+    Automation -.->|"Auto-includes"| Security
+    
+    Monitoring -.->|"Auto-includes"| Security
+    
+    CICD -.->|"Auto-includes"| Security
+    
+    %% Labels for auto-resolution
+    ChatAI ---|"📦 Resolved"| ResolvedChat["Security +<br/>Infrastructure +<br/>GPU-NVIDIA"]
+    Automation ---|"📦 Resolved"| ResolvedAuto["Security"]
+    
+    %% Styling
+    classDef core fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#1a237e
+    classDef infra fill:#f3e5f5,stroke:#7b1fa2,stroke-width:3px,color:#4a148c
+    classDef dev fill:#fff9c4,stroke:#f57f17,stroke-width:3px,color:#f57f17
+    classDef resolved fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20
+    classDef user fill:#e0f2f1,stroke:#00796b,stroke-width:3px,color:#004d40
+    
+    class ChatAI,Automation,Monitoring,CICD core
+    class Security,Infrastructure,GPUNV infra
+    class Dev,Testing,Debug dev
+    class ResolvedChat,ResolvedAuto resolved
+    class User user
+    
+    %% Notes
+    Note1["💡 Before: Manual specification<br/>./stack-manager.sh start security infrastructure gpu-nvidia chat-ai"]
+    Note2["✨ After: Auto-resolution<br/>./stack-manager.sh start chat-ai"]
+    
+    Note1 -.->|"Simplified to"| Note2
+    
+    classDef note fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100
+    class Note1,Note2 note
