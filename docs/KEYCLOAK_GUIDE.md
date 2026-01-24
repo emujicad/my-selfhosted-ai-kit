@@ -460,7 +460,7 @@ For detailed diagnosis:
 ./scripts/stack-manager.sh diagnose keycloak-db
 
 # Or using keycloak-manager wrapper
-./scripts/keycloak-manager.sh fix-db
+./scripts/stack-manager.sh diagnose keycloak-db
 ```
 
 This shows detailed information about connections, transactions and locks, and allows you to decide whether to clean manually.

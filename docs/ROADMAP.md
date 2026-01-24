@@ -167,14 +167,15 @@ Este documento combina el plan de acción general con los próximos pasos detall
 
 **Comandos útiles:**
 ```bash
-# Ver usuarios en Keycloak
-./scripts/keycloak-manager.sh show-users
+# Ver ayuda y estado
+./scripts/auth-manager.sh --status
+./scripts/auth-manager.sh --help
 
-# Crear usuario
-./scripts/keycloak-manager.sh create-user <username> <email> <password>
+# Crear usuario admin
+./scripts/auth-manager.sh --create-admin
 
-# Ver clientes OIDC
-./scripts/keycloak-manager.sh show-clients
+# Configurar roles
+./scripts/auth-manager.sh --setup-roles
 ```
 
 **Documentación:**

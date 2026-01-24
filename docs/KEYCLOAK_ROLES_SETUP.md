@@ -5,10 +5,10 @@
 Los scripts de configuración de roles de Keycloak **NO se ejecutan automáticamente por defecto**. Tienes dos opciones:
 
 ### Opción 1: Manual (Recomendado)
-Ejecutar el script manualmente cuando sea necesario
+Ejecutar el script manualmente cuando sea necesario.
 
 ### Opción 2: Automático
-Usar el flag `--setup-roles` al levantar servicios
+Usar el flag `--setup-roles` al levantar servicios.
 
 ---
 
@@ -16,16 +16,16 @@ Usar el flag `--setup-roles` al levantar servicios
 
 1. **Primera vez que configuras el sistema**
    - Después de levantar Keycloak por primera vez
-   - Comando: `./scripts/keycloak-roles-manager.sh all`
+   - Comando: `./scripts/auth-manager.sh --setup-roles`
 
 2. **Después de `./scripts/stack-manager.sh clean all`**
    - Este comando elimina TODA la base de datos de Keycloak
    - Los roles se pierden y deben recrearse
-   - Comando: `./scripts/keycloak-roles-manager.sh all`
+   - Comando: `./scripts/auth-manager.sh --setup-roles`
 
 3. **Después de eliminar el volumen de Keycloak manualmente**
    - Si eliminas `keycloak_data` volume
-   - Comando: `./scripts/keycloak-roles-manager.sh all`
+   - Comando: `./scripts/auth-manager.sh --setup-roles`
 
 ### ✅ Cuándo NO Ejecutar
 
@@ -45,34 +45,22 @@ Usar el flag `--setup-roles` al levantar servicios
 
 ## 🚀 Uso del Script Unificado
 
-### Script Principal: keycloak-roles-manager.sh
+### Script Principal: auth-manager.sh
 
 **Un solo script para todo**. Comandos disponibles:
 
 ```bash
-# Configurar TODO (recomendado)
-./scripts/keycloak-roles-manager.sh all
+# Configurar TODOS los roles (recomendado)
+./scripts/auth-manager.sh --setup-roles
 
-# Solo grupos
-./scripts/keycloak-roles-manager.sh groups
-
-# Solo Grafana
-./scripts/keycloak-roles-manager.sh grafana
-
-# Solo Open WebUI
-./scripts/keycloak-roles-manager.sh openwebui
-
-# Solo n8n
-./scripts/keycloak-roles-manager.sh n8n
-
-# Solo Jenkins
-./scripts/keycloak-roles-manager.sh jenkins
+# Ver estado
+./scripts/auth-manager.sh --status
 
 # Ver ayuda
-./scripts/keycloak-roles-manager.sh help
+./scripts/auth-manager.sh --help
 ```
 
-**Qué hace `all`**:
+**Qué hace `--setup-roles`**:
 - ✅ Crea grupos (super-admins, admins, users, viewers)
 - ✅ Crea roles de Grafana (admin, editor, viewer)
 - ✅ Crea roles de Open WebUI (admin, user)
@@ -82,7 +70,7 @@ Usar el flag `--setup-roles` al levantar servicios
 
 **Tiempo**: ~30 segundos
 
-**Seguro**: Detecta roles existentes y los omite (puedes ejecutarlo múltiples veces)
+**Seguro**: Detecta roles existentes y los omite (puedes ejecutarlo múltiples veces).
 
 ---
 
@@ -98,7 +86,7 @@ Usar el flag `--setup-roles` al levantar servicios
 # Verificar en: http://localhost:8080
 
 # 3. Configurar roles (UNA SOLA VEZ)
-./scripts/keycloak-roles-manager.sh all
+./scripts/auth-manager.sh --setup-roles
 
 # 4. Listo! Los roles están configurados
 ```
@@ -112,7 +100,7 @@ Usar el flag `--setup-roles` al levantar servicios
 # Esto hace:
 # 1. Levanta servicios
 # 2. Espera a que Keycloak esté listo
-# 3. Ejecuta automáticamente keycloak-roles-manager.sh all
+# 3. Ejecuta automáticamente auth-manager.sh --setup-roles
 ```
 
 ### Después de Clean All
@@ -126,7 +114,7 @@ Usar el flag `--setup-roles` al levantar servicios
 
 # O manualmente:
 ./scripts/stack-manager.sh start
-./scripts/keycloak-roles-manager.sh all
+./scripts/auth-manager.sh --setup-roles
 ```
 
 ### Uso Normal (Sin Clean)
@@ -146,23 +134,9 @@ Usar el flag `--setup-roles` al levantar servicios
 ### Método 1: Interfaz Web
 
 1. Ir a http://localhost:8080
-2. Login con `emujicad` / `TempPass123!`
+2. Login con `emujicad` / (Tu contraseña)
 3. Ir a **Clients** → **grafana** → **Roles**
 4. Deberías ver: `grafana-admin`, `grafana-editor`, `grafana-viewer`
-
-### Método 2: Script de Verificación
-
-```bash
-# Ver si Keycloak está corriendo
-docker ps | grep keycloak
-
-# Ver si los roles existen (ejemplo para Grafana)
-docker exec keycloak /opt/keycloak/bin/kcadm.sh config credentials \
-  --server http://localhost:8080 --realm master \
-  --user emujicad --password TempPass123!
-
-docker exec keycloak /opt/keycloak/bin/kcadm.sh get clients \
-  -r master -q clientId=grafana --fields id --format csv --noquotes
 ```
 
 ---
@@ -182,20 +156,20 @@ docker exec keycloak /opt/keycloak/bin/kcadm.sh get clients \
 
 **Causa**: Password incorrecto en `.env`
 
-**Solución**: Verificar que `KEYCLOAK_ADMIN_PASSWORD=TempPass123!` en `.env`
+**Solución**: Verificar que `KEYCLOAK_ADMIN_PASSWORD` en `.env` es correcto.
 
 ### Error: "Client 'grafana' not found"
 
 **Causa**: El cliente de Grafana no está configurado en Keycloak
 
-**Solución**: Ejecutar primero:
+**Solución**: 
 ```bash
-./scripts/keycloak-manager.sh setup grafana
+./scripts/auth-manager.sh --fix-clients
 ```
 
 ### Roles duplicados
 
-**No es un problema**: El script detecta roles existentes y los omite automáticamente
+**No es un problema**: El script detecta roles existentes y los omite automáticamente.
 
 ---
 
@@ -203,9 +177,9 @@ docker exec keycloak /opt/keycloak/bin/kcadm.sh get clients \
 
 | Situación | ¿Ejecutar script? | Comando |
 |-----------|-------------------|---------|
-| Primera vez (manual) | ✅ SÍ | `./scripts/keycloak-roles-manager.sh all` |
+| Primera vez (manual) | ✅ SÍ | `./scripts/auth-manager.sh --setup-roles` |
 | Primera vez (auto) | ✅ SÍ | `./scripts/stack-manager.sh start --setup-roles` |
-| Después de `clean all` | ✅ SÍ | `./scripts/keycloak-roles-manager.sh all` |
+| Después de `clean all` | ✅ SÍ | `./scripts/auth-manager.sh --setup-roles` |
 | Después de `start` | ❌ NO | (ya están configurados) |
 | Después de `stop` | ❌ NO | (se mantienen en volumen) |
 | Después de `restart` | ❌ NO | (se mantienen en volumen) |
@@ -231,6 +205,6 @@ docker exec keycloak /opt/keycloak/bin/kcadm.sh get clients \
 
 ## 📚 Archivos Relacionados
 
-- **Script unificado**: [`scripts/keycloak-roles-manager.sh`](file:///mnt/backups/emujicad/Documents/ai/my-selfhosted-ai-kit/scripts/keycloak-roles-manager.sh)
-- **Stack manager**: [`scripts/stack-manager.sh`](file:///mnt/backups/emujicad/Documents/ai/my-selfhosted-ai-kit/scripts/stack-manager.sh)
-- **Test de validación**: [`scripts/test-keycloak-roles-flow.sh`](file:///mnt/backups/emujicad/Documents/ai/my-selfhosted-ai-kit/scripts/test-keycloak-roles-flow.sh)
+- **Script unificado**: [`scripts/auth-manager.sh`](../scripts/auth-manager.sh)
+- **Stack manager**: [`scripts/stack-manager.sh`](../scripts/stack-manager.sh)
+- **Test de validación**: [`scripts/tests/test-auth-manager.sh`](../scripts/tests/test-auth-manager.sh)
