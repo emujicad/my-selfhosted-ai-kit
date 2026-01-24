@@ -60,6 +60,12 @@ The tests are designed to be **Environment Aware**:
 - `test-ollama-advanced.sh`: Extensive optimization usage tests.
 - `test-ollama-performance.sh`: Metrics and inference speed benchmarks.
 
+### Initialization & Helpers (P3)
+- `test-auto-validate.sh`: Validates the `auto-validate.sh` script logic.
+- `test-init-config-volumes.sh`: Validates configuration volume initialization logic.
+- `test-init-jenkins-oidc.sh`: Validates Jenkins OIDC configuration logic.
+- `test-verifica-modelos.sh`: Validates model verification logic.
+
 ---
 
 ## 🔧 Creating New Tests
