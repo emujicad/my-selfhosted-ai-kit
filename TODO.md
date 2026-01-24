@@ -18,6 +18,13 @@ Stack actual: Ollama (LLMs) + Open WebUI (chat) + n8n (automatización) + Postgr
   - [ ] Integrar Jenkins con Keycloak (secretos corregidos, pendiente validación)
   - [ ] Configurar roles y permisos básicos
 
+- [x] **Mejorar scripts de gestión** ✅ **COMPLETADO**
+  - [x] Implementar resolución automática de dependencias en `stack-manager.sh`
+  - [x] Mapear dependencias entre perfiles (chat-ai → security, infrastructure, gpu-nvidia)
+  - [x] Simplificar inicio de servicios (solo especificar perfil principal)
+  - [x] Agregar modo DEBUG_PROFILES para visualizar resolución
+
+
 - [ ] **Configurar HTTPS/SSL**
   - [ ] Generar certificados SSL (Let's Encrypt)
   - [ ] Configurar HAProxy con SSL termination

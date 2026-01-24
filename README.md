@@ -77,6 +77,32 @@ sudo docker run --rm --gpus all nvidia/cuda:12.0.0-base-ubuntu22.04 nvidia-smi
 
 ## 🚀 Usage
 
+### Recommended: Use Stack Manager Script
+
+The project includes an enhanced `stack-manager.sh` script with **automatic dependency resolution**. When you start a profile, it automatically includes all required dependencies:
+
+```bash
+# Start Open WebUI with all its dependencies (Keycloak, Redis, Ollama)
+./scripts/stack-manager.sh start chat-ai
+# Auto-includes: security infrastructure gpu-nvidia
+
+# Start automation with auth
+./scripts/stack-manager.sh start automation
+# Auto-includes: security
+
+# Start the default preset (recommended for production)
+./scripts/stack-manager.sh start
+
+# Stop all services
+./scripts/stack-manager.sh stop
+
+# View available presets and profiles
+./scripts/stack-manager.sh list
+
+# Debug mode (see profile resolution)
+DEBUG_PROFILES=true ./scripts/stack-manager.sh start chat-ai
+```
+
 ### Available profiles
 
 The stack includes different profiles to optimize according to your needs:
@@ -147,6 +173,8 @@ docker compose --profile cpu --profile dev --profile testing up -d
 # Full stack (watch out for resource usage!)
 docker compose --profile gpu-nvidia --profile monitoring --profile infrastructure --profile security --profile automation up -d
 ```
+
+> **Note:** When using `stack-manager.sh`, dependencies are resolved automatically, so you don't need to manually specify all profiles.
 
 ## 🧩 What does each profile do and how to use them?
 

@@ -274,6 +274,73 @@ validate_before_start() {
     return 0
 }
 
+# Función para obtener dependencias de un perfil
+# Retorna los perfiles de los que depende un perfil dado
+get_profile_dependencies() {
+    local profile=$1
+    case "$profile" in
+        chat-ai)
+            # Open WebUI requiere Keycloak (auth), Redis (cache), Ollama (IA)
+            echo "security infrastructure gpu-nvidia"
+            ;;
+        automation)
+            # n8n requiere PostgreSQL (ya incluido en base), puede usar Keycloak
+            echo "security"
+            ;;
+        monitoring)
+            # Grafana puede usar Keycloak, Prometheus necesita PostgreSQL
+            echo "security"
+            ;;
+        ci-cd)
+            # Jenkins puede usar Keycloak
+            echo "security"
+            ;;
+        *)
+            # Otros perfiles no tienen dependencias externas
+            echo ""
+            ;;
+    esac
+}
+
+# Función para resolver dependencias recursivamente
+# Toma una lista de perfiles y agrega todas sus dependencias
+resolve_dependencies() {
+    local -a profiles=("$@")
+    local -a resolved=()
+    local -a to_process=("${profiles[@]}")
+    
+    # Usar un array asociativo para evitar duplicados
+    declare -A seen
+    
+    while [ ${#to_process[@]} -gt 0 ]; do
+        local current="${to_process[0]}"
+        to_process=("${to_process[@]:1}")
+        
+        # Si ya procesamos este perfil, continuar
+        # Usar ${seen[$current]:-} para evitar errores con set -u
+        if [ -n "${seen[$current]:-}" ]; then
+            continue
+        fi
+        
+        # Marcar como visto
+        seen[$current]=1
+        resolved+=("$current")
+        
+        # Obtener dependencias de este perfil
+        local deps=$(get_profile_dependencies "$current")
+        
+        # Agregar dependencias a la cola de procesamiento
+        for dep in $deps; do
+            if [ -z "${seen[$dep]:-}" ]; then
+                to_process+=("$dep")
+            fi
+        done
+    done
+    
+    # Retornar perfiles únicos en orden
+    echo "${resolved[@]}"
+}
+
 # Función para expandir presets
 expand_preset() {
     local preset=$1
@@ -303,12 +370,36 @@ expand_preset() {
 build_compose_command() {
     local action=$1
     shift
-    local profiles=("$@")
+    local input_profiles=("$@")
+    
+    # Expandir presets y resolver dependencias
+    local -a expanded_profiles=()
+    for profile in "${input_profiles[@]}"; do
+        # Expandir preset si es necesario
+        local preset_profiles=$(expand_preset "$profile")
+        if [ -n "$preset_profiles" ]; then
+            # Si es un preset, agregar sus perfiles
+            expanded_profiles+=($preset_profiles)
+        else
+            # Si es un perfil individual, agregarlo
+            expanded_profiles+=("$profile")
+        fi
+    done
+    
+    # Resolver dependencias automáticamente
+    local resolved_profiles=$(resolve_dependencies "${expanded_profiles[@]}")
+    
+    # Opcional: mostrar debug de perfiles resueltos
+    if [ "$DEBUG_PROFILES" = "true" ]; then
+        print_info "📦 Perfiles solicitados: ${input_profiles[*]}"
+        print_info "🔍 Perfiles expandidos: ${expanded_profiles[*]}"
+        print_info "✅ Perfiles finales (con dependencias): $resolved_profiles"
+    fi
     
     local cmd="$DOCKER_CMD compose"
     
-    # Agregar perfiles
-    for profile in "${profiles[@]}"; do
+    # Agregar perfiles resueltos
+    for profile in $resolved_profiles; do
         cmd="$cmd --profile $profile"
     done
     
