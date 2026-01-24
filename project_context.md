@@ -43,11 +43,10 @@
 - `resolve_dependencies()`: Recursively resolves all required profiles
 - **Status**: Implemented and tested
 
-### 3. Documentation Consolidation (2026-01-24)
-**Challenge**: 24 fragmented documentation files causing confusion  
-**Solution**: Merged into 7 comprehensive guides without information loss
-- **Reduction**: 45.8% (24 → 13 files)
-- **Created**: ROADMAP, KEYCLOAK_GUIDE, PROJECT_STATUS, OLLAMA_GUIDE, MONITORING_GUIDE, CONFIGURATION, TROUBLESHOOTING
+### 3. Documentation & Script Consolidation (2026-01-24)
+**Challenge**: Fragmented documentation and script sprawl.
+**Solution**: Consolidated 10+ scripts into 4 main tools (`stack`, `auth`, `backup`, `validate`) and merged 24 docs into 13 guides.
+- **New Tool**: `auth-manager.sh` replaces 5 legacy scripts.
 - **Status**: Complete
 
 ### 4. Enhanced Backup Coverage
@@ -66,9 +65,11 @@ my-selfhosted-ai-kit/
 ├── docker-compose.yml         # Service orchestration
 ├── .env                       # Environment variables
 ├── docs/                      # Documentation (13 files, 5,474 lines)
-├── scripts/                   # Management scripts (19 scripts)
+├── scripts/                   # Management scripts (15 scripts)
 │   ├── stack-manager.sh       # Main orchestration script
-│   └── backup-manager.sh      # Backup/restore manager
+│   ├── auth-manager.sh        # Identity & Security manager
+│   ├── backup-manager.sh      # Backup/restore manager
+│   └── validate-system.sh     # System validation tool
 ├── monitoring/                # Prometheus + Grafana configs
 │   ├── grafana/dashboards/    # JSON dashboard definitions
 │   └── prometheus/            # Rules and alerts

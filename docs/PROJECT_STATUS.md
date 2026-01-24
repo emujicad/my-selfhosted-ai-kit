@@ -53,7 +53,7 @@ This document combines the current project status with the TODO list to provide 
 
 ### 5. **Consolidated Scripts**
 - ✅ Backup scripts consolidated into `backup-manager.sh`
-- ✅ Keycloak scripts consolidated into `keycloak-manager.sh`
+- ✅ Keycloak scripts consolidated into `auth-manager.sh`
 - ✅ Validation scripts integrated into `stack-manager.sh`
 - ✅ Master script `stack-manager.sh` for complete stack management
 - ✅ **Automatic dependency resolution** between profiles in `stack-manager.sh`
