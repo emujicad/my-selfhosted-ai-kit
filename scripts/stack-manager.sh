@@ -2153,13 +2153,13 @@ auto_validate() {
     fi
 }
 
-# Función para probar cambios recientes (integra test-changes.sh)
-test_changes() {
-    print_header "PRUEBA DE CAMBIOS RECIENTES"
-    if [ -f "$SCRIPT_DIR/test-changes.sh" ]; then
-        bash "$SCRIPT_DIR/test-changes.sh"
+# Función para probar integración de servicios (test-integration.sh)
+test_integration() {
+    print_header "PRUEBA DE INTEGRACIÓN DE SERVICIOS"
+    if [ -f "$SCRIPT_DIR/tests/test-integration.sh" ]; then
+        bash "$SCRIPT_DIR/tests/test-integration.sh"
     else
-        print_error "Script 'test-changes.sh' no encontrado."
+        print_error "Script 'tests/test-integration.sh' no encontrado."
         exit 1
     fi
 }
