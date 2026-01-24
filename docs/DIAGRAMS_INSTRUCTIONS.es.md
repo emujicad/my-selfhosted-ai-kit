@@ -4,51 +4,98 @@
 
 > **Esta documentación está en español. La versión principal en inglés está en [DIAGRAMS_INSTRUCTIONS.md](DIAGRAMS_INSTRUCTIONS.md).**
 
-# Instrucciones para generar diagramas PNG a partir de archivos .mmd
+# Instrucciones para Generar Diagramas PNG desde Archivos .mmd
 
-Todos los diagramas fuente están en la carpeta `diagrams_mmd/` y los PNG generados se guardan en `diagrams_png/`.
+Todos los diagramas fuente están en la carpeta `../diagrams_mmd/` y los PNGs generados en `../diagrams_png/`.
 
-## 1. Instalar Mermaid CLI
+## Diagramas Actuales
 
-Si no tienes instalado Node.js y npm, instálalos primero. Luego instala Mermaid CLI globalmente:
+**Diagramas Profesionales Nuevos (2026-01-24):**
+- `architecture_complete.mmd` - Arquitectura completa del sistema con todos los servicios
+- `oidc_authentication_flow.mmd` - Diagrama de secuencia de autenticación OIDC detallado
+- `profile_dependencies.mmd` - Diagrama de resolución automática de dependencias del stack-manager
+- `perfiles.mmd` - Ecosistema completo de perfiles y relaciones
 
+**Diagramas Heredados:**
+- Otros archivos .mmd en diagrams_mmd/ (pueden necesitar actualizaciones)
+
+## Opciones para Generar PNGs
+
+### Opción 1: Editor en Línea de Mermaid (Recomendado - Más Fácil)
+
+1. Ir a https://mermaid.live/
+2. Copiar el contenido del archivo `.mmd`
+3. Pegar en el editor
+4. Ajustar el zoom/tamaño si es necesario
+5. Click en "Actions" → "Export as PNG" o "Export as SVG"
+6. Guardar en `diagrams_png/`
+
+### Opción 2: Mermaid CLI (Requiere Chrome/Chromium)
+
+#### Configuración Inicial:
 ```bash
+# Instalar mermaid-cli globalmente
 npm install -g @mermaid-js/mermaid-cli
+
+# Instalar Chrome headless para Puppeteer
+npx puppeteer browsers install chrome-headless-shell
 ```
 
-O usa npx (no requiere instalación global):
-
+#### Generar PNGs:
 ```bash
-npx -y @mermaid-js/mermaid-cli -i archivo.mmd -o archivo.png
-```
+cd diagrams_mmd
 
-## 2. Generar un PNG a partir de un archivo .mmd
+# Establecer la ruta del navegador (si es necesario)
+export PUPPETEER_EXECUTABLE_PATH=/home/$USER/.cache/puppeteer/chrome-headless-shell/linux-*/chrome-headless-shell-linux64/chrome-headless-shell
 
-Ejemplo para un solo archivo:
+# Generar un diagrama específico
+npx -y @mermaid-js/mermaid-cli -i architecture_complete.mmd -o ../diagrams_png/architecture_complete.png -w 2400 -H 1800 -s 2
 
-```bash
-npx -y @mermaid-js/mermaid-cli -i diagrams_mmd/dev_stack_minimal.mmd -o diagrams_png/dev_stack_minimal.png -w 1800 -H 900 -s 2
-```
-
-## 3. Generar todos los PNG automáticamente
-
-Puedes usar un bucle en bash para convertir todos los .mmd:
-
-```bash
-for f in diagrams_mmd/*.mmd; do 
-  nombre=$(basename "$f" .mmd)
-  npx -y @mermaid-js/mermaid-cli -i "$f" -o "diagrams_png/${nombre}.png" -w 1800 -H 900 -s 2
+# Generar todos los diagramas
+for f in *.mmd; do
+  name=$(basename "$f" .mmd)
+  npx -y @mermaid-js/mermaid-cli -i "$f" -o "../diagrams_png/${name}.png" -w 2400 -H 1800 -s 2
 done
 ```
 
-Ajusta los parámetros `-w` (ancho), `-H` (alto) y `-s` (escala) según la calidad y tamaño que desees.
+### Opción 3: Extensión de VS Code
 
-## 4. Editar o crear nuevos diagramas
+1. Instalar extensión "Markdown Preview Mermaid Support"
+2. Abrir archivo `.mmd`
+3. Vista previa (Ctrl+Shift+V)
+4. Capturar pantalla o exportar
 
-- Puedes editar los archivos `.mmd` con cualquier editor de texto.
-- Usa la sintaxis de Mermaid para crear tus propios diagramas.
-- Puedes previsualizarlos en [Mermaid Live Editor](https://mermaid.live/).
+### Opción 4: Contenedor Docker (Automatizado)
+
+```bash
+# Usar contenedor con Chrome incluido
+docker run --rm -v $(pwd):/data minlag/mermaid-cli \
+  -i /data/diagrams_mmd/architecture_complete.mmd \
+  -o /data/diagrams_png/architecture_complete.png \
+  -w 2400 -H 1800
+```
+
+## Parámetros Recomendados
+
+- **Ancho**: 2400px (alta resolución)
+- **Alto**: 1800px (o automático)
+- **Escala**: 2 (para salida nítida)
+- **Formato**: PNG (mejor compatibilidad) o SVG (vectorial, escalable)
+- **Fondo**: Transparente o blanco
+
+## Editar o Crear Nuevos Diagramas
+
+- Puedes editar archivos `.mmd` con cualquier editor de texto.
+- Usa sintaxis Mermaid para crear tus propios diagramas.
+- Previsualízalos en [Editor en Línea de Mermaid](https://mermaid.live/).
+- Ver [Documentación de Mermaid](https://mermaid.js.org/) para referencia de sintaxis.
+
+**Consejos de Estilo:**
+- Usa `%%{init: {...}}%%` para personalización de tema
+- Codifica por colores según categoría para mayor claridad
+- Agrega íconos emoji para identificación visual
+- Mantén los diagramas enfocados y no demasiado complejos
 
 ---
 
-**¡Así puedes mantener y personalizar todos los diagramas visuales de tu stack!** 
+**¡De esta manera puedes mantener y personalizar todos los diagramas visuales de tu stack!**
