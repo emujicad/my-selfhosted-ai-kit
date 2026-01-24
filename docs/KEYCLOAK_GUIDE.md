@@ -458,9 +458,6 @@ For detailed diagnosis:
 ```bash
 # Detailed diagnosis with manual cleanup option
 ./scripts/stack-manager.sh diagnose keycloak-db
-
-# Or using keycloak-manager wrapper
-./scripts/stack-manager.sh diagnose keycloak-db
 ```
 
 This shows detailed information about connections, transactions and locks, and allows you to decide whether to clean manually.
