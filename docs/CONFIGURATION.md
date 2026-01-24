@@ -602,4 +602,25 @@ n8n:
 
 ---
 
+## ⚡ Redis and Cache Optimization
+
+### Overview
+
+Redis is used to improve the performance of Open WebUI and n8n.
+
+### Open WebUI Optimization
+
+We leverage Redis for:
+- **Session Management**: Handling user sessions efficiently.
+- **KV Cache Optimization (RAG)**: By enabling `OPEN_WEBUI_RAG_SYSTEM_CONTEXT=true`, we inject the RAG context into the system message. This allows the LLM provider to cache the processed context, significantly reducing latency and costs for follow-up questions.
+- **Embedding Cache**: Enabled via `OPEN_WEBUI_USE_EMBEDDING_CACHE=true` to cache vector embeddings.
+
+### n8n Integration
+
+Redis is configured for n8n to enable:
+- **Workflow Usage**: Use the Redis node within workflows to store/retrieve high-performance data (using `REDIS_HOST` and `REDIS_PORT`).
+- **Queue Mode Readiness**: The environment is configured to easily switch to Queue Mode (scalability) in the future by flipping `N8N_RUNNERS_ENABLED`.
+
+---
+
 *Last updated: 2026-01-24*

@@ -355,6 +355,8 @@ services:
       # Redis Cache Config
       - CACHE_TYPE=${OPEN_WEBUI_CACHE_TYPE:-redis}
       - REDIS_URL=${OPEN_WEBUI_REDIS_URL:-redis://redis:6379/0}
+      - RAG_SYSTEM_CONTEXT=${OPEN_WEBUI_RAG_SYSTEM_CONTEXT:-true}
+      - USE_EMBEDDING_CACHE=${OPEN_WEBUI_USE_EMBEDDING_CACHE:-true}
       # OLLAMA_BASE_URL: URL interna para conectar con Ollama desde el contenedor
       # IMPORTANTE: Si OLLAMA_URL_INTERNAL está vacía en .env, debe tener un valor o no estar definida
       # Si está definida pero vacía, Docker Compose la pasa como cadena vacía y ${VAR:-default} no funciona
@@ -469,6 +471,14 @@ services:
       - N8N_OIDC_REDIRECT_URI=${N8N_URL_PUBLIC:-http://localhost:5678}/rest/oauth2-credential/callback
       - N8N_OIDC_SCOPES=${N8N_OIDC_SCOPES:-openid profile email}
       - N8N_OIDC_DISPLAY_NAME=${N8N_OIDC_DISPLAY_NAME:-Keycloak}
+      # Redis Config (for Queue Mode readiness and Workflow nodes)
+      # These specific ENV vars are standard for n8n queue mode or can be used inside workflows
+      - QUEUE_BULL_REDIS_HOST=${N8N_REDIS_HOST:-redis}
+      - QUEUE_BULL_REDIS_PORT=${N8N_REDIS_PORT:-6379}
+      - QUEUE_BULL_REDIS_DB=${N8N_REDIS_DB:-1}
+      - REDIS_HOST=${N8N_REDIS_HOST:-redis} # For use in workflows via expression
+      - REDIS_PORT=${N8N_REDIS_PORT:-6379} # For use in workflows via expression
+      - Redis_DB=${N8N_REDIS_DB:-1} # For use in workflows via expression
     volumes:
       - n8n_storage:/home/node/.n8n # Datos persistentes de n8n
       - n8n_data:/data # Datos de importación/exportación
@@ -1136,10 +1146,6 @@ services:
         condition: service_healthy
       n8n:
         condition: service_healthy
-      grafana:
-        condition: service_healthy # Esperar a que Grafana esté listo
-      prometheus:
-        condition: service_healthy # Esperar a que Prometheus esté listo
     healthcheck:
       test: [ "CMD", "haproxy", "-c", "-f", "/usr/local/etc/haproxy/haproxy.cfg" ]
       interval: 30s

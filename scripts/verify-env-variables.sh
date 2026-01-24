@@ -25,6 +25,12 @@ fi
 
 # Lista de variables críticas que NO deben estar vacías
 CRITICAL_VARS=(
+    # Redis
+    "REDIS_HOST"
+    "REDIS_PORT"
+    "N8N_REDIS_HOST"
+    "N8N_REDIS_PORT"
+
     # PostgreSQL
     "POSTGRES_USER"
     "POSTGRES_PASSWORD"

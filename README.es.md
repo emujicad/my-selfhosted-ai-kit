@@ -16,6 +16,7 @@ Un stack completo de herramientas de Inteligencia Artificial auto-hospedadas usa
 - **n8n**: Plataforma de automatización de flujos de trabajo
 - **PostgreSQL**: Base de datos para n8n
 - **Qdrant**: Base de datos vectorial para embeddings
+- **Redis**: Caché y gestión de sesiones
 - **pgvector**: Extensión de PostgreSQL para vectores
 
 ### Servicios opcionales:

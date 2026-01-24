@@ -115,6 +115,13 @@ my-selfhosted-ai-kit/
 - Removed empty keycloak-proxy/ directory
 - **Fixed malformed placeholders in .env.example (KEYCLOAK_ADMIN_EMAIL)**
 
+### 2026-01-24: Redis & Cache Optimization
+- **Redis Integration**: Configured Redis for n8n (workflow/queue) and Open WebUI (RAG/embeddings)
+- **Environment**: Standardized Redis host variables in `.env`
+- **Bug Fix**: Fixed unbound `DEBUG_PROFILES` variable in `stack-manager.sh`
+- **Architecture**: Decoupled HAProxy from strict monitoring dependencies for flexible startup
+
+
 ### 2026-01-23: Diagram Improvements
 - Created architecture_complete.mmd (full system architecture)
 - Created oidc_authentication_flow.mmd (SSO sequence)

@@ -424,7 +424,7 @@ build_compose_command() {
     local resolved_profiles=$(resolve_dependencies "${expanded_profiles[@]}")
     
     # Opcional: mostrar debug de perfiles resueltos
-    if [ "$DEBUG_PROFILES" = "true" ]; then
+    if [ "${DEBUG_PROFILES:-false}" = "true" ]; then
         print_info "📦 Perfiles solicitados: ${input_profiles[*]}"
         print_info "🔍 Perfiles expandidos: ${expanded_profiles[*]}"
         print_info "✅ Perfiles finales (con dependencias): $resolved_profiles"

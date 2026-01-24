@@ -96,6 +96,13 @@ This document combines the current project status with the TODO list to provide 
 - ✅ Optimization: excluded ollama_storage
 - ✅ Consolidated script: `backup-manager.sh`
 
+### 10. **Redis & Cache Optimization** ✅ **COMPLETE**
+- ✅ Redis Configuration (Standardized in `.env`)
+- ✅ n8n Integration (Redis Variables for Workflow/Queue)
+- ✅ Open WebUI KV Cache Optimization (`RAG_SYSTEM_CONTEXT=true`)
+- ✅ Open WebUI Embedding Cache (`USE_EMBEDDING_CACHE=true`)
+- ✅ Stack Stability Improvements (Decoupled HAProxy, Fixed Scripts)
+
 ---
 
 ## 📝 Pending Tasks

@@ -16,6 +16,7 @@ A complete stack of self-hosted Artificial Intelligence tools using Docker Compo
 - **n8n**: Workflow automation platform
 - **PostgreSQL**: Database for n8n
 - **Qdrant**: Vector database for embeddings
+- **Redis**: Caching and session management
 - **pgvector**: PostgreSQL extension for vectors
 
 ### Optional services:

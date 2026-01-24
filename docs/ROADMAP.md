@@ -62,6 +62,12 @@ Este documento combina el plan de acción general con los próximos pasos detall
    - Dashboard de monitoreo creado
    - ⏳ Queue de requests (pendiente)
 
+10. **Redis & Cache Optimization** ✅
+   - Redis para n8n (prep for Queue Mode)
+   - Redis KV Cache para Open WebUI (RAG System Context)
+   - Embeddings Cache habilitado
+   - Corrección de bugs en scripts de validación
+
 ---
 
 ## 🎯 Plan de Acción por Prioridades
