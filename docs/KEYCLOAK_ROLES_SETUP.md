@@ -2,22 +2,30 @@
 
 ## 📋 ¿Cuándo se ejecutan los scripts de roles?
 
-Los scripts de configuración de roles de Keycloak **NO se ejecutan automáticamente**. Debes ejecutarlos manualmente en las siguientes situaciones:
+Los scripts de configuración de roles de Keycloak **NO se ejecutan automáticamente por defecto**. Tienes dos opciones:
 
-### 🔄 Cuándo Ejecutar
+### Opción 1: Manual (Recomendado)
+Ejecutar el script manualmente cuando sea necesario
+
+### Opción 2: Automático
+Usar el flag `--setup-roles` al levantar servicios
+
+---
+
+## 🔄 Cuándo Ejecutar
 
 1. **Primera vez que configuras el sistema**
    - Después de levantar Keycloak por primera vez
-   - Comando: `./scripts/setup-all-keycloak-roles.sh`
+   - Comando: `./scripts/keycloak-roles-manager.sh all`
 
 2. **Después de `./scripts/stack-manager.sh clean all`**
    - Este comando elimina TODA la base de datos de Keycloak
    - Los roles se pierden y deben recrearse
-   - Comando: `./scripts/setup-all-keycloak-roles.sh`
+   - Comando: `./scripts/keycloak-roles-manager.sh all`
 
 3. **Después de eliminar el volumen de Keycloak manualmente**
    - Si eliminas `keycloak_data` volume
-   - Comando: `./scripts/setup-all-keycloak-roles.sh`
+   - Comando: `./scripts/keycloak-roles-manager.sh all`
 
 ### ✅ Cuándo NO Ejecutar
 
@@ -35,17 +43,36 @@ Los scripts de configuración de roles de Keycloak **NO se ejecutan automáticam
 
 ---
 
-## 🚀 Uso Manual
+## 🚀 Uso del Script Unificado
 
-### Opción 1: Script Consolidado (Recomendado)
+### Script Principal: keycloak-roles-manager.sh
 
-Configura **todos** los roles y grupos de una vez:
+**Un solo script para todo**. Comandos disponibles:
 
 ```bash
-./scripts/setup-all-keycloak-roles.sh
+# Configurar TODO (recomendado)
+./scripts/keycloak-roles-manager.sh all
+
+# Solo grupos
+./scripts/keycloak-roles-manager.sh groups
+
+# Solo Grafana
+./scripts/keycloak-roles-manager.sh grafana
+
+# Solo Open WebUI
+./scripts/keycloak-roles-manager.sh openwebui
+
+# Solo n8n
+./scripts/keycloak-roles-manager.sh n8n
+
+# Solo Jenkins
+./scripts/keycloak-roles-manager.sh jenkins
+
+# Ver ayuda
+./scripts/keycloak-roles-manager.sh help
 ```
 
-**Qué hace**:
+**Qué hace `all`**:
 - ✅ Crea grupos (super-admins, admins, users, viewers)
 - ✅ Crea roles de Grafana (admin, editor, viewer)
 - ✅ Crea roles de Open WebUI (admin, user)
@@ -57,32 +84,11 @@ Configura **todos** los roles y grupos de una vez:
 
 **Seguro**: Detecta roles existentes y los omite (puedes ejecutarlo múltiples veces)
 
-### Opción 2: Scripts Individuales
-
-Si solo necesitas configurar un servicio específico:
-
-```bash
-# Solo grupos
-./scripts/keycloak-setup-roles-cli.sh groups
-
-# Solo Grafana
-./scripts/keycloak-setup-roles-cli.sh grafana
-
-# Solo Open WebUI
-./scripts/keycloak-setup-openwebui-roles.sh
-
-# Solo n8n
-./scripts/keycloak-setup-n8n-roles.sh
-
-# Solo Jenkins
-./scripts/keycloak-setup-jenkins-roles.sh
-```
-
 ---
 
 ## 📖 Flujo Completo de Configuración
 
-### Primera Vez
+### Primera Vez (Manual)
 
 ```bash
 # 1. Levantar servicios
@@ -92,9 +98,21 @@ Si solo necesitas configurar un servicio específico:
 # Verificar en: http://localhost:8080
 
 # 3. Configurar roles (UNA SOLA VEZ)
-./scripts/setup-all-keycloak-roles.sh
+./scripts/keycloak-roles-manager.sh all
 
 # 4. Listo! Los roles están configurados
+```
+
+### Primera Vez (Automático)
+
+```bash
+# Todo en un comando
+./scripts/stack-manager.sh start --setup-roles
+
+# Esto hace:
+# 1. Levanta servicios
+# 2. Espera a que Keycloak esté listo
+# 3. Ejecuta automáticamente keycloak-roles-manager.sh all
 ```
 
 ### Después de Clean All
@@ -103,11 +121,12 @@ Si solo necesitas configurar un servicio específico:
 # 1. Limpiar todo (elimina base de datos)
 ./scripts/stack-manager.sh clean all
 
-# 2. Levantar servicios de nuevo
-./scripts/stack-manager.sh start
+# 2. Levantar servicios y configurar roles automáticamente
+./scripts/stack-manager.sh start --setup-roles
 
-# 3. Reconfigurar roles (porque se perdieron)
-./scripts/setup-all-keycloak-roles.sh
+# O manualmente:
+./scripts/stack-manager.sh start
+./scripts/keycloak-roles-manager.sh all
 ```
 
 ### Uso Normal (Sin Clean)
@@ -176,16 +195,17 @@ docker exec keycloak /opt/keycloak/bin/kcadm.sh get clients \
 
 ### Roles duplicados
 
-**No es un problema**: Los scripts detectan roles existentes y los omiten automáticamente
+**No es un problema**: El script detecta roles existentes y los omite automáticamente
 
 ---
 
 ## 📝 Resumen Rápido
 
-| Situación | ¿Ejecutar scripts de roles? | Comando |
-|-----------|----------------------------|---------|
-| Primera vez | ✅ SÍ | `./scripts/setup-all-keycloak-roles.sh` |
-| Después de `clean all` | ✅ SÍ | `./scripts/setup-all-keycloak-roles.sh` |
+| Situación | ¿Ejecutar script? | Comando |
+|-----------|-------------------|---------|
+| Primera vez (manual) | ✅ SÍ | `./scripts/keycloak-roles-manager.sh all` |
+| Primera vez (auto) | ✅ SÍ | `./scripts/stack-manager.sh start --setup-roles` |
+| Después de `clean all` | ✅ SÍ | `./scripts/keycloak-roles-manager.sh all` |
 | Después de `start` | ❌ NO | (ya están configurados) |
 | Después de `stop` | ❌ NO | (se mantienen en volumen) |
 | Después de `restart` | ❌ NO | (se mantienen en volumen) |
@@ -211,8 +231,6 @@ docker exec keycloak /opt/keycloak/bin/kcadm.sh get clients \
 
 ## 📚 Archivos Relacionados
 
-- **Script consolidado**: [`scripts/setup-all-keycloak-roles.sh`](file:///mnt/backups/emujicad/Documents/ai/my-selfhosted-ai-kit/scripts/setup-all-keycloak-roles.sh)
-- **Script CLI base**: [`scripts/keycloak-setup-roles-cli.sh`](file:///mnt/backups/emujicad/Documents/ai/my-selfhosted-ai-kit/scripts/keycloak-setup-roles-cli.sh)
-- **Open WebUI roles**: [`scripts/keycloak-setup-openwebui-roles.sh`](file:///mnt/backups/emujicad/Documents/ai/my-selfhosted-ai-kit/scripts/keycloak-setup-openwebui-roles.sh)
-- **n8n roles**: [`scripts/keycloak-setup-n8n-roles.sh`](file:///mnt/backups/emujicad/Documents/ai/my-selfhosted-ai-kit/scripts/keycloak-setup-n8n-roles.sh)
-- **Jenkins roles**: [`scripts/keycloak-setup-jenkins-roles.sh`](file:///mnt/backups/emujicad/Documents/ai/my-selfhosted-ai-kit/scripts/keycloak-setup-jenkins-roles.sh)
+- **Script unificado**: [`scripts/keycloak-roles-manager.sh`](file:///mnt/backups/emujicad/Documents/ai/my-selfhosted-ai-kit/scripts/keycloak-roles-manager.sh)
+- **Stack manager**: [`scripts/stack-manager.sh`](file:///mnt/backups/emujicad/Documents/ai/my-selfhosted-ai-kit/scripts/stack-manager.sh)
+- **Test de validación**: [`scripts/test-keycloak-roles-flow.sh`](file:///mnt/backups/emujicad/Documents/ai/my-selfhosted-ai-kit/scripts/test-keycloak-roles-flow.sh)
