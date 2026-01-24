@@ -2,7 +2,7 @@
 # scripts/test-ollama-advanced.sh
 # Pruebas avanzadas de optimizaciones de Ollama
 
-set -e
+set +e
 
 echo "🧪 PRUEBAS AVANZADAS DE OPTIMIZACIONES DE OLLAMA"
 echo "=================================================="

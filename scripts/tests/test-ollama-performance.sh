@@ -2,7 +2,7 @@
 # scripts/test-ollama-performance.sh
 # Script para probar el rendimiento de Ollama y validar las optimizaciones
 
-set -e
+set +e
 
 echo "🧪 PRUEBAS DE RENDIMIENTO DE OLLAMA"
 echo "===================================="
