@@ -25,10 +25,10 @@ echo
 
 # Test 1: Verificar que el script consolidado existe
 echo -e "${BLUE}Test 1: Verificar existencia de scripts${NC}"
-if [ -f "$SCRIPT_DIR/setup-all-keycloak-roles.sh" ]; then
-    echo -e "${GREEN}✓ setup-all-keycloak-roles.sh existe${NC}"
+if [ -f "$SCRIPT_DIR/keycloak-roles-manager.sh" ]; then
+    echo -e "${GREEN}✓ keycloak-roles-manager.sh existe${NC}"
 else
-    echo -e "${RED}✗ setup-all-keycloak-roles.sh NO existe${NC}"
+    echo -e "${RED}✗ keycloak-roles-manager.sh NO existe${NC}"
     exit 1
 fi
 
@@ -90,7 +90,7 @@ else
     exit 1
 fi
 
-if grep -q "./scripts/setup-all-keycloak-roles.sh" "$SCRIPT_DIR/stack-manager.sh"; then
+if grep -q "./scripts/keycloak-roles-manager.sh" "$SCRIPT_DIR/stack-manager.sh"; then
     echo -e "${GREEN}✓ Comando de ejecución manual en recordatorio${NC}"
 else
     echo -e "${RED}✗ Comando NO encontrado en recordatorio${NC}"
@@ -108,9 +108,9 @@ else
 fi
 echo
 
-# Test 6: Verificar que setup-all-keycloak-roles.sh tiene health check
-echo -e "${BLUE}Test 6: Verificar health check en setup-all-keycloak-roles.sh${NC}"
-if grep -q "http://localhost:8080/health/ready" "$SCRIPT_DIR/setup-all-keycloak-roles.sh"; then
+# Test 6: Verificar que keycloak-roles-manager.sh tiene health check
+echo -e "${BLUE}Test 6: Verificar health check en keycloak-roles-manager.sh${NC}"
+if grep -q "http://localhost:8080/health/ready" "$SCRIPT_DIR/keycloak-roles-manager.sh"; then
     echo -e "${GREEN}✓ Health check en script consolidado${NC}"
 else
     echo -e "${RED}✗ Health check NO encontrado${NC}"
@@ -118,27 +118,8 @@ else
 fi
 echo
 
-# Test 7: Verificar que los scripts individuales existen
-echo -e "${BLUE}Test 7: Verificar scripts individuales${NC}"
-INDIVIDUAL_SCRIPTS=(
-    "keycloak-setup-roles-cli.sh"
-    "keycloak-setup-openwebui-roles.sh"
-    "keycloak-setup-n8n-roles.sh"
-    "keycloak-setup-jenkins-roles.sh"
-)
-
-for script in "${INDIVIDUAL_SCRIPTS[@]}"; do
-    if [ -f "$SCRIPT_DIR/$script" ]; then
-        echo -e "${GREEN}✓ $script existe${NC}"
-    else
-        echo -e "${RED}✗ $script NO existe${NC}"
-        exit 1
-    fi
-done
-echo
-
-# Test 8: Verificar documentación
-echo -e "${BLUE}Test 8: Verificar documentación${NC}"
+# Test 7: Verificar documentación
+echo -e "${BLUE}Test 7: Verificar documentación${NC}"
 if [ -f "$PROJECT_ROOT/docs/KEYCLOAK_ROLES_SETUP.md" ]; then
     echo -e "${GREEN}✓ Documentación KEYCLOAK_ROLES_SETUP.md existe${NC}"
 else
@@ -147,8 +128,8 @@ else
 fi
 echo
 
-# Test 9: Simular parsing de argumentos (sin ejecutar stack-manager)
-echo -e "${BLUE}Test 9: Simular parsing de argumentos${NC}"
+# Test 8: Simular parsing de argumentos (sin ejecutar stack-manager)
+echo -e "${BLUE}Test 8: Simular parsing de argumentos${NC}"
 echo -e "${BLUE}Simulando: start --setup-roles${NC}"
 
 # Crear función de prueba que simula el parsing
@@ -184,8 +165,8 @@ else
 fi
 echo
 
-# Test 10: Verificar que Keycloak está corriendo (opcional)
-echo -e "${BLUE}Test 10: Verificar estado de Keycloak (opcional)${NC}"
+# Test 9: Verificar que Keycloak está corriendo (opcional)
+echo -e "${BLUE}Test 9: Verificar estado de Keycloak (opcional)${NC}"
 if docker ps | grep -q keycloak; then
     echo -e "${GREEN}✓ Keycloak está corriendo${NC}"
     
