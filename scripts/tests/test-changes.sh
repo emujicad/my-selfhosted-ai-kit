@@ -9,14 +9,14 @@
 set +e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-cd "$PROJECT_DIR"
+cd "$PROJECT_ROOT"
 
 # Verificar variables de entorno antes de continuar
-if [ -f "$SCRIPT_DIR/verify-env-variables.sh" ]; then
+if [ -f "$SCRIPT_DIR/../verify-env-variables.sh" ]; then
     echo "🔍 Verificando variables de entorno..."
-    if ! bash "$SCRIPT_DIR/verify-env-variables.sh" > /tmp/env-verification.log 2>&1; then
+    if ! bash "$SCRIPT_DIR/../verify-env-variables.sh" > /tmp/env-verification.log 2>&1; then
         echo "❌ ERROR: Se encontraron errores críticos en las variables de entorno"
         cat /tmp/env-verification.log | grep "❌ ERROR"
         echo ""
