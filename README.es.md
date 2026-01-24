@@ -659,6 +659,10 @@ Si tienes problemas:
 
 ## 📚 Documentación Adicional
 
+### Gestión del Proyecto
+- [`TODO.md`](TODO.md) - Próximos pasos inmediatos y logros recientes
+- [`project_context.md`](project_context.md) - Resumen completo del proyecto para asistentes IA y desarrolladores
+
 Para más información, consulta:
 - **[docs/INDEX.md](docs/INDEX.md)** - Guía de lectura de toda la documentación
 - **[PROJECT_STATUS.md](docs/PROJECT_STATUS.md)** - ⭐ **NUEVO** - Estado del proyecto y tareas pendientes
