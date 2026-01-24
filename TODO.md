@@ -13,7 +13,7 @@ Stack actual: Ollama (LLMs) + Open WebUI (chat) + n8n (automatización) + Postgr
   - [x] Integrar Grafana con Keycloak (completado y funcionando)
   - [x] Script consolidado: `scripts/keycloak-manager.sh`
   - [x] Documentación completa: `docs/KEYCLOAK_INTEGRATION_PLAN.md`
-  - [x] **Integración Open WebUI + Keycloak** (Solved via Fake Discovery/UserInfo pattern)
+  - [x] **Integración Open WebUI + Keycloak** ✅ (Resuelto usando "Emulated OIDC Environment": Fake Discovery para split-horizon routing + Fake UserInfo para bypass de 401 errors)
   - [ ] Integrar n8n con Keycloak (configuración lista y secretos corregidos, pendiente validación)
   - [ ] Integrar Jenkins con Keycloak (secretos corregidos, pendiente validación)
   - [ ] Configurar roles y permisos básicos

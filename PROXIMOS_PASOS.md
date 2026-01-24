@@ -1,6 +1,6 @@
 # 🚀 Próximos Pasos - My Self-Hosted AI Kit
 
-**Fecha de análisis**: 2025-12-12
+**Fecha de análisis**: 2026-01-24
 
 ## 📊 Resumen del Estado Actual
 
@@ -24,7 +24,7 @@
    - Documentación en `docs/GRAFANA_MONITORING_GUIDE.md`
 
 4. **Scripts Consolidados** ✅
-   - `stack-manager.sh` - Gestión completa del stack
+   - `stack-manager.sh` - Gestión completa del stack con **resolución automática de dependencias**
    - `backup-manager.sh` - Gestión de backups
    - `keycloak-manager.sh` - Gestión de Keycloak
    - Scripts de validación integrados
@@ -64,10 +64,11 @@
 
 ### ⚠️ Limitaciones Conocidas
 
-1. **Open WebUI + Keycloak** ✅ **SOLUCIONADO (Advanced Emulation)**
-   - **Problema 1 (Routing)**: Se solucionó con "Fake Discovery" (`oidc-config.json` local) que separa rutas para browser (`localhost`) y backend (`keycloak`).
-   - **Problema 2 (401 UserInfo)**: Se solucionó con "Fake UserInfo" (`userinfo.json` local) que simula la respuesta de perfil para evitar errores de validación de token interna.
-   - **Resultado**: Flujo de login completo y funcional con SSO.
+1. **Open WebUI + Keycloak** ✅ **COMPLETADO (Emulated OIDC Environment)**
+   - **Problema 1 (Split Horizon Routing)**: Solucionado con "Fake Discovery" (`oidc-config.json`) que separa rutas browser (`localhost:8080`) y backend (`keycloak:8080`).
+   - **Problema 2 (UserInfo 401)**: Solucionado con "Fake UserInfo" (`userinfo.json`) que sirve datos de perfil estáticos.
+   - **Problema 3 (User Mapping)**: Resuelto mediante modificación directa de SQLite para vincular login OIDC con cuenta admin existente.
+   - **Resultado**: Autenticación SSO totalmente funcional con admin@emujicad.
 
 2. **PostgreSQL Exporter** ✅ **RESUELTO**
    - Problema solucionado: las métricas están disponibles y la conexión es correcta
@@ -83,7 +84,7 @@
 
 **Estado actual:**
 - ✅ Grafana: Completado y funcionando
-- ⚠️ Open WebUI: Limitación conocida (no funciona)
+- ✅ Open WebUI: ✅ **COMPLETADO** (Emulated OIDC Environment implementado)
 - ✅ n8n: Configuración lista y clientes OIDC creados automáticamente por `keycloak-init`
 - ✅ Jenkins: Script de inicialización listo y clientes OIDC creados automáticamente por `keycloak-init`
 
@@ -359,5 +360,5 @@
 
 ---
 
-**Última actualización**: 2025-12-12
+**Última actualización**: 2026-01-24
 

@@ -1,6 +1,6 @@
 # 📊 Estado del Proyecto - My Self-Hosted AI Kit
 
-**Última actualización**: 2025-12-12 (revisado y actualizado con servicios automáticos keycloak-db-init, keycloak-init, mejoras de HAProxy y mejoras de dashboards de Grafana)
+**Última actualización**: 2026-01-24 (revisado y actualizado con integración Open WebUI + Keycloak, mejora de stack-manager.sh con resolución automática de dependencias)
 
 ## ✅ Completado
 
@@ -37,6 +37,7 @@
    - ✅ Scripts de Keycloak consolidados en `keycloak-manager.sh`
    - ✅ Scripts de validación integrados en `stack-manager.sh`
    - ✅ Script maestro `stack-manager.sh` para gestión completa del stack
+   - ✅ Resolución automática de dependencias entre perfiles en `stack-manager.sh`
 
 6. **Mejoras de Documentación**
    - ✅ Documentación consolidada en archivos principales
@@ -89,7 +90,7 @@
    - ✅ **Clean slate funciona automáticamente** (stop → clean all → start sin intervención manual)
    - ✅ **keycloak-db-init**: Crea automáticamente la base de datos de Keycloak si no existe
    - ✅ **keycloak-init**: Crea automáticamente clientes OIDC (Grafana, n8n, Open WebUI, Jenkins) y actualiza secrets en `.env`
-   - ✅ Open WebUI con OIDC (solucionado usando split routing: Auth público / Token interno)
+   - ✅ Open WebUI con OIDC ✅ **SOLUCIONADO** (Emulated OIDC Environment: Fake Discovery + Fake UserInfo para resolver split-horizon Docker networking y UserInfo 401 errors)
    - ✅ n8n con OIDC (configuración lista en docker-compose.yml, clientes creados automáticamente por keycloak-init)
    - ✅ Jenkins con OIDC (script de inicialización listo: `init-jenkins-oidc.sh`, clientes creados automáticamente por keycloak-init)
    - ✅ Script consolidado: `keycloak-manager.sh`

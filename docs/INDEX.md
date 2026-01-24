@@ -25,7 +25,7 @@
 - **[AUTO_FIXES_SUMMARY.md](AUTO_FIXES_SUMMARY.md)** - ⭐ **NUEVO** - Resumen de todas las correcciones automáticas
   - Credenciales y acceso
   - Grafana + Keycloak ✅ (configuración completa y troubleshooting)
-  - Open WebUI + Keycloak ⚠️ (limitación conocida documentada)
+  - Open WebUI + Keycloak ✅ **COMPLETADO** (Emulated OIDC Environment)
   - n8n + Keycloak ⏳ (configuración lista)
   - Jenkins + Keycloak ⏳ (pendiente)
   - Troubleshooting general
@@ -54,6 +54,7 @@
 #### Gestión del Stack
 - **[STACK_MANAGER_GUIDE.md](STACK_MANAGER_GUIDE.md)** - ⭐ **NUEVO** - Script maestro para gestionar perfiles Docker Compose
   - Gestión simplificada de perfiles
+  - **Resolución automática de dependencias entre perfiles**
   - Presets predefinidos (default, dev, production, full)
   - Validación automática integrada
   - Comandos disponibles (start, stop, restart, status, info, logs, validate, monitor)
@@ -228,4 +229,4 @@ Los siguientes archivos fueron eliminados porque su información fue consolidada
 
 ---
 
-**Última actualización**: 2025-12-07
+**Última actualización**: 2026-01-24
