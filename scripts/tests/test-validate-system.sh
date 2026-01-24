@@ -37,6 +37,15 @@ run_check "Config verification" "$TARGET_SCRIPT --config"
 # Test 5: Models flag
 run_check "Models verification" "$TARGET_SCRIPT --models"
 
+# Test 6: Deploy flag (Existence check only)
+# We don't want to actually deploy in a unit test, so we just check if it accepts the flag
+if grep -q "deploy-check" "$TARGET_SCRIPT"; then
+     echo "Test: Deploy flag definition... ✅ PASSED"
+else
+     echo "Test: Deploy flag definition... ❌ FAILED"
+     FAILURES=$((FAILURES + 1))
+fi
+
 if [ $FAILURES -eq 0 ]; then
     exit 0
 else

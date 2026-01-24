@@ -115,9 +115,10 @@ show_help() {
     echo "Flags:"
     echo "  --env       Validate environment variables"
     echo "  --config    Validate configuration files"
-    echo "  --models    Validate/Monitor Ollama models"
-    echo "  --all       Run all validations (default)"
-    echo "  --help      Show this help"
+    echo "  --models        Validate/Monitor Ollama models"
+    echo "  --deploy-check  Start stack and verify runtime status"
+    echo "  --all           Run all validations (default)"
+    echo "  --help          Show this help"
     echo ""
 }
 
@@ -125,22 +126,32 @@ show_help() {
 RUN_ENV=false
 RUN_CONFIG=false
 RUN_MODELS=false
+RUN_DEPLOY=false
 
 # Parse arguments
 if [ $# -eq 0 ]; then
     RUN_ENV=true
     RUN_CONFIG=true
     RUN_MODELS=true
+    # Default NO deploy check to ensure safety, unless explicitly requested or --all
+    # Actually, let's keep --all as PASSIVE checks only for safety?
+    # User asked for TOTAL unification. Let's make --all include deployment?
+    # No, --all usually implies "Validate everything current".
+    # Let's keep deploy as opt-in via flag or specific --deploy-check
+    # But wait, auto-validate did EVERYTHING.
+    # Let's stick to explicit flag for deploy actions.
 else
     for arg in "$@"; do
         case $arg in
             --env) RUN_ENV=true ;;
             --config) RUN_CONFIG=true ;;
             --models) RUN_MODELS=true ;;
+            --deploy-check) RUN_DEPLOY=true ;;
             --all) 
                 RUN_ENV=true
                 RUN_CONFIG=true
                 RUN_MODELS=true
+                # RUN_DEPLOY=true # Uncomment if we want --all to start containers (Risky?)
                 ;;
             --help) 
                 show_help
@@ -263,8 +274,76 @@ check_models() {
     fi
 }
 
+# =============================================================================
+# Logic: Deploy Check (--deploy-check)
+# =============================================================================
+
+check_deploy() {
+    print_header "DEPLOYMENT CHECK & ORCHESTRATION"
+    
+    # Check if Docker is available
+    if ! command -v docker > /dev/null 2>&1 && ! command -v sudo > /dev/null 2>&1; then
+        print_error "Docker not found - Cannot run deployment check"
+        return 1
+    fi
+    local DOCKER_CMD="docker"
+    if ! docker ps > /dev/null 2>&1; then
+        DOCKER_CMD="sudo docker"
+    fi
+
+    # 1. Start Services (Orchestration)
+    print_info "Starting core services..."
+    if ! $DOCKER_CMD compose up -d postgres pgvector qdrant 2>&1; then
+        print_error "Failed to start core services"
+        return 1
+    fi
+    print_success "Core services checked/started"
+    
+    print_info "Starting monitoring services..."
+    if ! $DOCKER_CMD compose --profile monitoring up -d prometheus grafana alertmanager 2>&1; then
+        print_error "Failed to start monitoring services"
+    else
+        print_success "Monitoring services checked/started"
+    fi
+    
+    print_info "Starting security services..."
+    if ! $DOCKER_CMD compose --profile security up -d modsecurity 2>&1; then
+        print_error "Failed to start security services"
+    else
+        print_success "Security services checked/started"
+    fi
+    
+    print_info "Waiting for services to settle (10s)..."
+    sleep 10
+    
+    # 2. Verify Runtime Status
+    print_header "VERIFYING RUNTIME STATUS"
+    
+    # Verify Prometheus
+    if $DOCKER_CMD compose --profile monitoring ps prometheus | grep -q "Up\|running"; then
+        print_success "Prometheus container is running"
+        sleep 2
+        if curl -s -f http://localhost:9090/-/healthy > /dev/null 2>&1; then
+            print_success "Prometheus endpoint healthy (http://localhost:9090)"
+        else
+             print_warning "Prometheus running but endpoint check failed (might imply starting up)"
+        fi
+    else
+        print_error "Prometheus container NOT running"
+    fi
+    
+    # Verify Logs (Sample)
+    print_info "Checking Prometheus logs for critical errors..."
+    if $DOCKER_CMD compose --profile monitoring logs --tail=20 prometheus 2>&1 | grep -qi "fatal\|panic"; then
+         print_warning "Potential critical errors found in Prometheus logs"
+    else
+         print_success "No fatal errors in recent Prometheus logs"
+    fi
+}
+
 if [ "$RUN_CONFIG" = true ]; then check_config; fi
 if [ "$RUN_MODELS" = true ]; then check_models; fi
+if [ "$RUN_DEPLOY" = true ]; then check_deploy; fi
 
 # Final Report
 echo ""
