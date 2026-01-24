@@ -101,8 +101,8 @@ step1_static_validation() {
     
     print_info "Ejecutando validación estática de configuración..."
     
-    if [ -f "$SCRIPT_DIR/validate-config.sh" ]; then
-    bash "$SCRIPT_DIR/validate-config.sh" > /tmp/validation.log 2>&1
+    if [ -f "$SCRIPT_DIR/validate-system.sh" ]; then
+    bash "$SCRIPT_DIR/validate-system.sh" --config > /tmp/validation.log 2>&1
     VALIDATION_EXIT=$?
     
     # Contar errores reales (no warnings)
@@ -118,7 +118,7 @@ step1_static_validation() {
         return 1
     fi
     else
-        print_error "Script de validación no encontrado"
+        print_error "Script de sistema (validate-system.sh) no encontrado"
         return 1
     fi
 }
