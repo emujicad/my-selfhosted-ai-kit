@@ -1191,6 +1191,7 @@ services:
       - KC_HTTP_RELATIVE_PATH=${KEYCLOAK_HTTP_RELATIVE_PATH:-/}
       - KC_PROXY=${KEYCLOAK_PROXY:-edge}
       - KC_PROXY_ADDRESS_FORWARDING=${KEYCLOAK_PROXY_ADDRESS_FORWARDING:-true}
+      - KC_METRICS_ENABLED=true
     ports:
       - "${PORT_KEYCLOAK_HOST:-8080}:${PORT_KEYCLOAK_CONTAINER:-8080}"
     volumes:
@@ -1206,7 +1207,7 @@ services:
         condition: service_completed_successfully
     # Tiempo de gracia para shutdown limpio (30 segundos)
     stop_grace_period: 30s
-    command: start-dev --http-enabled=true --hostname-strict=false
+    command: start-dev --http-enabled=true --hostname-strict=false --metrics-enabled=true
     healthcheck:
       # Keycloak health check: verificar que el proceso esté corriendo Y que el puerto responda
       # Keycloak no tiene curl/wget, pero podemos verificar:

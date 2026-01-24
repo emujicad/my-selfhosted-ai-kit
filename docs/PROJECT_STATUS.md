@@ -138,6 +138,8 @@ This document combines the current project status with the TODO list to provide 
   - [x] Verify Exporters are used correctly
   - [x] Resolve false positive "Down" alerts
   - [x] Fix "Response Latency Percentiles" (No data) in AI Models Dashboard
+  - [x] Fix Keycloak Metrics (Port 9000 & Enabled Flag) ✅
+  - [x] Fix Ollama Metrics (Model Size Corrected) ✅
 
 - [ ] **Intelligent Grafana Alerts**
   - [ ] Configure visual alerts

@@ -469,7 +469,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "((sum(rate(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"}[5m])) * 0.10) + (sum(container_memory_usage_bytes{id=~\"/system.slice/docker-.*\"}) / 1024 / 1024 / 1024 * 0.05)) / max(count(sum(rate(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"}[5m])) by (id) > 0.01), 1)",
+          "expr": "((sum(rate(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"}[5m])) * 0.10) + (sum(container_memory_usage_bytes{id=~\"/system.slice/docker-.*\"}) / 1024 / 1024 / 1024 * 0.05)) / count(sum(rate(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"}[5m])) by (id) > 0.01)",
           "legendFormat": "Cost per User ($/hr)",
           "refId": "A"
         }
@@ -643,5 +643,3 @@
   "version": 1,
   "weekStart": ""
 }
-
-

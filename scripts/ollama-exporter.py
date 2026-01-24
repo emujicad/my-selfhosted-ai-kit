@@ -74,8 +74,15 @@ def scrape_metrics() -> Dict[str, Any]:
         total_size = 0
         for model in models:
             model_name = model.get('name', 'unknown')
-            model_info = fetch_model_info(model_name)
-            size_bytes = model_info.get('size', 0)
+            
+            # Intentar obtener size directamente de tags (optimización)
+            size_bytes = model.get('size', 0)
+            
+            # Si no está (versiones viejas de Ollama), intentar fallback
+            if size_bytes == 0:
+                model_info = fetch_model_info(model_name)
+                size_bytes = model_info.get('size', 0)
+                
             total_size += size_bytes
             
             metrics['models'].append({

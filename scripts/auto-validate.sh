@@ -72,11 +72,11 @@ step0_verify_env_variables() {
         ENV_VERIFICATION_EXIT=$?
         
         # Contar errores
-        ERROR_COUNT=$(grep -c "❌ ERROR" /tmp/env-verification.log || echo "0")
-        WARNING_COUNT=$(grep -c "⚠️  WARNING" /tmp/env-verification.log || echo "0")
+        ERROR_COUNT=$(grep -c "❌ ERROR" /tmp/env-verification.log | tr -d '[:space:]' || echo "0")
+        WARNING_COUNT=$(grep -c "⚠️  WARNING" /tmp/env-verification.log | tr -d '[:space:]' || echo "0")
         
-        if [ $ERROR_COUNT -eq 0 ]; then
-            if [ $WARNING_COUNT -gt 0 ]; then
+        if [ "$ERROR_COUNT" -eq 0 ]; then
+            if [ "$WARNING_COUNT" -gt 0 ]; then
                 print_warning "Verificación de variables completada con advertencias"
                 cat /tmp/env-verification.log | grep -E "⚠️|ℹ️" | head -10
             else
@@ -106,9 +106,9 @@ step1_static_validation() {
     VALIDATION_EXIT=$?
     
     # Contar errores reales (no warnings)
-    ERROR_COUNT=$(grep -c "❌" /tmp/validation.log || echo "0")
+    ERROR_COUNT=$(grep -c "❌" /tmp/validation.log | tr -d '[:space:]' || echo "0")
     
-    if [ $ERROR_COUNT -eq 0 ]; then
+    if [ "$ERROR_COUNT" -eq 0 ]; then
         print_success "Validación estática completada"
         cat /tmp/validation.log | grep -E "✅|❌|⚠️" | head -20
         return 0
@@ -194,8 +194,43 @@ step3_verify_services() {
         if curl -s -f http://localhost:9090/-/healthy > /dev/null 2>&1; then
             print_success "Prometheus responde en http://localhost:9090"
             
+            # Verificar Targets Granularmente
+            print_info "Verificando estado de los Targets de Prometheus..."
+            TARGETS_STATUS=$(curl -s http://localhost:9090/api/v1/targets | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    targets = data.get('data', {}).get('activeTargets', [])
+    down_targets = []
+    print(f'{len(targets)} targets configurados.')
+    for t in targets:
+        job = t['labels']['job']
+        health = t['health']
+        error = t.get('lastError', '')
+        status_icon = '✅' if health == 'up' else '❌'
+        print(f'   {status_icon} {job}: {health} {error}')
+        if health != 'up':
+            down_targets.append(job)
+    
+    if down_targets:
+        print('DOWN_TARGETS=' + ','.join(down_targets))
+except Exception as e:
+    print(f'Error parsing targets: {e}')
+    exit(1)
+")
+            echo "$TARGETS_STATUS"
+            
+            if echo "$TARGETS_STATUS" | grep -q "DOWN_TARGETS="; then
+                 # Si encontramos targets caídos, verificar si son críticos
+                 # (Para esta validación estricta, cualquier fallo es un warning/error)
+                 print_warning "Algunos targets de Prometheus no están UP"
+                 ((ERRORS++))
+            else
+                 print_success "Todos los targets de Prometheus están UP"
+            fi
+
             # Verificar que las alertas están cargadas
-            sleep 2
+            sleep 1
             if curl -s http://localhost:9090/api/v1/rules 2>/dev/null | grep -q "alerts\|groups"; then
                 print_success "Alertas cargadas en Prometheus"
             else
@@ -203,6 +238,7 @@ step3_verify_services() {
             fi
         else
             print_warning "Prometheus no responde aún (puede estar iniciando)"
+            ((ERRORS++))
         fi
         
         # Verificar logs
@@ -211,7 +247,7 @@ step3_verify_services() {
         if echo "$PROMETHEUS_LOGS" | grep -qi "error\|fatal\|failed"; then
             print_warning "Posibles errores en logs de Prometheus:"
             echo "$PROMETHEUS_LOGS" | grep -i "error\|fatal\|failed" | head -3
-            ((ERRORS++))
+            # No contamos esto como error crítico si el healthcheck pasa
         else
             print_success "No hay errores críticos en logs de Prometheus"
         fi

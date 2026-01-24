@@ -114,6 +114,10 @@ my-selfhosted-ai-kit/
 - Reorganized root directory (moved OIDC configs to config/open-webui-oidc/)
 - Removed empty keycloak-proxy/ directory
 - **Fixed malformed placeholders in .env.example (KEYCLOAK_ADMIN_EMAIL)**
+- **Monitoring Fixes**:
+  - **Keycloak**: Enabled metrics (Port 9000 + Flag), fixed Prometheus scrapers
+  - **Ollama**: Optimized Model Size metrics (API usage correction), fixed 0GB size issue
+  - **Validation**: Updated `auto-validate.sh` for robust metrics checks
 
 ### 2026-01-24: Redis & Cache Optimization
 - **Redis Integration**: Configured Redis for n8n (workflow/queue) and Open WebUI (RAG/embeddings)
