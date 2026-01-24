@@ -116,7 +116,7 @@ This document combines the current project status with the TODO list to provide 
   - [x] Open WebUI with Keycloak ✅ (Emulated OIDC Environment solution)
   - [ ] Test n8n with Keycloak (configuration ready)
   - [ ] Test Jenkins with Keycloak (initialization script ready)
-  - [ ] Configure basic roles and permissions
+  - [x] Configure basic roles and permissions ✅ (Auto-mapped in docker-compose.yml)
 
 - [ ] **Configure HTTPS/SSL**
   - [ ] Generate SSL certificates (Let's Encrypt or self-signed)

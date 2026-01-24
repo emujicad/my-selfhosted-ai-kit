@@ -385,6 +385,10 @@ services:
       - OPENID_PROVIDER_URL=http://127.0.0.1:8080/static/oidc-config.json # Fake Discovery endpoint
       - OPENID_REDIRECT_URI=${OPEN_WEBUI_URL_PUBLIC:-http://localhost:3000}/oauth/oidc/callback
       - OPENID_SCOPES=${OPEN_WEBUI_OAUTH_SCOPES:-openid profile email}
+      # Role Mapping: Keycloak -> Open WebUI
+      # Maps 'openwebui-admin' -> Admin
+      - OPENID_ROLES_CLAIM=resource_access.open-webui.roles
+      - OPENID_ADMIN_ROLE=openwebui-admin
       - OPENID_SIGN_OUT_REDIRECT_URL=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/logout
     volumes:
       - open_webui_storage:/app/backend/data # Datos persistentes
@@ -675,7 +679,10 @@ services:
       # TOKEN_URL y API_URL pueden usar keycloak:8080 porque Grafana las llama desde dentro del contenedor
       - GF_AUTH_GENERIC_OAUTH_TOKEN_URL=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/token
       - GF_AUTH_GENERIC_OAUTH_API_URL=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/userinfo
-      - GF_AUTH_GENERIC_OAUTH_SKIP_ORG_ROLE_SYNC=${GRAFANA_SKIP_ORG_ROLE_SYNC:-true} # Necesario: Keycloak devuelve realm roles del usuario admin que Grafana intenta sincronizar
+      - GF_AUTH_GENERIC_OAUTH_SKIP_ORG_ROLE_SYNC=${GRAFANA_SKIP_ORG_ROLE_SYNC:-true}
+      # Role Mapping: Keycloak Roles -> Grafana Roles
+      # Maps 'grafana-admin' -> Admin, 'grafana-editor' -> Editor, others -> Viewer
+      - GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH=contains(resource_access.grafana.roles[*], 'grafana-admin') && 'Admin' || contains(resource_access.grafana.roles[*], 'grafana-editor') && 'Editor' || 'Viewer'
       # SIGNOUT_REDIRECT_URL debe usar localhost porque el navegador del usuario necesita acceder
       - GF_AUTH_SIGNOUT_REDIRECT_URL=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/logout
       - GF_SERVER_ROOT_URL=${GRAFANA_URL_PUBLIC:-http://localhost:3001}
