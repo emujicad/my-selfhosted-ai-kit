@@ -490,3 +490,43 @@ Improvements in `docker-compose.yml` help prevent the problem:
 ---
 
 **Last updated**: 2026-01-24
+
+---
+
+## 🔐 Automated Role Mapping
+
+The system implements an **Automated Role Mapping** strategy to ensure that Keycloak roles are correctly translated into application permissions (Admin, Editor, Viewer) without manual configuration in the GUIs.
+
+### How it works
+
+1.  **Creation (`auth-manager.sh`)**:
+    *   Creates roles in Keycloak (e.g., `grafana-admin`, `openwebui-admin`).
+    *   Creates a **Client Role Mapper** that adds these roles to the Access Token under the top-level `roles` claim.
+
+2.  **Consumption (`docker-compose.yml`)**:
+    *   Applications are configured to "read" this specific claim and map it to their internal permission levels.
+
+### Specific Implementations
+
+#### Grafana (JMESPath)
+Grafana uses **JMESPath** to parse the JSON Token and decide the user's role.
+*   **Variable**: `GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH`
+*   **Logic**:
+    ```javascript
+    contains(roles[*], 'grafana-admin') && 'Admin' || 
+    contains(roles[*], 'grafana-editor') && 'Editor' || 'Viewer'
+    ```
+    *   If token has `grafana-admin` → User becomes **Admin** in Grafana.
+    *   If token has `grafana-editor` → User becomes **Editor**.
+    *   Otherwise → **Viewer**.
+
+#### Open WebUI (Claim Mapping)
+Open WebUI looks for a specific list of roles in the token.
+*   **Variable**: `OPENID_ROLES_CLAIM=resource_access.open-webui.roles` (configured to look at the client specific roles)
+*   **Variable**: `OPENID_ADMIN_ROLE=openwebui-admin`
+    *   If the user has the role `openwebui-admin`, they are automatically promoted to **Admin**.
+
+### ✅ Automated Verification
+We have dedicated tests to ensure this "Contract" is never broken:
+1.  **`scripts/tests/test-roles-mapping.sh`**: Static analysis that ensures `docker-compose.yml` contains the correct mapping rules.
+2.  **`scripts/tests/test-keycloak-claims.sh`**: Integration test that logs in, decodes a real token, and verifies that Keycloak is actually sending the roles.
