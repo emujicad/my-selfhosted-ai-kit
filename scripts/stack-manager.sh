@@ -1102,7 +1102,33 @@ cleanup_orphaned_resources() {
             echo "   ❌ $item"
         done
     fi
+    
+    # Mostrar recordatorio para reconfigurar Keycloak roles si se hizo clean all
+    if [ "$clean_type" = "all" ] || [ "$clean_type" = "storage" ]; then
+        echo ""
+        print_header "⚠️  RECORDATORIO IMPORTANTE - KEYCLOAK ROLES"
+        echo ""
+        print_warning "🗑️  Has eliminado la base de datos de Keycloak"
+        print_warning "📋 Los ROLES de Keycloak se han PERDIDO y deben reconfigurarse"
+        echo ""
+        print_info "Después de levantar los servicios de nuevo, ejecuta:"
+        echo ""
+        print_success "   ./scripts/setup-all-keycloak-roles.sh"
+        echo ""
+        print_info "Este script reconfigurará:"
+        echo "   • Grupos (super-admins, admins, users, viewers)"
+        echo "   • Roles de Grafana (admin, editor, viewer)"
+        echo "   • Roles de Open WebUI (admin, user)"
+        echo "   • Roles de n8n (admin, user)"
+        echo "   • Roles de Jenkins (admin, user)"
+        echo ""
+        print_info "⏱️  Tiempo estimado: ~30 segundos"
+        echo ""
+        print_info "📚 Más información: docs/KEYCLOAK_ROLES_SETUP.md"
+        echo ""
+    fi
 }
+
 
 # Función para verificar y corregir automáticamente problemas de base de datos de Keycloak
 # Esta función se ejecuta automáticamente antes de levantar Keycloak
@@ -1884,7 +1910,37 @@ start_services() {
         
         return 1
     fi
+    
+    # Mostrar recordatorio para configurar roles de Keycloak si se levantó security
+    if [[ " ${unique_profiles[@]} " =~ " security " ]]; then
+        echo ""
+        print_header "⚠️  RECORDATORIO IMPORTANTE - KEYCLOAK ROLES"
+        echo ""
+        print_warning "📋 Keycloak se ha levantado, pero los ROLES aún NO están configurados"
+        echo ""
+        print_info "Los roles de Keycloak NO se configuran automáticamente por seguridad."
+        print_info "Debes ejecutar el script de configuración manualmente:"
+        echo ""
+        print_success "   ./scripts/setup-all-keycloak-roles.sh"
+        echo ""
+        print_info "Este script configura:"
+        echo "   • Grupos (super-admins, admins, users, viewers)"
+        echo "   • Roles de Grafana (admin, editor, viewer)"
+        echo "   • Roles de Open WebUI (admin, user)"
+        echo "   • Roles de n8n (admin, user)"
+        echo "   • Roles de Jenkins (admin, user)"
+        echo ""
+        print_info "⏱️  Tiempo estimado: ~30 segundos"
+        print_info "🔒 Seguro: Detecta roles existentes y los omite"
+        echo ""
+        print_warning "⚠️  Si ya ejecutaste este script antes, NO necesitas ejecutarlo de nuevo"
+        print_info "   (Los roles persisten en la base de datos)"
+        echo ""
+        print_info "📚 Más información: docs/KEYCLOAK_ROLES_SETUP.md"
+        echo ""
+    fi
 }
+
 
 # Función para limpiar base de datos de Keycloak antes de detener (opcional)
 # Esto ayuda a prevenir problemas cuando se reinicie
