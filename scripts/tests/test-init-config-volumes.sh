@@ -10,7 +10,7 @@ NC='\033[0m'
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-TARGET_SCRIPT="$PROJECT_ROOT/scripts/init-config-volumes.sh"
+TARGET_SCRIPT="$PROJECT_ROOT/scripts/utils/init/init-config-volumes.sh"
 
 echo -e "${BLUE}============================================================================${NC}"
 echo -e "${BLUE}Test: init-config-volumes.sh Validation${NC}"

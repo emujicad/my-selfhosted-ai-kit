@@ -1950,15 +1950,15 @@ start_services() {
             
             if [ $waited -ge $max_wait ]; then
                 print_warning "⚠️  Keycloak tardó demasiado en estar listo"
-                print_info "Puedes ejecutar manualmente: ./scripts/keycloak-roles-manager.sh all"
+                print_info "Puedes ejecutar manualmente: ./scripts/auth-manager.sh --setup-roles"
             else
                 # Ejecutar script de configuración
                 echo ""
-                if "$SCRIPT_DIR/keycloak-roles-manager.sh" all; then
+                if "$SCRIPT_DIR/auth-manager.sh" --setup-roles; then
                     print_success "✅ Roles de Keycloak configurados exitosamente"
                 else
                     print_warning "⚠️  Hubo un problema configurando los roles"
-                    print_info "Puedes ejecutar manualmente: ./scripts/setup-all-keycloak-roles.sh"
+                    print_info "Puedes ejecutar manualmente: ./scripts/auth-manager.sh --setup-roles"
                 fi
             fi
             echo ""
@@ -1971,7 +1971,7 @@ start_services() {
             print_info "Los roles de Keycloak NO se configuran automáticamente por seguridad."
             print_info "Debes ejecutar el script de configuración manualmente:"
             echo ""
-            print_success "   ./scripts/keycloak-roles-manager.sh all"
+            print_success "   ./scripts/auth-manager.sh --setup-roles"
             echo ""
             print_info "O puedes usar el flag --setup-roles para configuración automática:"
             echo ""

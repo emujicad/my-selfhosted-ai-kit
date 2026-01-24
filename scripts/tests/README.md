@@ -42,15 +42,12 @@ The tests are designed to be **Environment Aware**:
 
 ### Critical Infrastructure (P0)
 - `test-stack-manager.sh`: Validates core orchestration (start/stop/profiles). **(34 checks)**
-- `test-keycloak-manager.sh`: Validates identity management scripts.
 
 ### High Impact (P1)
 - `test-backup-manager.sh`: Validates backup and restore logic.
-- `test-keycloak-permanent-admin.sh`: Validates security initialization.
-- `test-keycloak-roles-flow.sh`: Validates role and permission setups.
+- `test-auth-manager.sh`: **Unified Auth Tests** (replaces old Keycloak tests). Validates roles, admin creation, and client fixes.
 
 ### Utils & Config (P2)
-- `test-recreate-keycloak-clients.sh`: Validates recovery tools.
 - `test-changes.sh`: Integration test for recent stack changes.
 
 ### Performance Benchmarking (Ollama)
@@ -61,7 +58,6 @@ The tests are designed to be **Environment Aware**:
 ### Initialization & Helpers (P3)
 - `test-validate-system.sh`: **Unified Validation System** (replaces old individual tests) - Validates env, config, models, and deployment.
 - `test-init-config-volumes.sh`: Validates configuration volume initialization logic.
-- `test-init-jenkins-oidc.sh`: Validates Jenkins OIDC configuration logic.
 
 ---
 

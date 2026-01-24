@@ -286,7 +286,7 @@ services:
       - POSTGRES_INITDB_ARGS=-E UTF8 --locale=C
     volumes:
       - postgres_storage:/var/lib/postgresql/data # Datos persistentes
-      - ./scripts/init-keycloak-db.sql:/docker-entrypoint-initdb.d/init-keycloak-db.sql
+      - ./scripts/utils/sql/init-keycloak-db.sql:/docker-entrypoint-initdb.d/init-keycloak-db.sql
     # Tiempo de gracia para shutdown limpio (30 segundos)
     stop_grace_period: 30s
     # Comando con configuración para manejar mejor los shutdowns
@@ -949,7 +949,7 @@ services:
     ports:
       - "${PORT_OLLAMA_EXPORTER_HOST:-9888}:${PORT_OLLAMA_EXPORTER_CONTAINER:-9888}"
     volumes:
-      - ./scripts/ollama-exporter.py:/app/ollama-exporter.py:ro
+      - ./scripts/utils/exporters/ollama-exporter.py:/app/ollama-exporter.py:ro
     networks:
       - monitoring-network
       - genai-network # Necesario para conectarse a Ollama
@@ -986,7 +986,7 @@ services:
     ports:
       - "${PORT_N8N_EXPORTER_HOST:-9889}:${PORT_N8N_EXPORTER_CONTAINER:-9889}"
     volumes:
-      - ./scripts/n8n-exporter.py:/app/n8n-exporter.py:ro
+      - ./scripts/utils/exporters/n8n-exporter.py:/app/n8n-exporter.py:ro
     networks:
       - monitoring-network
       - genai-network # Necesario para conectarse a n8n
@@ -1024,7 +1024,7 @@ services:
     ports:
       - "${PORT_OPENWEBUI_EXPORTER_HOST:-9890}:${PORT_OPENWEBUI_EXPORTER_CONTAINER:-9890}"
     volumes:
-      - ./scripts/openwebui-exporter.py:/app/openwebui-exporter.py:ro
+      - ./scripts/utils/exporters/openwebui-exporter.py:/app/openwebui-exporter.py:ro
     networks:
       - monitoring-network
       - genai-network # Necesario para conectarse a Open WebUI

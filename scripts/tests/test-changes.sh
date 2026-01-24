@@ -195,13 +195,13 @@ echo ""
 
 # Verificar que los volúmenes están correctamente configurados
 echo "🔍 Verificando configuración de volúmenes en docker-compose..."
-if grep -q "modsecurity.conf.*:ro" docker-compose.yml; then
+if grep -q "modsecurity.conf.*:ro" "$PROJECT_ROOT/docker-compose.yml"; then
     echo "   ✅ modsecurity.conf configurado como solo lectura"
 else
     echo "   ⚠️  modsecurity.conf no configurado como solo lectura"
 fi
 
-if grep -q "alerts.yml.*:ro" docker-compose.yml; then
+if grep -q "alerts.yml.*:ro" "$PROJECT_ROOT/docker-compose.yml"; then
     echo "   ✅ alerts.yml configurado como solo lectura"
 else
     echo "   ⚠️  alerts.yml no configurado como solo lectura"
