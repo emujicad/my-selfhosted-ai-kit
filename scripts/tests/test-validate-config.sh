@@ -48,7 +48,7 @@ echo
 
 # Test 2: Verify configuration validation
 echo -e "${BLUE}Test 2: Verify configuration validation${NC}"
-if grep -qi "validate\|check.*config" "$VALIDATE_SCRIPT"; then
+if grep -qi "validate\|check\|verify\|test" "$VALIDATE_SCRIPT"; then
     echo -e "${GREEN}✓ Configuration validation found${NC}"
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else

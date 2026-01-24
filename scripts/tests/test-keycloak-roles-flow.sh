@@ -16,7 +16,8 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+SCRIPTS_DIR="$PROJECT_ROOT/scripts"
 
 echo -e "${BLUE}============================================================================${NC}"
 echo -e "${BLUE}Test: Keycloak Roles Setup Flow${NC}"
@@ -25,14 +26,14 @@ echo
 
 # Test 1: Verificar que el script consolidado existe
 echo -e "${BLUE}Test 1: Verificar existencia de scripts${NC}"
-if [ -f "$SCRIPT_DIR/keycloak-roles-manager.sh" ]; then
+if [ -f "$SCRIPTS_DIR/keycloak-roles-manager.sh" ]; then
     echo -e "${GREEN}✓ keycloak-roles-manager.sh existe${NC}"
 else
     echo -e "${RED}✗ keycloak-roles-manager.sh NO existe${NC}"
     exit 1
 fi
 
-if [ -f "$SCRIPT_DIR/stack-manager.sh" ]; then
+if [ -f "$SCRIPTS_DIR/stack-manager.sh" ]; then
     echo -e "${GREEN}✓ stack-manager.sh existe${NC}"
 else
     echo -e "${RED}✗ stack-manager.sh NO existe${NC}"
@@ -42,21 +43,21 @@ echo
 
 # Test 2: Verificar que stack-manager.sh tiene el código del flag --setup-roles
 echo -e "${BLUE}Test 2: Verificar implementación del flag --setup-roles${NC}"
-if grep -q "auto_setup_roles" "$SCRIPT_DIR/stack-manager.sh"; then
+if grep -q "auto_setup_roles" "$SCRIPTS_DIR/stack-manager.sh"; then
     echo -e "${GREEN}✓ Variable auto_setup_roles encontrada${NC}"
 else
     echo -e "${RED}✗ Variable auto_setup_roles NO encontrada${NC}"
     exit 1
 fi
 
-if grep -q "if \[ \"\$arg\" = \"--setup-roles\" \]" "$SCRIPT_DIR/stack-manager.sh"; then
+if grep -q "if \[ \"\$arg\" = \"--setup-roles\" \]" "$SCRIPTS_DIR/stack-manager.sh"; then
     echo -e "${GREEN}✓ Parsing del flag --setup-roles encontrado${NC}"
 else
     echo -e "${RED}✗ Parsing del flag --setup-roles NO encontrado${NC}"
     exit 1
 fi
 
-if grep -q "if \[ \"\$auto_setup_roles\" = \"true\" \]" "$SCRIPT_DIR/stack-manager.sh"; then
+if grep -q "if \[ \"\$auto_setup_roles\" = \"true\" \]" "$SCRIPTS_DIR/stack-manager.sh"; then
     echo -e "${GREEN}✓ Lógica condicional para auto_setup_roles encontrada${NC}"
 else
     echo -e "${RED}✗ Lógica condicional NO encontrada${NC}"
@@ -66,14 +67,14 @@ echo
 
 # Test 3: Verificar health check wait logic
 echo -e "${BLUE}Test 3: Verificar lógica de espera de health check${NC}"
-if grep -q "curl -s http://localhost:8080/health/ready" "$SCRIPT_DIR/stack-manager.sh"; then
+if grep -q "curl -s http://localhost:8080/health/ready" "$SCRIPTS_DIR/stack-manager.sh"; then
     echo -e "${GREEN}✓ Health check endpoint encontrado${NC}"
 else
     echo -e "${RED}✗ Health check endpoint NO encontrado${NC}"
     exit 1
 fi
 
-if grep -q "max_wait=60" "$SCRIPT_DIR/stack-manager.sh"; then
+if grep -q "max_wait=60" "$SCRIPTS_DIR/stack-manager.sh"; then
     echo -e "${GREEN}✓ Timeout de 60 segundos configurado${NC}"
 else
     echo -e "${RED}✗ Timeout NO configurado${NC}"
@@ -83,14 +84,14 @@ echo
 
 # Test 4: Verificar que el recordatorio existe
 echo -e "${BLUE}Test 4: Verificar recordatorio por defecto${NC}"
-if grep -q "RECORDATORIO IMPORTANTE - KEYCLOAK ROLES" "$SCRIPT_DIR/stack-manager.sh"; then
+if grep -q "RECORDATORIO IMPORTANTE - KEYCLOAK ROLES" "$SCRIPTS_DIR/stack-manager.sh"; then
     echo -e "${GREEN}✓ Recordatorio encontrado${NC}"
 else
     echo -e "${RED}✗ Recordatorio NO encontrado${NC}"
     exit 1
 fi
 
-if grep -q "./scripts/keycloak-roles-manager.sh" "$SCRIPT_DIR/stack-manager.sh"; then
+if grep -q "./scripts/keycloak-roles-manager.sh" "$SCRIPTS_DIR/stack-manager.sh"; then
     echo -e "${GREEN}✓ Comando de ejecución manual en recordatorio${NC}"
 else
     echo -e "${RED}✗ Comando NO encontrado en recordatorio${NC}"
@@ -100,7 +101,7 @@ echo
 
 # Test 5: Verificar recordatorio después de clean all
 echo -e "${BLUE}Test 5: Verificar recordatorio después de clean all${NC}"
-if grep -q "Has eliminado la base de datos de Keycloak" "$SCRIPT_DIR/stack-manager.sh"; then
+if grep -q "Has eliminado la base de datos de Keycloak" "$SCRIPTS_DIR/stack-manager.sh"; then
     echo -e "${GREEN}✓ Recordatorio después de clean all encontrado${NC}"
 else
     echo -e "${RED}✗ Recordatorio después de clean all NO encontrado${NC}"
@@ -110,7 +111,7 @@ echo
 
 # Test 6: Verificar que keycloak-roles-manager.sh tiene health check
 echo -e "${BLUE}Test 6: Verificar health check en keycloak-roles-manager.sh${NC}"
-if grep -q "http://localhost:8080/health/ready" "$SCRIPT_DIR/keycloak-roles-manager.sh"; then
+if grep -q "http://localhost:8080/health/ready" "$SCRIPTS_DIR/keycloak-roles-manager.sh"; then
     echo -e "${GREEN}✓ Health check en script consolidado${NC}"
 else
     echo -e "${RED}✗ Health check NO encontrado${NC}"
