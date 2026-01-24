@@ -148,65 +148,42 @@ docker exec open-webui sqlite3 /app/backend/data/webui.db "SELECT * FROM user WH
 - Open WebUI lists all available models without filtering by capability
 - Embedding models are designed for text vectorization, not conversation
 
-**Solution 1: Hide models via Open WebUI Admin Panel (Recommended)**
+**Solution: Hide models via Admin Panel**
 
-This is the **official and persistent** way to hide models:
+Open WebUI v0.7.2 **does** have model visibility controls:
+
+**Correct path**: Settings → Models (not Workspace → Models)
+
+**Step-by-step**:
 
 1. Access Open WebUI at `http://localhost:3000`
 2. Login as administrator (via Keycloak)
-3. Click your profile icon → **"Admin Panel"** or **"Settings"**
-4. Navigate to **"Workspace"** → **"Models"** (or **"Admin Settings"** → **"Models"**)
-5. Find the embedding models:
+3. Click profile icon → **"Settings"**
+4. In left sidebar, click **"Models"** (under Settings section)
+5. Find the embedding models and toggle them **OFF** (gray):
    - `all-minilm:latest`
    - `nomic-embed-text:latest`
-6. For each model, toggle **"Show in chat"** to OFF or mark as **"Hidden"**
-7. Save changes
+6. Keep chat models **ON** (green):
+   - `llama3.2:latest`, `llama3.3:latest`, `deepseek-r1:14b`
 
-**Result**: Models will be hidden from the chat interface but remain available for embeddings/RAG functionality.
+**Result**: 
+- ✅ Embedding models hidden from chat interface
+- ✅ Models still available for RAG/embeddings functionality
+- ✅ Configuration persists across container restarts
 
-**Solution 2: Remove embedding models from Ollama (Not Recommended)**
+**About "Arena Model"**:
 
-Only if you don't need embeddings:
-
-```bash
-# List all models
-docker exec ollama ollama list
-
-# Remove embedding models (WARNING: This disables RAG functionality!)
-docker exec ollama ollama rm all-minilm:latest
-docker exec ollama ollama rm nomic-embed-text:latest
-```
-
-**⚠️ WARNING**: This will break RAG (Retrieval-Augmented Generation) features in Open WebUI.
-
-**Solution 3: Use Ollama model tags (Advanced)**
-
-Rename models with custom tags to differentiate them:
-
-```bash
-# Tag embedding models with 'embedding-' prefix
-docker exec ollama ollama tag all-minilm:latest embedding-minilm:latest
-docker exec ollama ollama tag nomic-embed-text:latest embedding-nomic:latest
-
-# Remove original tags
-docker exec ollama ollama rm all-minilm:latest
-docker exec ollama ollama rm nomic-embed-text:latest
-
-# Update Open WebUI embedding configuration
-# In docker-compose.yml, update:
-# - RAG_EMBEDDING_MODEL=embedding-minilm:latest
-```
+"Arena Model" is a built-in Open WebUI feature for comparing responses from multiple models side-by-side. It's **not** an actual Ollama model and **cannot be hidden** in v0.7.2. Simply don't select it when choosing a model for chat.
 
 **Why environment variables don't work**:
 
-Open WebUI v0.7.x does **not** support the following environment variables for model filtering:
+Open WebUI v0.7.2 does **not** support these environment variables:
 - ❌ `ENABLE_MODEL_FILTER` (doesn't exist)
 - ❌ `MODEL_FILTER_LIST` (doesn't exist)
 - ❌ `DEFAULT_MODELS` (exists but doesn't hide models, only sets defaults)
+- ❌ `ENABLE_ARENA_MODELS` (doesn't exist in v0.7.2)
 
-Model visibility must be configured through the **Admin Panel** or **database**.
-
-**Recommended approach**: Use **Solution 1** (Admin Panel) - it's persistent, official, and doesn't break functionality.
+**Model visibility must be configured through Settings → Models in the Admin Panel.**
 
 ---
 
