@@ -1,41 +1,84 @@
-# 📋 Próximos Pasos Detallados - My Self-Hosted AI Kit
+# 🚀 Roadmap - My Self-Hosted AI Kit
 
-**Última actualización**: 2026-01-24  
-**Estado del proyecto**: Open WebUI + Keycloak completado, stack-manager.sh mejorado, monitoreo y dashboards completados, optimizaciones de Ollama parcialmente completadas
+**Última actualización**: 2026-01-24
+
+Este documento combina el plan de acción general con los próximos pasos detallados para el proyecto. Está organizado por prioridades y proporciona una guía completa para implementar todas las funcionalidades pendientes.
 
 ---
 
-## 📊 Resumen Ejecutivo
+## 📊 Resumen del Estado Actual
 
 ### ✅ Completado Recientemente
-- ✅ Mejoras de dashboards de Grafana (9 dashboards completos)
-- ✅ Optimizaciones de Ollama (parcialmente completadas)
-- ✅ Mejoras de HAProxy (health checks, rate limiting, routing mejorado)
-- ✅ Exporters personalizados (nvidia, ollama, n8n, openwebui)
-- ✅ Sistema de backups automático
-- ✅ Integración Keycloak con Grafana
 
-### 🎯 Próximos Pasos por Prioridad
+1. **Sistema de Backups** ✅
+   - Backup incremental y completo
+   - Restauración automática
+   - Verificación de integridad
+   - Script consolidado: `backup-manager.sh`
 
-**Prioridad Alta**: Seguridad básica (Keycloak, HTTPS/SSL, Gestión de secretos)  
-**Prioridad Media**: Monitoreo avanzado (Alertas, Redis, Logging)  
-**Prioridad Baja**: Optimizaciones y mejoras avanzadas
+2. **Integración Keycloak - Grafana** ✅
+   - Grafana completamente integrado con Keycloak
+   - OAuth funcionando correctamente
+   - Documentación completa en `docs/KEYCLOAK_GUIDE.md`
+
+3. **Integración Open WebUI + Keycloak** ✅ **COMPLETADO**
+   - Solución "Emulated OIDC Environment" implementada
+   - Fake Discovery (`oidc-config.json`) para split-horizon routing
+   - Fake UserInfo (`userinfo.json`) para bypass de 401 errors
+   - Autenticación SSO totalmente funcional con admin@emujicad
+
+4. **Monitoreo Completo** ✅
+   - Prometheus configurado
+   - Grafana con 9 dashboards pre-configurados
+   - AlertManager funcionando
+   - Documentación en `docs/MONITORING_GUIDE.md`
+
+5. **Scripts Consolidados** ✅
+   - `stack-manager.sh` - Gestión completa del stack con **resolución automática de dependencias**
+   - `backup-manager.sh` - Gestión de backups
+   - `keycloak-manager.sh` - Gestión de Keycloak
+   - Scripts de validación integrados
+
+6. **Actualización de n8n** ✅
+   - Actualizado de 1.101.2 a 1.122.5
+   - Estrategia documentada en `docs/CONFIGURATION.md`
+
+7. **Mejoras de HAProxy** ✅
+   - Health checks avanzados (inter 3s, fall 3, rise 2)
+   - Rate limiting (100 req/10s por IP) - Protección DDoS
+   - Routing mejorado por paths
+   - Timeouts optimizados, logging y estadísticas mejoradas
+
+8. **Mejoras de Dashboards de Grafana** ✅
+   - 9 dashboards completos y profesionales
+   - Métricas específicas de IA, GPU/CPU, usuarios, costos
+   - Executive Summary Dashboard
+   - Ollama Optimization Monitoring Dashboard
+
+9. **Optimizaciones de Ollama** ✅ **PARCIALMENTE COMPLETADO**
+   - Variables de optimización configuradas
+   - Shared memory configurado (shm_size=2g)
+   - Límites de recursos configurados
+   - Dashboard de monitoreo creado
+   - ⏳ Queue de requests (pendiente)
 
 ---
 
-## 🔥 PRIORIDAD ALTA (Implementar Primero)
+## 🎯 Plan de Acción por Prioridades
 
-### 1. 🔐 Completar Integración Keycloak
+### 🔥 PRIORIDAD ALTA (Semanas 1-2)
 
-**Estado Actual:**
+#### 1. 🔐 Completar Integración Keycloak
+
+**Estado actual:**
 - ✅ Grafana: Completado y funcionando
-- ✅ Open WebUI: ✅ **COMPLETADO** (Emulated OIDC Environment: Fake Discovery + Fake UserInfo + SQLite user mapping)
-- ✅ n8n: Configuración lista, clientes OIDC creados automáticamente por `keycloak-init`
-- ✅ Jenkins: Script de inicialización listo, clientes OIDC creados automáticamente por `keycloak-init`
+- ✅ Open WebUI: Completado (Emulated OIDC Environment)
+- ✅ n8n: Configuración lista, clientes OIDC creados automáticamente
+- ✅ Jenkins: Script de inicialización listo, clientes OIDC creados automáticamente
 
-**Tareas Pendientes:**
+**Tareas pendientes:**
 
-#### 1.1 Probar Integración n8n con Keycloak
+##### 1.1 Probar Integración n8n con Keycloak
 **Objetivo**: Validar que n8n puede autenticarse con Keycloak usando OIDC
 
 **Pasos:**
@@ -61,10 +104,10 @@
    - Completar autenticación y verificar que regresa a n8n
 
 **Documentación de referencia:**
-- `docs/KEYCLOAK_INTEGRATION_PLAN.md` - Guía completa
+- `docs/KEYCLOAK_GUIDE.md` - Guía completa
 - `scripts/keycloak-manager.sh help` - Comandos disponibles
 
-#### 1.2 Probar Integración Jenkins con Keycloak
+##### 1.2 Probar Integración Jenkins con Keycloak
 **Objetivo**: Validar que Jenkins puede autenticarse con Keycloak usando OIDC
 
 **Pasos:**
@@ -97,7 +140,7 @@
 **Archivos relevantes:**
 - `scripts/init-jenkins-oidc.sh` - Script de inicialización de Jenkins OIDC
 
-#### 1.3 Configurar Roles y Permisos Básicos en Keycloak
+##### 1.3 Configurar Roles y Permisos Básicos en Keycloak
 **Objetivo**: Establecer un sistema de roles y permisos básico para control de acceso
 
 **Tareas:**
@@ -129,25 +172,25 @@
 ```
 
 **Documentación:**
-- `docs/KEYCLOAK_INTEGRATION_PLAN.md` - Guía de integración
+- `docs/KEYCLOAK_GUIDE.md` - Guía de integración
 - [Keycloak Documentation - Roles](https://www.keycloak.org/docs/latest/server_admin/#_roles)
 
 ---
 
-### 2. 🔒 Implementar HTTPS/SSL
+#### 2. 🔒 Implementar HTTPS/SSL
 
-**Estado Actual:**
+**Estado actual:**
 - ✅ HAProxy configurado con mejoras (health checks, rate limiting, routing)
 - ⏳ SSL/HTTPS pendiente de implementar
 
 **Tareas:**
 
-#### 2.1 Configurar Certificados SSL
+##### 2.1 Configurar Certificados SSL
 **Opción A: Let's Encrypt (Producción)**
 - Instalar certbot
 - Configurar dominio (si tienes uno)
 - Obtener certificados SSL
-- Configurar renovación automática
+-Configurar renovación automática
 
 **Opción B: Certificados Autofirmados (Desarrollo)**
 - Generar certificados autofirmados
@@ -157,7 +200,7 @@
 - [Let's Encrypt Documentation](https://letsencrypt.org/docs/)
 - [Certbot Documentation](https://certbot.eff.org/)
 
-#### 2.2 Configurar HAProxy con SSL Termination
+##### 2.2 Configurar HAProxy con SSL Termination
 **Tareas:**
 1. Actualizar `haproxy/haproxy.cfg`:
    - Agregar configuración SSL en frontend
@@ -180,7 +223,7 @@ frontend https_frontend
     default_backend http_back
 ```
 
-#### 2.3 Actualizar Servicios para HTTPS
+##### 2.3 Actualizar Servicios para HTTPS
 **Tareas:**
 1. Actualizar URLs en configuraciones:
    - Actualizar redirect URIs en Keycloak para usar HTTPS
@@ -199,13 +242,13 @@ frontend https_frontend
 
 ---
 
-### 3. 🔐 Gestión de Secretos (Opcional pero Recomendado)
+#### 3. 🔐 Gestión de Secretos (Opcional pero Recomendado)
 
 **Objetivo**: Migrar credenciales sensibles de `.env` a un sistema de gestión de secretos más seguro
 
 **Tareas:**
 
-#### 3.1 Configurar HashiCorp Vault
+##### 3.1 Configurar HashiCorp Vault
 1. Agregar Vault al `docker-compose.yml`
 2. Configurar persistencia de datos de Vault
 3. Inicializar Vault
@@ -216,7 +259,7 @@ frontend https_frontend
 - [HashiCorp Vault Documentation](https://www.vaultproject.io/docs)
 - [Vault Docker Image](https://hub.docker.com/_/vault)
 
-#### 3.2 Migrar Credenciales a Vault
+##### 3.2 Migrar Credenciales a Vault
 **Credenciales a migrar:**
 - Contraseñas de bases de datos (PostgreSQL, Keycloak)
 - Secrets de OIDC (Grafana, n8n, Jenkins, Open WebUI)
@@ -229,35 +272,35 @@ frontend https_frontend
 3. Actualizar servicios para leer de Vault
 4. Mantener `.env` solo para configuración no sensible
 
-#### 3.3 Configurar Rotación Automática de Secretos
+##### 3.3 Configurar Rotación Automática de Secretos
 1. Configurar políticas de rotación
 2. Automatizar renovación de secretos
 3. Configurar notificaciones cuando se roten secretos
 
 **Documentación:**
-- `docs/VARIABLES_ENTORNO_DINAMICAS.md` - Guía de variables de entorno
+- `docs/CONFIGURATION.md` - Guía de variables de entorno
 
 ---
 
-## ⚡ PRIORIDAD MEDIA (Implementar Después)
+### ⚡ PRIORIDAD MEDIA (Semanas 3-6)
 
-### 4. 📊 Alertas Inteligentes en Grafana
+#### 4. 📊 Alertas Inteligentes en Grafana
 
-**Estado Actual:**
+**Estado actual:**
 - ✅ Dashboards de Grafana completados (9 dashboards)
 - ✅ Alertas básicas en Prometheus configuradas
 - ⏳ Alertas visuales en Grafana pendientes
 
 **Tareas:**
 
-#### 4.1 Configurar Grafana Alerting
+##### 4.1 Configurar Grafana Alerting
 1. Habilitar Grafana Alerting
 2. Configurar canales de notificación:
    - Email
    - Slack (opcional)
    - Webhook (opcional)
 
-#### 4.2 Crear Alertas Basadas en Paneles
+##### 4.2 Crear Alertas Basadas en Paneles
 **Alertas a configurar:**
 - **CPU Usage > 80%** por más de 5 minutos
 - **Memoria Usage > 85%** por más de 5 minutos
@@ -269,20 +312,20 @@ frontend https_frontend
 - **Alta latencia** en respuestas de Ollama (> 10s)
 
 **Documentación:**
-- `docs/MONITORING_NEXT_STEPS.md` - Guía de próximos pasos de monitoreo
+- `docs/MONITORING_GUIDE.md` - Guía de monitoreo
 - [Grafana Alerting Documentation](https://grafana.com/docs/grafana/latest/alerting/)
 
 ---
 
-### 5. 💾 Implementar Redis
+#### 5. 💾 Implementar Redis
 
-**Estado Actual:**
+**Estado actual:**
 - ✅ Redis disponible en el perfil `infrastructure`
 - ⏳ Configuración e integración pendiente
 
 **Tareas:**
 
-#### 5.1 Configurar Redis
+##### 5.1 Configurar Redis
 1. Configurar persistencia de Redis:
    - Habilitar AOF (Append Only File)
    - Configurar snapshots (RDB)
@@ -295,7 +338,7 @@ frontend https_frontend
 **Archivos a modificar:**
 - `docker-compose.yml` - Configurar Redis con persistencia
 
-#### 5.2 Integrar con Open WebUI
+##### 5.2 Integrar con Open WebUI
 **Tareas:**
 1. Configurar cache de sesiones de usuario
 2. Configurar cache de respuestas frecuentes
@@ -306,7 +349,7 @@ frontend https_frontend
 - Menor carga en la base de datos
 - Mejor rendimiento general
 
-#### 5.3 Integrar con n8n
+##### 5.3 Integrar con n8n
 **Tareas:**
 1. Configurar cache de resultados de workflows
 2. Configurar cache de datos frecuentes
@@ -317,7 +360,7 @@ frontend https_frontend
 - Menor procesamiento redundante
 - Mejor escalabilidad
 
-#### 5.4 Cache de Embeddings
+##### 5.4 Cache de Embeddings
 **Tareas:**
 1. Configurar cache de embeddings generados
 2. Reducir recálculo de embeddings similares
@@ -328,13 +371,13 @@ frontend https_frontend
 
 ---
 
-### 6. 📝 Logging Centralizado (ELK Stack)
+#### 6. 📝 Logging Centralizado (ELK Stack)
 
 **Objetivo**: Centralizar todos los logs del sistema para facilitar debugging y monitoreo
 
 **Tareas:**
 
-#### 6.1 Configurar ELK Stack
+##### 6.1 Configurar ELK Stack
 1. **Elasticsearch:**
    - Configurar cluster de Elasticsearch
    - Configurar índices para logs
@@ -355,22 +398,15 @@ frontend https_frontend
 - `elk/logstash/pipeline/` - Pipelines de Logstash
 - `elk/kibana/dashboards/` - Dashboards de Kibana
 
-#### 6.2 Configurar Recolección de Logs
+##### 6.2 Configurar Recolección de Logs
 1. Configurar Docker logging driver:
    - Configurar todos los servicios para enviar logs a Logstash
    - Usar syslog o gelf driver
 
 2. Recolectar logs de todos los servicios:
-   - Ollama
-   - Open WebUI
-   - n8n
-   - Keycloak
-   - Grafana
-   - PostgreSQL
-   - HAProxy
-   - Prometheus
+   - Ollama, Open WebUI, n8n, Keycloak, Grafana, PostgreSQL, HAProxy, Prometheus
 
-#### 6.3 Configurar Log Rotation y Retención
+##### 6.3 Configurar Log Rotation y Retención
 1. Configurar políticas de retención:
    - Logs de aplicación: 30 días
    - Logs de sistema: 7 días
@@ -381,16 +417,15 @@ frontend https_frontend
    - Comprimir logs antiguos
    - Eliminar logs expirados
 
-#### 6.4 Crear Dashboards de Logs
-**Dashboards a crear:**
+##### 6.4 Crear Dashboards de Logs y Alertas
+**Dashboards:**
 - Errores por servicio
 - Patrones de uso
 - Tendencias de errores
 - Logs de acceso
 - Logs de seguridad
 
-#### 6.5 Configurar Alertas Basadas en Logs
-**Alertas a configurar:**
+**Alertas:**
 - Errores críticos en logs
 - Patrones sospechosos
 - Intentos de acceso no autorizados
@@ -403,20 +438,20 @@ frontend https_frontend
 
 ---
 
-## 🎯 PRIORIDAD BAJA (Implementar al Final)
+### 🎯 PRIORIDAD BAJA (Semanas 7+)
 
-### 7. ⚡ Completar Optimizaciones de Ollama
+#### 7. ⚡ Completar Optimizaciones de Ollama
 
-**Estado Actual:**
-- ✅ Variables de optimización configuradas (OLLAMA_MAX_LOADED_MODELS=2, OLLAMA_NUM_THREAD=8, OLLAMA_KEEP_ALIVE=10m)
+**Estado actual:**
+- ✅ Variables de optimización configuradas
 - ✅ Shared memory configurado (shm_size=2g)
 - ✅ Límites de recursos configurados
 - ✅ Dashboard de monitoreo creado
 - ⏳ Queue de requests pendiente
 
-**Tareas Pendientes:**
+**Tareas pendientes:**
 
-#### 7.1 Implementar Queue de Requests
+##### 7.1 Implementar Queue de Requests
 **Objetivo**: Gestionar mejor la carga de requests concurrentes a Ollama
 
 **Tareas:**
@@ -426,30 +461,29 @@ frontend https_frontend
 4. Monitorear cola de requests
 
 **Recursos:**
-- `docs/OLLAMA_OPTIMIZATION_MONITORING.md` - Monitoreo de optimizaciones
-- `docs/TESTING_OLLAMA_OPTIMIZATIONS.md` - Testing de optimizaciones
+- `docs/OLLAMA_GUIDE.md` - Optimización y monitoreo de Ollama
 
 ---
 
-### 8. 🎨 Panel de Administración Unificado
+#### 8. 🎨 Panel de Administración Unificado
 
 **Objetivo**: Crear una interfaz web unificada para administrar todo el sistema
 
 **Tareas:**
 
-#### 8.1 Dashboard Principal
+##### 8.1 Dashboard Principal
 1. Estado de todos los servicios en tiempo real
 2. Métricas clave (CPU, memoria, disco, GPU)
 3. Alertas y notificaciones
 4. Enlaces rápidos a servicios
 
-#### 8.2 Gestión de Usuarios y Permisos
+##### 8.2 Gestión de Usuarios y Permisos
 1. Interfaz para gestionar usuarios de Keycloak
 2. Asignación de roles
 3. Permisos por servicio
 4. Historial de cambios
 
-#### 8.3 Configuración de Servicios
+##### 8.3 Configuración de Servicios
 1. Configuración de servicios desde interfaz web
 2. Cambios de configuración sin editar archivos manualmente
 3. Validación de configuraciones
@@ -459,39 +493,6 @@ frontend https_frontend
 - React o Vue.js para frontend
 - API REST para backend
 - Integración con Keycloak para autenticación
-
----
-
-### 9. 🔧 Otras Tareas Pendientes
-
-#### 9.1 Resolver PostgreSQL Exporter
-**Problema**: PostgreSQL Exporter muestra "Exporter Not Connected"  
-**Tareas:**
-- Revisar configuración de autenticación
-- Verificar conexión a PostgreSQL
-- Corregir configuración del exporter
-
-#### 9.2 Implementar CI/CD Básico
-**Estado**: Jenkins ya está configurado  
-**Tareas:**
-- Configurar pipelines básicos
-- Testing automático
-- Deployment automático
-- Notificaciones de deployment
-
-#### 9.3 Mejorar Open WebUI
-**Tareas:**
-- Tema oscuro/claro
-- Soporte multiidioma
-- Historial de conversaciones mejorado
-- Exportación de chats
-
-#### 9.4 API RESTful Unificada
-**Tareas:**
-- Documentación con Swagger
-- Autenticación JWT
-- Rate limiting por usuario
-- Webhooks para notificaciones
 
 ---
 
@@ -536,41 +537,28 @@ frontend https_frontend
    - Configuración de servicios
 
 8. **Otras tareas pendientes**
-   - Resolver PostgreSQL Exporter
    - Implementar CI/CD básico
    - Mejorar Open WebUI
    - API RESTful unificada
 
 ---
 
-## 📚 Documentación de Referencia
+## 📋 Checklist de Implementación
 
-### Documentos Principales
-- `README.md` / `README.es.md` - Visión general del proyecto
-- `ESTADO_PROYECTO.md` - Estado actual del proyecto
-- `TODO.md` - Lista de tareas pendientes
-- `PROXIMOS_PASOS.md` - Plan de acción recomendado
-- `docs/INDEX.md` - Índice de toda la documentación
+### Antes de Empezar
 
-### Guías Específicas
-- `docs/KEYCLOAK_INTEGRATION_PLAN.md` - Integración completa de Keycloak
-- `docs/BACKUP_GUIDE.md` - Guía de backups y restauración
-- `docs/GRAFANA_MONITORING_GUIDE.md` - Guía de monitoreo
-- `docs/STACK_MANAGER_GUIDE.md` - Gestión del stack
-- `docs/VALIDATION_GUIDE.md` - Validación y testing
-- `docs/MONITORING_NEXT_STEPS.md` - Próximos pasos de monitoreo
-- `docs/TESTING_OLLAMA_OPTIMIZATIONS.md` - Testing de optimizaciones
-- `docs/OLLAMA_OPTIMIZATION_MONITORING.md` - Monitoreo de optimizaciones
+- [ ] Revisar `PROJECT_STATUS.md` para estado actual
+- [ ] Hacer backup completo: `./scripts/backup-manager.sh backup --full --verify`
+- [ ] Validar configuración: `./scripts/stack-manager.sh validate`
 
-### Scripts Disponibles
-- `./scripts/stack-manager.sh` - Gestión completa del stack
-- `./scripts/backup-manager.sh` - Gestión de backups
-- `./scripts/keycloak-manager.sh` - Gestión de Keycloak
-- `./scripts/validate-config.sh` - Validación de configuración
-- `./scripts/init-jenkins-oidc.sh` - Inicialización de Jenkins OIDC
-- `./scripts/test-ollama-quick.sh` - Testing rápido de Ollama
-- `./scripts/test-ollama-performance.sh` - Testing de rendimiento de Ollama
-- `./scripts/test-ollama-advanced.sh` - Testing avanzado de Ollama
+### Para Cada Tarea
+
+- [ ] Leer documentación relevante en `docs/`
+- [ ] Hacer backup antes de cambios importantes
+- [ ] Probar en entorno de desarrollo si es posible
+- [ ] Documentar cambios realizados
+- [ ] Actualizar `PROJECT_STATUS.md` al completar
+- [ ] Marcar tareas completadas en este archivo
 
 ---
 
@@ -586,6 +574,30 @@ frontend https_frontend
 
 ---
 
+## 📚 Documentación de Referencia
+
+### Documentos Principales
+- `README.md` / `README.es.md` - Visión general del proyecto
+- `PROJECT_STATUS.md` - Estado actual del proyecto
+- `docs/INDEX.md` - Índice de toda la documentación
+
+### Guías Específicas
+- `docs/KEYCLOAK_GUIDE.md` - Integración completa de Keycloak
+- `docs/BACKUP_GUIDE.md` - Guía de backups y restauración
+- `docs/MONITORING_GUIDE.md` - Guía de monitoreo
+- `docs/STACK_MANAGER_GUIDE.md` - Gestión del stack
+- `docs/VALIDATION_GUIDE.md` - Validación y testing
+- `docs/OLLAMA_GUIDE.md` - Optimización y monitoreo de Ollama
+- `docs/CONFIGURATION.md` - Variables de entorno y configuración
+
+### Scripts Disponibles
+- `./scripts/stack-manager.sh` - Gestión completa del stack
+- `./scripts/backup-manager.sh` - Gestión de backups
+- `./scripts/keycloak-manager.sh` - Gestión de Keycloak
+- `./scripts/validate-config.sh` - Validación de configuración
+- `./scripts/init-jenkins-oidc.sh` - Inicialización de Jenkins OIDC
+
+---
+
 **Última actualización**: 2026-01-24  
 **Próxima revisión**: Después de completar tareas de Prioridad Alta
-

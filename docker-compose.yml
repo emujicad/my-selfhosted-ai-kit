@@ -380,14 +380,14 @@ services:
       - OPENID_CLIENT_SECRET=${OPEN_WEBUI_OAUTH_CLIENT_SECRET} # OpenID usa variables OAUTH_ (consolidado según documentación)
       # FAKE DISCOVERY: Solución robusta para split routing (Browser vs Backend)
       # Apunta a un archivo JSON local (montado) que define URLs diferentes para Auth (localhost) y Token (keycloak)
-      - OPENID_PROVIDER_URL=http://127.0.0.1:8080/static/oidc-config.json
+      - OPENID_PROVIDER_URL=http://127.0.0.1:8080/static/oidc-config.json # Fake Discovery endpoint
       - OPENID_REDIRECT_URI=${OPEN_WEBUI_URL_PUBLIC:-http://localhost:3000}/oauth/oidc/callback
       - OPENID_SCOPES=${OPEN_WEBUI_OAUTH_SCOPES:-openid profile email}
       - OPENID_SIGN_OUT_REDIRECT_URL=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/logout
     volumes:
       - open_webui_storage:/app/backend/data # Datos persistentes
-      - ./oidc-config.json:/app/backend/open_webui/static/oidc-config.json:ro # Fake Discovery JSON montado en static
-      - ./userinfo.json:/app/backend/open_webui/static/userinfo.json:ro # Fake UserInfo response
+      - ./config/open-webui-oidc/oidc-config.json:/app/backend/open_webui/static/oidc-config.json:ro # Fake Discovery JSON
+      - ./config/open-webui-oidc/userinfo.json:/app/backend/open_webui/static/userinfo.json:ro # Fake UserInfo response
       #- /mnt/e/docker/app/open-webui/backend/data:/app/backend/data  # Montaje local (comentado)
     networks:
       - genai-network

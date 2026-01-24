@@ -106,8 +106,8 @@ backups/
     ├── n8n_storage.tar.gz     # Volumen n8n
     ├── postgres_storage.tar.gz # Volumen PostgreSQL
     ├── postgres_n8n.sql.gz    # Dump de base de datos
-    ├── ollama_storage.tar.gz  # Modelos de IA
-    └── config.tar.gz          # Configuraciones
+    ├── ollama_storage.tar.gz  # Modelos de IA (opcional)
+    └── config.tar.gz          # docker-compose.yml, .env.example, config/, haproxy/, monitoring/, modsecurity/, scripts/
 ```
 
 ## 🔍 Verificación de Integridad
@@ -144,70 +144,55 @@ docker info
 docker compose up -d postgres
 ```
 
-## 📝 Notas Importantes
+## 📝 ¿Qué Se Respalda Exactamente?
 
-1. **Espacio en disco**: Los backups ahora son más pequeños al excluir `ollama_storage`
-2. **Modelos de IA**: Los modelos en `ollama_storage` NO se respaldan porque:
-   - Se pueden volver a descargar fácilmente con `ollama pull <modelo>`
-   - Son muy grandes (varios GB cada uno)
-   - El backup sería muy lento
-3. **Retención**: Considera implementar rotación de backups antiguos
-4. **Ubicación**: Los backups se guardan localmente en `backups/`
-5. **Seguridad**: Los backups contienen datos sensibles, protégelos adecuadamente
+### ✅ Volúmenes Docker (Datos Críticos)
+- ✅ `n8n_storage`: Workflows y datos de n8n
+- ✅ `postgres_storage`: Base de datos PostgreSQL
+- ✅ `qdrant_storage`: Vectores y embeddings
+- ✅ `open_webui_storage`: Configuración de Open WebUI
+- ✅ `grafana_data`: Dashboards personalizados y configuración de Grafana
+- ✅ `prometheus_data`: Datos históricos de métricas
+- ✅ `keycloak_data`: Datos de autenticación y usuarios
+- ❌ `ollama_storage`: **Excluido por defecto** (modelos descargables)
+
+### ✅ Base de Datos
+- ✅ Dump completo de PostgreSQL (n8n)
+
+### ✅ Configuraciones del Proyecto
+- ✅ `docker-compose.yml`: Orquestación de servicios
+- ✅ `.env.example`: Plantilla de variables
+- ✅ `config/`: Configuración de Open WebUI OIDC y otros
+- ✅ `haproxy/`: Configuración del proxy inverso
+- ✅ `monitoring/`: Dashboards, alertas, reglas de Prometheus
+- ✅ `modsecurity/`: Reglas de WAF
+- ✅ `scripts/`: Scripts de gestión del stack
+
+### ❌ Volúmenes Excluidos (Datos Regenerables)
+
+Estos volúmenes **NO se respaldan** porque contienen datos temporales o regenerables:
+
+#### `ollama_storage` (Modelos IA)
+- **Por qué se excluye**: Los modelos se pueden volver a descargar
+- **Beneficio**: Ahorra decenas de GB de espacio
+- **Cómo recuperar**: `ollama pull <modelo>`
+- **Para incluirlo**: Edita `scripts/backup-manager.sh` y descomenta la línea
+
+#### Volúmenes Temporales
+- `ssl_certs_data`: Certificados auto-generados (se regeneran)
+- `logs_data`: Logs operacionales (temporales)
+- `prometheus_rules_data`: Reglas derivadas de `monitoring/` (regenerables)
+- `grafana_provisioning_data`: Dashboards desde `monitoring/grafana/` (regenerables)
+
+### 📋 Notas Importantes
+
+1. **Retención**: Considera implementar rotación de backups antiguos
+2. **Ubicación**: Los backups se guardan localmente en `backups/`
+3. **Seguridad**: Los backups contienen datos sensibles (.env, contraseñas, tokens)
+4. **Configuraciones bind mount**: `monitoring/`, `haproxy/`, `modsecurity/` están incluidas en config.tar.gz
 
 ---
 
-**Última actualización**: 2025-12-07
+**Última actualización**: 2026-01-24
 
 
-## 📦 Nuevos Volúmenes de Persistencia
-
-### Volúmenes Agregados para Mejorar Persistencia
-
-#### 1. `ssl_certs_data` - Certificados SSL/TLS
-**Propósito**: Almacenar certificados SSL/TLS generados automáticamente o por Let's Encrypt.
-
-**Contenido**:
-- Certificados generados automáticamente
-- Claves privadas
-- Certificados intermedios
-
-**Uso**: Montar en servicios que necesiten certificados SSL/TLS.
-
-#### 2. `logs_data` - Logs Consolidados
-**Propósito**: Centralizar logs de todos los servicios para análisis y auditoría.
-
-**Contenido**:
-- Logs consolidados de servicios
-- Logs de acceso
-- Logs de errores
-
-**Uso**: Para análisis centralizado de logs y auditoría.
-
-#### 3. `prometheus_rules_data` - Reglas Personalizadas de Prometheus
-**Propósito**: Almacenar reglas de alertas personalizadas que persistan independientemente del proyecto.
-
-**Contenido**:
-- Reglas de alertas personalizadas (`.yml`)
-- Configuraciones de alertas específicas del usuario
-
-**Uso**: Montar en `/etc/prometheus/rules/custom/` para reglas personalizadas.
-
-#### 4. `grafana_provisioning_data` - Dashboards Personalizados de Grafana
-**Propósito**: Almacenar dashboards personalizados creados por usuarios.
-
-**Contenido**:
-- Dashboards JSON personalizados
-- Configuraciones de dashboards específicas
-
-**Uso**: Complementa los dashboards provisionados desde el proyecto.
-
-### ⚠️ Nota sobre Configuraciones Existentes
-
-Las configuraciones en bind mounts (`./monitoring/`, `./haproxy/`, `./modsecurity/`) están montadas directamente desde el proyecto. Estas configuraciones:
-
-- ✅ Son fáciles de editar durante desarrollo
-- ⚠️ Se pierden si se borra el proyecto
-- ✅ Están incluidas en los backups automáticos
-
-**Recomendación**: Ejecutar `./scripts/backup-manager.sh backup` regularmente para respaldar estas configuraciones.

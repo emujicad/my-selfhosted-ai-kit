@@ -332,6 +332,6 @@ Para más información sobre funcionalidades específicas:
 
 - **Backups**: Ver `docs/BACKUP_GUIDE.md`
 - **Validación**: Ver `docs/VALIDATION_GUIDE.md`
-- **Keycloak**: Ver `docs/KEYCLOAK_INTEGRATION_PLAN.md`
+- **Keycloak**: Ver `docs/KEYCLOAK_GUIDE.md`
 - **Monitoreo**: Ver `docs/GRAFANA_MONITORING_GUIDE.md`
 

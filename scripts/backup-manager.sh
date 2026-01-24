@@ -168,6 +168,8 @@ backup_config() {
         -C "$PROJECT_DIR" \
         docker-compose.yml \
         .env.example \
+        config/ \
+        haproxy/ \
         monitoring/ \
         modsecurity/ \
         scripts/ \

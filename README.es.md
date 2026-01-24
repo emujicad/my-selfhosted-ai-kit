@@ -661,9 +661,8 @@ Si tienes problemas:
 
 Para más información, consulta:
 - **[docs/INDEX.md](docs/INDEX.md)** - Guía de lectura de toda la documentación
-- **[TODO.md](docs/TODO.md)** - Lista de tareas pendientes
-- **[ESTADO_PROYECTO.md](docs/ESTADO_PROYECTO.md)** - Estado actual del proyecto
-- **[PROXIMOS_PASOS.md](docs/PROXIMOS_PASOS.md)** - ⭐ **NUEVO** - Plan de acción detallado con próximos pasos recomendados
+- **[PROJECT_STATUS.md](docs/PROJECT_STATUS.md)** - ⭐ **NUEVO** - Estado del proyecto y tareas pendientes
+- **[ROADMAP.md](docs/ROADMAP.md)** - ⭐ **NUEVO** - Hoja de ruta y plan de acción detallado
 
 ---
 

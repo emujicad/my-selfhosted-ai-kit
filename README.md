@@ -723,9 +723,8 @@ If you have problems:
 
 For more information, see:
 - **[docs/INDEX.md](docs/INDEX.md)** - Reading guide for all documentation
-- **[TODO.md](docs/TODO.md)** - Pending tasks list
-- **[ESTADO_PROYECTO.md](docs/ESTADO_PROYECTO.md)** - Current project status
-- **[PROXIMOS_PASOS.md](docs/PROXIMOS_PASOS.md)** - ⭐ **NEW** - Detailed action plan with recommended next steps
+- **[PROJECT_STATUS.md](docs/PROJECT_STATUS.md)** - ⭐ **NEW** - Project status and pending tasks
+- **[ROADMAP.md](docs/ROADMAP.md)** - ⭐ **NEW** - Detailed roadmap and action plan
 
 ---
 
