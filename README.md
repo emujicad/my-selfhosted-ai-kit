@@ -722,7 +722,6 @@ If you have problems:
 ## 📚 Additional Documentation
 
 ### Project Management
-- [`TODO.md`](TODO.md) - Immediate next steps and recent accomplishments
 - [`project_context.md`](project_context.md) - Comprehensive project overview for AI assistants and developers
 
 For more information, see:
