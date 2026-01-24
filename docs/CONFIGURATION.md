@@ -9,9 +9,45 @@ Complete guide for managing environment variables, dynamic configuration, and up
 ## 📋 Table of Contents
 
 1. [Automatic .env Fixing](#automatic-env-fixing)
-2. [Dynamic Environment Variables](#dynamic-environment-variables)
-3. [Update Strategies](#update-strategies)
-4. [Best Practices](#best-practices)
+2. [OIDC Personal Information](#oidc-personal-information)
+3. [Dynamic Environment Variables](#dynamic-environment-variables)
+4. [Update Strategies](#update-strategies)
+5. [Best Practices](#best-practices)
+
+---
+
+## 🔐 OIDC Personal Information
+
+### Overview
+
+To protect your privacy when sharing this repository, personal details like your email and full name used for Open WebUI + Keycloak integration are **dynamically generated** from your `.env` file and **never committed to Git**.
+
+### How to Configure
+
+When you clone the repository for the first time:
+
+1.  **Copy the template**: `cp .env.example .env`
+2.  **Edit `.env`**: Look for the `OIDC User Emulation` section (around line 195):
+
+```bash
+# OIDC User Emulation (for Open WebUI Admin bypass)
+# These values are used to generate config/open-webui-oidc/userinfo.json automatically
+OPEN_WEBUI_OIDC_USER_EMAIL=your-email@example.com
+OPEN_WEBUI_OIDC_USER_NAME="Your Full Name"
+OPEN_WEBUI_OIDC_USER_GIVEN_NAME=YourFirstName
+OPEN_WEBUI_OIDC_USER_FAMILY_NAME=YourLastName
+```
+
+3.  **Automatic Generation**: Run any `stack-manager.sh` command (like `start` or `validate`). The script will automatically:
+    -   Create the directory `config/open-webui-oidc/` if it doesn't exist.
+    -   Generate/Update `config/open-webui-oidc/userinfo.json` using your personal data.
+    -   Ensure the file is ignored by Git (via `.gitignore`).
+
+### Why This Matters
+
+-   ✅ **Privacy**: Your real identity is only stored in your local `.env`.
+-   ✅ **Portability**: Other users can clone your repo and simply change these 4 variables to use their own profile in Open WebUI.
+-   ✅ **Automation**: No manual JSON editing required.
 
 ---
 

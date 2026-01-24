@@ -87,6 +87,9 @@ config.local.*
 *.local
 local_config.*
 
+# Open WebUI OIDC personal info (generated dynamically)
+config/open-webui-oidc/userinfo.json
+
 # -----------------------------------------------------------------------------
 # Python (si hay scripts Python)
 # -----------------------------------------------------------------------------

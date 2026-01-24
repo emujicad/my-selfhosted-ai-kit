@@ -53,10 +53,16 @@ cd my-selfhosted-ai-kit
 ### 2. Configurar variables de entorno
 Crea un archivo `.env` en la raíz del proyecto:
 ```bash
-# Configuración de PostgreSQL
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=tu_contraseña_segura
-POSTGRES_DB=n8n
+cp .env.example .env
+# Edita el archivo con tu editor favorito
+nano .env
+```
+
+**CRÍTICO**: Asegúrate de configurar tu información en la sección `OIDC User Emulation`. Estos valores se usarán para generar automáticamente tu perfil local en Open WebUI:
+- `OPEN_WEBUI_OIDC_USER_EMAIL`: Tu correo de admin
+- `OPEN_WEBUI_OIDC_USER_NAME`: Tu nombre completo
+
+Consulta la [**Guía de Configuración**](docs/CONFIGURATION.md) para más detalles sobre la generación dinámica.
 
 # Configuración de n8n
 N8N_ENCRYPTION_KEY=tu_clave_de_encriptacion_32_caracteres

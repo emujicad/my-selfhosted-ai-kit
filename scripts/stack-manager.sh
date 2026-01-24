@@ -242,11 +242,45 @@ auto_fix_env_quotes() {
 }
 
 # Función para validar antes de levantar
+# Función para generar dinámicamente userinfo.json para Open WebUI
+# Esto evita subir información personal (email, nombre) al repositorio de Git
+generate_oidc_userinfo() {
+    local OIDC_CONFIG_DIR="$PROJECT_DIR/config/open-webui-oidc"
+    local USERINFO_FILE="$OIDC_CONFIG_DIR/userinfo.json"
+    
+    # Valores por defecto si no están en .env
+    local USER_EMAIL="${OPEN_WEBUI_OIDC_USER_EMAIL:-admin@example.com}"
+    local USER_NAME="${OPEN_WEBUI_OIDC_USER_NAME:-Admin User}"
+    local GIVEN_NAME="${OPEN_WEBUI_OIDC_USER_GIVEN_NAME:-Admin}"
+    local FAMILY_NAME="${OPEN_WEBUI_OIDC_USER_FAMILY_NAME:-User}"
+    
+    print_info "Generando configuración OIDC dinámica..."
+    
+    mkdir -p "$OIDC_CONFIG_DIR"
+    
+    cat > "$USERINFO_FILE" <<EOF
+{
+    "sub": "admin",
+    "email": "$USER_EMAIL",
+    "email_verified": true,
+    "preferred_username": "admin",
+    "name": "$USER_NAME",
+    "given_name": "$GIVEN_NAME",
+    "family_name": "$FAMILY_NAME"
+}
+EOF
+    
+    print_success "Archivo userinfo.json generado correctamente"
+}
+
 validate_before_start() {
     print_header "VALIDACIÓN PREVIA"
     
     # Corregir automáticamente variables de .env que necesitan comillas
     auto_fix_env_quotes
+    
+    # Generar archivos de configuración dinámicos sensibles
+    generate_oidc_userinfo
     
     # Verificar variables de entorno
     if [ -f "$SCRIPT_DIR/verify-env-variables.sh" ]; then
