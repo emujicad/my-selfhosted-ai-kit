@@ -65,10 +65,11 @@ MY SELF-HOSTED AI KIT - Stack Manager
 ════════════════════════════════════════════════════════
 
 USO:
-    ./scripts/stack-manager.sh [OPCIÓN] [PERFILES...]
+    ./scripts/stack-manager.sh [OPCIÓN] [PERFILES...] [FLAGS]
 
 OPCIONES:
-    start [perfiles]     Levantar servicios con perfiles especificados
+    start [perfiles] [--setup-roles]     Levantar servicios con perfiles especificados
+                                         --setup-roles: Configurar roles de Keycloak automáticamente
     stop [perfiles]      Detener servicios con perfiles especificados
     stop --clean         Detener servicios y limpiar recursos huérfanos del proyecto
     restart [perfiles]   Reiniciar servicios con perfiles especificados
@@ -1638,7 +1639,17 @@ analyze_services_before_start() {
 
 # Función para levantar servicios
 start_services() {
-    local profiles=("$@")
+    local profiles=()
+    local auto_setup_roles=false
+    
+    # Parsear argumentos para detectar --setup-roles
+    for arg in "$@"; do
+        if [ "$arg" = "--setup-roles" ]; then
+            auto_setup_roles=true
+        else
+            profiles+=("$arg")
+        fi
+    done
     
     # Si no hay perfiles, usar preset default
     if [ ${#profiles[@]} -eq 0 ]; then
@@ -1911,33 +1922,77 @@ start_services() {
         return 1
     fi
     
-    # Mostrar recordatorio para configurar roles de Keycloak si se levantó security
+    # Mostrar recordatorio o ejecutar automáticamente configuración de roles de Keycloak
     if [[ " ${unique_profiles[@]} " =~ " security " ]]; then
         echo ""
-        print_header "⚠️  RECORDATORIO IMPORTANTE - KEYCLOAK ROLES"
-        echo ""
-        print_warning "📋 Keycloak se ha levantado, pero los ROLES aún NO están configurados"
-        echo ""
-        print_info "Los roles de Keycloak NO se configuran automáticamente por seguridad."
-        print_info "Debes ejecutar el script de configuración manualmente:"
-        echo ""
-        print_success "   ./scripts/setup-all-keycloak-roles.sh"
-        echo ""
-        print_info "Este script configura:"
-        echo "   • Grupos (super-admins, admins, users, viewers)"
-        echo "   • Roles de Grafana (admin, editor, viewer)"
-        echo "   • Roles de Open WebUI (admin, user)"
-        echo "   • Roles de n8n (admin, user)"
-        echo "   • Roles de Jenkins (admin, user)"
-        echo ""
-        print_info "⏱️  Tiempo estimado: ~30 segundos"
-        print_info "🔒 Seguro: Detecta roles existentes y los omite"
-        echo ""
-        print_warning "⚠️  Si ya ejecutaste este script antes, NO necesitas ejecutarlo de nuevo"
-        print_info "   (Los roles persisten en la base de datos)"
-        echo ""
-        print_info "📚 Más información: docs/KEYCLOAK_ROLES_SETUP.md"
-        echo ""
+        
+        if [ "$auto_setup_roles" = "true" ]; then
+            # Ejecutar automáticamente el script de configuración
+            print_header "🔧 CONFIGURANDO ROLES DE KEYCLOAK AUTOMÁTICAMENTE"
+            echo ""
+            print_info "Flag --setup-roles detectado, configurando roles automáticamente..."
+            echo ""
+            
+            # Esperar a que Keycloak esté completamente listo
+            print_info "Esperando a que Keycloak esté listo..."
+            local max_wait=60
+            local waited=0
+            while [ $waited -lt $max_wait ]; do
+                if curl -s http://localhost:8080/health/ready > /dev/null 2>&1; then
+                    print_success "✓ Keycloak está listo"
+                    break
+                fi
+                sleep 2
+                waited=$((waited + 2))
+                echo -n "."
+            done
+            echo ""
+            
+            if [ $waited -ge $max_wait ]; then
+                print_warning "⚠️  Keycloak tardó demasiado en estar listo"
+                print_info "Puedes ejecutar manualmente: ./scripts/setup-all-keycloak-roles.sh"
+            else
+                # Ejecutar script de configuración
+                echo ""
+                if "$SCRIPT_DIR/setup-all-keycloak-roles.sh"; then
+                    print_success "✅ Roles de Keycloak configurados exitosamente"
+                else
+                    print_warning "⚠️  Hubo un problema configurando los roles"
+                    print_info "Puedes ejecutar manualmente: ./scripts/setup-all-keycloak-roles.sh"
+                fi
+            fi
+            echo ""
+        else
+            # Mostrar recordatorio (comportamiento por defecto)
+            print_header "⚠️  RECORDATORIO IMPORTANTE - KEYCLOAK ROLES"
+            echo ""
+            print_warning "📋 Keycloak se ha levantado, pero los ROLES aún NO están configurados"
+            echo ""
+            print_info "Los roles de Keycloak NO se configuran automáticamente por seguridad."
+            print_info "Debes ejecutar el script de configuración manualmente:"
+            echo ""
+            print_success "   ./scripts/setup-all-keycloak-roles.sh"
+            echo ""
+            print_info "O puedes usar el flag --setup-roles para configuración automática:"
+            echo ""
+            print_success "   ./scripts/stack-manager.sh start --setup-roles"
+            echo ""
+            print_info "Este script configura:"
+            echo "   • Grupos (super-admins, admins, users, viewers)"
+            echo "   • Roles de Grafana (admin, editor, viewer)"
+            echo "   • Roles de Open WebUI (admin, user)"
+            echo "   • Roles de n8n (admin, user)"
+            echo "   • Roles de Jenkins (admin, user)"
+            echo ""
+            print_info "⏱️  Tiempo estimado: ~30 segundos"
+            print_info "🔒 Seguro: Detecta roles existentes y los omite"
+            echo ""
+            print_warning "⚠️  Si ya ejecutaste este script antes, NO necesitas ejecutarlo de nuevo"
+            print_info "   (Los roles persisten en la base de datos)"
+            echo ""
+            print_info "📚 Más información: docs/KEYCLOAK_ROLES_SETUP.md"
+            echo ""
+        fi
     fi
 }
 
