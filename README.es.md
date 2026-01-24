@@ -661,9 +661,9 @@ Si tienes problemas:
 
 Para más información, consulta:
 - **[docs/INDEX.md](docs/INDEX.md)** - Guía de lectura de toda la documentación
-- **[TODO.md](TODO.md)** - Lista de tareas pendientes
-- **[ESTADO_PROYECTO.md](ESTADO_PROYECTO.md)** - Estado actual del proyecto
-- **[PROXIMOS_PASOS.md](PROXIMOS_PASOS.md)** - ⭐ **NUEVO** - Plan de acción detallado con próximos pasos recomendados
+- **[TODO.md](docs/TODO.md)** - Lista de tareas pendientes
+- **[ESTADO_PROYECTO.md](docs/ESTADO_PROYECTO.md)** - Estado actual del proyecto
+- **[PROXIMOS_PASOS.md](docs/PROXIMOS_PASOS.md)** - ⭐ **NUEVO** - Plan de acción detallado con próximos pasos recomendados
 
 ---
 
@@ -702,4 +702,4 @@ A continuación se muestran ejemplos visuales de combinaciones de perfiles para 
 ---
 
 **¿Quieres crear tus propios diagramas o modificar los existentes?**
-Consulta el archivo [`DIAGRAMS_INSTRUCTIONS.es.md`](DIAGRAMS_INSTRUCTIONS.es.md) para aprender cómo generar los PNG a partir de los archivos `.mmd` usando Mermaid CLI. 
+Consulta el archivo [`docs/DIAGRAMS_INSTRUCTIONS.es.md`](docs/DIAGRAMS_INSTRUCTIONS.es.md) para aprender cómo generar los PNG a partir de los archivos `.mmd` usando Mermaid CLI. 

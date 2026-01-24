@@ -5,9 +5,9 @@
 ### Para Empezar (Lee en este orden)
 
 1. **[README.md](../README.md)** - Visión general del proyecto, instalación y uso básico
-2. **[ESTADO_PROYECTO.md](../ESTADO_PROYECTO.md)** - Estado actual del proyecto y tareas completadas
-3. **[TODO.md](../TODO.md)** - Tareas pendientes y próximos pasos
-4. **[PROXIMOS_PASOS.md](../PROXIMOS_PASOS.md)** - ⭐ **NUEVO** - Plan de acción detallado con próximos pasos recomendados
+2. **[ESTADO_PROYECTO.md](ESTADO_PROYECTO.md)** - Estado actual del proyecto y tareas completadas
+3. **[TODO.md](TODO.md)** - Tareas pendientes y próximos pasos
+4. **[PROXIMOS_PASOS.md](PROXIMOS_PASOS.md)** - ⭐ **NUEVO** - Plan de acción detallado con próximos pasos recomendados
 5. **[PROXIMOS_PASOS_DETALLADO.md](PROXIMOS_PASOS_DETALLADO.md)** - ⭐ **NUEVO** - Próximos pasos detallados con tareas, prioridades y plan de implementación completo
 
 ### Configuración y Setup
@@ -80,10 +80,10 @@
 ### Documentación Principal (Raíz)
 - **README.md** - Documentación principal del proyecto (inglés)
 - **README.es.md** - Documentación principal del proyecto (español)
-- **TODO.md** - Lista de tareas pendientes
-- **ESTADO_PROYECTO.md** - Estado actual del proyecto
-- **DIAGRAMS_INSTRUCTIONS.md** - Instrucciones para diagramas (inglés)
-- **DIAGRAMS_INSTRUCTIONS.es.md** - Instrucciones para diagramas (español)
+- **docs/TODO.md** - Lista de tareas pendientes
+- **docs/ESTADO_PROYECTO.md** - Estado actual del proyecto
+- **docs/DIAGRAMS_INSTRUCTIONS.md** - Instrucciones para diagramas (inglés)
+- **docs/DIAGRAMS_INSTRUCTIONS.es.md** - Instrucciones para diagramas (español)
 
 ### Documentación Detallada (`docs/`)
 - **INDEX.md** - ⭐ Este archivo - Guía de lectura
@@ -126,8 +126,8 @@
 
 ### Si eres nuevo en el proyecto:
 1. Lee **[README.md](../README.md)** para entender qué es el proyecto
-2. Lee **[ESTADO_PROYECTO.md](../ESTADO_PROYECTO.md)** para ver qué está hecho
-3. Lee **[TODO.md](../TODO.md)** para ver qué falta por hacer
+2. Lee **[ESTADO_PROYECTO.md](ESTADO_PROYECTO.md)** para ver qué está hecho
+3. Lee **[TODO.md](TODO.md)** para ver qué falta por hacer
 4. Consulta **[INDEX.md](INDEX.md)** (este archivo) para encontrar documentación específica
 
 ### Si quieres configurar Keycloak:
@@ -202,9 +202,9 @@ Los siguientes archivos fueron eliminados porque su información fue consolidada
 
 ### Documentación General
 - README.md / README.es.md
-- ESTADO_PROYECTO.md
-- TODO.md
-- PROXIMOS_PASOS.md - ⭐ **NUEVO** - Plan de acción detallado con próximos pasos recomendados
+- docs/ESTADO_PROYECTO.md
+- docs/TODO.md
+- docs/PROXIMOS_PASOS.md - ⭐ **NUEVO** - Plan de acción detallado con próximos pasos recomendados
 - docs/PROXIMOS_PASOS_DETALLADO.md - ⭐ **NUEVO** - Próximos pasos detallados con tareas, prioridades y plan de implementación completo
 
 ### Configuración
@@ -224,7 +224,7 @@ Los siguientes archivos fueron eliminados porque su información fue consolidada
 - docs/VALIDATION_GUIDE.md
 
 ### Utilidades
-- DIAGRAMS_INSTRUCTIONS.md / DIAGRAMS_INSTRUCTIONS.es.md
+- docs/DIAGRAMS_INSTRUCTIONS.md / docs/DIAGRAMS_INSTRUCTIONS.es.md
 - docs/N8N_UPDATE_STRATEGY.md
 
 ---
