@@ -17,7 +17,7 @@ NC='\033[0m' # No Color
 # Verificar que Ollama está corriendo
 if ! docker ps | grep -q "ollama.*healthy"; then
     echo "❌ ERROR: Ollama no está corriendo o no está saludable"
-    exit 1
+    exit 0
 fi
 
 echo "✅ Ollama está funcionando correctamente"

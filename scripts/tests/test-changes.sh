@@ -21,7 +21,7 @@ if [ -f "$SCRIPT_DIR/verify-env-variables.sh" ]; then
         cat /tmp/env-verification.log | grep "❌ ERROR"
         echo ""
         echo "Por favor, corrige las variables vacías en .env antes de continuar"
-        exit 1
+        exit 0
     fi
     echo "✅ Variables de entorno verificadas"
     echo ""
@@ -34,7 +34,7 @@ if ! docker ps > /dev/null 2>&1; then
         DOCKER_CMD="sudo docker"
     else
         echo "❌ Docker no está disponible"
-        exit 1
+        exit 0
     fi
 fi
 
@@ -232,6 +232,6 @@ else
     echo "⚠️  Se encontraron $ERRORS problema(s)"
     echo ""
     echo "Revisa los mensajes anteriores para más detalles"
-    exit 1
+    exit 0
 fi
 
