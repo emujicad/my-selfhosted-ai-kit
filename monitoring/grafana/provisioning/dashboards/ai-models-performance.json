@@ -776,19 +776,9 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"}[5m])) by (id, le)) * 1000",
-          "legendFormat": "{{id}} p50 (ms)",
+          "expr": "(1 / (rate(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"}[5m]) + 0.001)) * 1000",
+          "legendFormat": "{{id}} (est. ms)",
           "refId": "A"
-        },
-        {
-          "expr": "histogram_quantile(0.95, sum(rate(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"}[5m])) by (id, le)) * 1000",
-          "legendFormat": "{{id}} p95 (ms)",
-          "refId": "B"
-        },
-        {
-          "expr": "histogram_quantile(0.99, sum(rate(container_cpu_usage_seconds_total{id=~\"/system.slice/docker-.*\"}[5m])) by (id, le)) * 1000",
-          "legendFormat": "{{id}} p99 (ms)",
-          "refId": "C"
         }
       ],
       "fieldConfig": {
@@ -1013,4 +1003,3 @@
   "version": 1,
   "weekStart": ""
 }
-

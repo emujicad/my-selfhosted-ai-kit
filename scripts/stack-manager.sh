@@ -323,7 +323,7 @@ get_profile_dependencies() {
             ;;
         monitoring)
             # Grafana puede usar Keycloak, Prometheus necesita PostgreSQL
-            echo "security"
+            echo "security infrastructure"
             ;;
         ci-cd)
             # Jenkins puede usar Keycloak

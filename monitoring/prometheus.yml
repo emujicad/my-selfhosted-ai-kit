@@ -12,26 +12,9 @@ scrape_configs:
       - targets: ['localhost:9090']
 
   # Monitorear servicios del stack
-  - job_name: 'ollama'
-    static_configs:
-      - targets: ['ollama:11434']
-    metrics_path: '/api/tags'
 
-  - job_name: 'n8n'
-    static_configs:
-      - targets: ['n8n:5678']
-    metrics_path: '/healthz'
 
-  - job_name: 'open-webui'
-    static_configs:
-      - targets: ['open-webui:8080']
-    metrics_path: '/healthz'
 
-  # Qdrant health check (mantener para compatibilidad)
-  - job_name: 'qdrant'
-    static_configs:
-      - targets: ['qdrant:6333']
-    metrics_path: '/health'
 
   # Monitorear PostgreSQL con exporter
   - job_name: 'postgres-exporter'

@@ -425,7 +425,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(pg_stat_database_numbackends) or up{job=\"postgres-exporter\"} * 0",
+          "expr": "sum(pg_stat_database_numbackends)",
           "legendFormat": "Active Connections"
         }
       ],
@@ -442,10 +442,6 @@
             {
               "type": "value",
               "options": {
-                "0": {
-                  "text": "Exporter Not Connected",
-                  "color": "yellow"
-                },
                 "match": "null",
                 "result": {
                   "text": "No Data",
@@ -458,12 +454,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "yellow",
-                "value": null
-              },
-              {
                 "color": "green",
-                "value": 1
+                "value": null
               }
             ]
           },
@@ -540,35 +532,10 @@
               {
                 "id": "unit",
                 "value": "dateTimeFromNow"
-        }
-            ]
-          }
-        ]
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "auto",
-            "displayMode": "auto"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           }
-        }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -669,4 +636,4 @@
   "uid": "system-overview",
   "version": 1,
   "weekStart": ""
-} 
+}

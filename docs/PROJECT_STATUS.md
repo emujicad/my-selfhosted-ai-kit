@@ -133,11 +133,11 @@ This document combines the current project status with the TODO list to provide 
 
 #### 📊 Improved Monitoring
 
-- [ ] **Fix Prometheus Scrape Configurations** (High Priority)
-  - [ ] Remove incorrect direct scrapers for Ollama/n8n/WebUI
-  - [ ] Verify Exporters are used correctly
-  - [ ] Resolve false positive "Down" alerts
-  - [ ] Fix "Response Latency Percentiles" (No data) in AI Models Dashboard
+- [x] **Fix Prometheus Scrape Configurations** (High Priority) ✅ **COMPLETE**
+  - [x] Remove incorrect direct scrapers for Ollama/n8n/WebUI
+  - [x] Verify Exporters are used correctly
+  - [x] Resolve false positive "Down" alerts
+  - [x] Fix "Response Latency Percentiles" (No data) in AI Models Dashboard
 
 - [ ] **Intelligent Grafana Alerts**
   - [ ] Configure visual alerts
