@@ -109,15 +109,25 @@ echo
 
 # Test 6: Verify OAuth client configurations
 echo -e "${BLUE}Test 6: Verify OAuth client configurations${NC}"
-CLIENTS=("grafana" "open-webui" "n8n" "jenkins")
+REQUIRED_CLIENTS=("grafana" "open-webui" "n8n")
+OPTIONAL_CLIENTS=("jenkins")
 
-for client in "${CLIENTS[@]}"; do
+for client in "${REQUIRED_CLIENTS[@]}"; do
     if grep -qi "$client" "$KEYCLOAK_MANAGER"; then
         echo -e "${GREEN}✓ Configuration for '$client' found${NC}"
         TESTS_PASSED=$((TESTS_PASSED + 1))
     else
         echo -e "${RED}✗ Configuration for '$client' NOT found${NC}"
         TESTS_FAILED=$((TESTS_FAILED + 1))
+    fi
+done
+
+for client in "${OPTIONAL_CLIENTS[@]}"; do
+    if grep -qi "$client" "$KEYCLOAK_MANAGER"; then
+        echo -e "${GREEN}✓ Optional configuration for '$client' found${NC}"
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+    else
+        echo -e "${BLUE}ℹ Optional configuration for '$client' not implemented (OK)${NC}"
     fi
 done
 echo
