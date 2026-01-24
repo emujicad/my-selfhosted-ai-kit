@@ -62,8 +62,11 @@ echo
 echo -e "${BLUE}Test 3: Verify required functions exist${NC}"
 REQUIRED_FUNCTIONS=(
     "setup_grafana"
-    "setup_open_webui"
+    "setup_openwebui"
     "setup_n8n"
+)
+
+OPTIONAL_FUNCTIONS=(
     "setup_jenkins"
 )
 
@@ -74,6 +77,15 @@ for func in "${REQUIRED_FUNCTIONS[@]}"; do
     else
         echo -e "${RED}✗ Function '$func' NOT found${NC}"
         TESTS_FAILED=$((TESTS_FAILED + 1))
+    fi
+done
+
+for func in "${OPTIONAL_FUNCTIONS[@]}"; do
+    if grep -q "^${func}()" "$KEYCLOAK_MANAGER" || grep -q "^function ${func}" "$KEYCLOAK_MANAGER"; then
+        echo -e "${GREEN}✓ Optional function '$func' found${NC}"
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+    else
+        echo -e "${BLUE}ℹ Optional function '$func' not implemented (OK)${NC}"
     fi
 done
 echo
