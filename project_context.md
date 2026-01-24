@@ -113,6 +113,7 @@ my-selfhosted-ai-kit/
 - Enhanced backup-manager.sh to include config/ and haproxy/
 - Reorganized root directory (moved OIDC configs to config/open-webui-oidc/)
 - Removed empty keycloak-proxy/ directory
+- **Fixed malformed placeholders in .env.example (KEYCLOAK_ADMIN_EMAIL)**
 
 ### 2026-01-23: Diagram Improvements
 - Created architecture_complete.mmd (full system architecture)
