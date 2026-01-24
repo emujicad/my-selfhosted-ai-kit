@@ -65,7 +65,7 @@ my-selfhosted-ai-kit/
 ├── docker-compose.yml         # Service orchestration
 ├── .env                       # Environment variables
 ├── docs/                      # Documentation (13 files, 5,474 lines)
-├── scripts/                   # Management scripts (15 scripts)
+├── scripts/                   # Management scripts (4 core + tests & utils)
 │   ├── stack-manager.sh       # Main orchestration script
 │   ├── auth-manager.sh        # Identity & Security manager
 │   ├── backup-manager.sh      # Backup/restore manager
