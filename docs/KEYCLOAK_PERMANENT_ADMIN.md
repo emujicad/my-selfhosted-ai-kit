@@ -185,7 +185,7 @@ Después de crear el usuario permanente:
    - Configurar requisitos mínimos
 
 2. ✅ **Configurar roles y grupos** (siguiente fase)
-   - Ejecutar: `./scripts/keycloak-setup-roles.sh` (próximamente)
+   - Ejecutar: `./scripts/keycloak-roles-manager.sh all`
 
 3. ✅ **Habilitar 2FA** (recomendado)
    - Seguir pasos arriba
