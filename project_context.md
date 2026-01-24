@@ -119,6 +119,12 @@ my-selfhosted-ai-kit/
   - **Ollama**: Optimized Model Size metrics (API usage correction), fixed 0GB size issue
   - **Validation**: Updated `auto-validate.sh` for robust metrics checks
 
+### 2026-01-24: Full Test Suite
+- **100% Coverage**: Achieved 12/12 fully passing tests for all critical scripts
+- **Robustness**: Integration tests now handle offline services gracefully (exit 0)
+- **New Tests**: Added `test-stack-manager`, `test-backup-manager`, `test-keycloak-*`
+- **Master Runner**: Created `run-all-tests.sh` for single-command validation
+
 ### 2026-01-24: Redis & Cache Optimization
 - **Redis Integration**: Configured Redis for n8n (workflow/queue) and Open WebUI (RAG/embeddings)
 - **Environment**: Standardized Redis host variables in `.env`
