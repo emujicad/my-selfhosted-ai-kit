@@ -142,6 +142,8 @@ my-selfhosted-ai-kit/
 - **Network Fix**: Connected Jenkins and Backup services to `genai-network` for internet access (plugins/apk).
 - **PostgreSQL**: Enhanced `pg_dump` logic in `backup-manager.sh` to work reliably via DooD `docker exec`.
 - **n8n OIDC**: Documented Community Edition limitation (License required for SSO).
+  - **Grafana OIDC Fix**: Restored authentication by reverting to git HEAD and resolving Keycloak email conflicts.
+
 
 ### 2026-01-25: Keycloak Security Hardening
 - **Permanent Admin**: Created `keycloak-create-permanent-admin.sh` to automate admin migration
