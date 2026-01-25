@@ -19,7 +19,7 @@ echo "=================================================="
 # Configuration
 KEYCLOAK_URL="http://localhost:8080"
 REALM="${KEYCLOAK_REALM:-master}"
-USER="${KEYCLOAK_PERMANENT_ADMIN_USERNAME:-emujicad}"
+USER="${KEYCLOAK_PERMANENT_ADMIN_USERNAME:-admin-user}"
 PASS="${KEYCLOAK_PERMANENT_ADMIN_PASSWORD:-TempPass123!}"
 
 # 1. Test for different clients

@@ -78,8 +78,8 @@ KEYCLOAK_ADMIN_EMAIL_KC=$(echo "$KEYCLOAK_USERS" | jq -r '.[] | select(.username
 
 if [ -z "$KEYCLOAK_ADMIN_EMAIL_KC" ] || [ "$KEYCLOAK_ADMIN_EMAIL_KC" == "null" ]; then
     # Fallback: check if we are using a custom admin
-    KEYCLOAK_ADMIN_EMAIL_KC=$(echo "$KEYCLOAK_USERS" | jq -r '.[] | select(.username=="'"${KEYCLOAK_PERMANENT_ADMIN_USERNAME:-emujicad}"'") | .email')
-    KEYCLOAK_ADMIN_USER_ACTUAL="${KEYCLOAK_PERMANENT_ADMIN_USERNAME:-emujicad}"
+    KEYCLOAK_ADMIN_EMAIL_KC=$(echo "$KEYCLOAK_USERS" | jq -r '.[] | select(.username=="'"${KEYCLOAK_PERMANENT_ADMIN_USERNAME:-admin-user}"'") | .email')
+    KEYCLOAK_ADMIN_USER_ACTUAL="${KEYCLOAK_PERMANENT_ADMIN_USERNAME:-admin-user}"
 fi
 print_info "Keycloak user ($KEYCLOAK_ADMIN_USER_ACTUAL) email: $KEYCLOAK_ADMIN_EMAIL_KC"
 
