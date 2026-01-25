@@ -2289,12 +2289,26 @@ show_status() {
 # Función para mostrar logs
 show_logs() {
     local service=${1:-}
+    
+    # Verificar si hay servicios corriendo
+    local running_services=$($DOCKER_CMD compose ps --services --filter "status=running" 2>/dev/null)
+    if [ -z "$running_services" ]; then
+        print_info "ℹ️  No hay servicios corriendo actualmente. No hay logs para mostrar."
+        return 0
+    fi
+
     if [ -z "$service" ]; then
         print_info "Mostrando logs de todos los servicios..."
         $DOCKER_CMD compose logs -f
     else
-        print_info "Mostrando logs de: $service"
-        $DOCKER_CMD compose logs -f "$service"
+        # Verificar si el servicio solicitado está corriendo
+        if echo "$running_services" | grep -q "^${service}$"; then
+             print_info "Mostrando logs de: $service"
+             $DOCKER_CMD compose logs -f "$service"
+        else
+             print_warning "⚠️  El servicio '$service' no está corriendo."
+             print_info "Servicios disponibles: $(echo $running_services | tr '\n' ' ')"
+        fi
     fi
 }
 
