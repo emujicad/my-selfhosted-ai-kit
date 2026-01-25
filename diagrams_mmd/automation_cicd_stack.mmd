@@ -1,11 +1,18 @@
 flowchart TD
-    CPU["cpu\nOllama (CPU)"] -- cpu --> N8N["n8n"]
-    N8N -- automation --> AUTO["automation"]
-    N8N -- ci-cd --> CICD["ci-cd"]
+    CPU["🤖 cpu\nOllama (CPU)"] -- cpu --> N8N["⚙️ n8n"]
+    N8N -- automation --> AUTO["📦 automation"]
+    N8N -- ci-cd --> CICD["🔧 Jenkins"]
+    CICD -- "OIDC Auth" --> KC["🔐 Keycloak"]
+    CICD -- "Automated" --> PLUG["📦 Plugins Install"]
+    
     classDef ia fill:#e0f7fa,stroke:#00796b,stroke-width:2px,color:#222;
     classDef automation fill:#e0f7fa,stroke:#00bcd4,stroke-width:2px,color:#222;
     classDef cicd fill:#eceff1,stroke:#455a64,stroke-width:2px,color:#222;
+    classDef security fill:#ffebee,stroke:#e53935,stroke-width:2px,color:#222;
+    
     class CPU ia;
     class N8N ia;
     class AUTO automation;
-    class CICD cicd; 
+    class CICD cicd;
+    class KC security;
+    class PLUG cicd; 
