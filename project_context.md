@@ -172,6 +172,7 @@ my-selfhosted-ai-kit/
 - **Validation Standardization**: Unified error handling and validation logic across `validate-system.sh` and stack managers.
 - **Clean Slate Verification**: Performed a full destructive purge (`clean all`) and successful redeployment to verify repo-completeness and "First Run" stability.
 - **Identity Standardization**: Established "Admin User" (`admin-user`) as the standard identity across all SSO consumers (Grafana, OpenWebUI, Jenkins).
+- **Cleanup Safety & Reporting**: Enhanced `stack-manager.sh` with granular protection prompts (Images/Models default=Keep) and refactored reporting to show structured summary of Deleted vs Preserved resources.
 
 ## Known Issues & Limitations
 

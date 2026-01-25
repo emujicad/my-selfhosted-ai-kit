@@ -1118,6 +1118,7 @@ cleanup_orphaned_resources() {
                 fi
             done
         else
+            print_info "✅ No se encontraron volúmenes del proyecto para eliminar"
         fi
         
         # Eliminar modelos de Ollama (solo si se confirmó)
@@ -1143,7 +1144,6 @@ cleanup_orphaned_resources() {
                     failed_items+=("volumen modelos: $target_volume")
                 fi
             fi
-        fi
         fi
         
         # Contar volumen de modelos preservado si no se borró
@@ -1218,7 +1218,7 @@ cleanup_orphaned_resources() {
                     fi
                 fi
             done
-        else
+        fi
         else
             # Si NO se borran imágenes, contarlas como preservadas
             count_preserved_images=${#project_images[@]}
