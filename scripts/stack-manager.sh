@@ -2451,22 +2451,32 @@ show_service_info() {
     fi
     
     # Servicios con perfiles
-    if echo "$running_services" | grep -qE "^grafana|prometheus|alertmanager$"; then
+    if echo "$running_services" | grep -qE "^grafana|prometheus|alertmanager|cadvisor|node-exporter$"; then
         print_info "Servicios de Monitoreo:"
         if echo "$running_services" | grep -qE "^grafana$"; then echo "  - Grafana: http://localhost:3001"; fi
         if echo "$running_services" | grep -qE "^prometheus$"; then echo "  - Prometheus: http://localhost:9090"; fi
         if echo "$running_services" | grep -qE "^alertmanager$"; then echo "  - AlertManager: http://localhost:9093"; fi
+        if echo "$running_services" | grep -qE "^cadvisor$"; then echo "  - cAdvisor: http://localhost:8082"; fi
+        if echo "$running_services" | grep -qE "^node-exporter$"; then echo "  - Node Exporter: http://localhost:9100/metrics"; fi
     fi
     
-    if echo "$running_services" | grep -qE "^keycloak$"; then
+    if echo "$running_services" | grep -qE "^keycloak|modsecurity$"; then
         print_info "Servicios de Seguridad:"
-        echo "  - Keycloak: http://localhost:8080"
+        if echo "$running_services" | grep -qE "^keycloak$"; then echo "  - Keycloak: http://localhost:8080"; fi
+        if echo "$running_services" | grep -qE "^modsecurity$"; then echo "  - ModSecurity WAF: http://localhost:8080 (Proxy)"; fi
     fi
     
-    if echo "$running_services" | grep -qE "^redis|haproxy$"; then
+    if echo "$running_services" | grep -qE "^redis|haproxy|pgvector$"; then
         print_info "Servicios de Infraestructura:"
         if echo "$running_services" | grep -qE "^redis$"; then echo "  - Redis: localhost:6379"; fi
         if echo "$running_services" | grep -qE "^haproxy$"; then echo "  - HAProxy: http://localhost:80"; fi
+        if echo "$running_services" | grep -qE "^pgvector$"; then echo "  - PgVector: localhost:5433"; fi
+    fi
+    
+    if echo "$running_services" | grep -qE "^backup|sync$"; then
+        print_info "Utilidades:"
+        if echo "$running_services" | grep -qE "^backup$"; then echo "  - Backup Service: (Background)"; fi
+        if echo "$running_services" | grep -qE "^sync$"; then echo "  - Sync Service: (Background)"; fi
     fi
 }
 
