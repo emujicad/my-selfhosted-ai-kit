@@ -64,8 +64,12 @@ fi
 GRAFANA_ADMIN_EMAIL=$(echo "$GRAFANA_USERS" | jq -r '.[] | select(.isAdmin==true) | .email')
 print_info "Grafana internal admin email: $GRAFANA_ADMIN_EMAIL"
 
+
 # 2. Check Keycloak Users
 print_info "Checking Keycloak users..."
+# Initialize variable to avoid unbound error
+KEYCLOAK_ADMIN_USER_ACTUAL="${KEYCLOAK_ADMIN_USER:-admin}"
+
 # Authenticate kcadm
 kcadm config credentials --server http://localhost:8080 --realm master --user "${KEYCLOAK_ADMIN_USER:-admin}" --password "${KEYCLOAK_ADMIN_PASSWORD}" >/dev/null 2>&1
 
@@ -75,8 +79,9 @@ KEYCLOAK_ADMIN_EMAIL_KC=$(echo "$KEYCLOAK_USERS" | jq -r '.[] | select(.username
 if [ -z "$KEYCLOAK_ADMIN_EMAIL_KC" ] || [ "$KEYCLOAK_ADMIN_EMAIL_KC" == "null" ]; then
     # Fallback: check if we are using a custom admin
     KEYCLOAK_ADMIN_EMAIL_KC=$(echo "$KEYCLOAK_USERS" | jq -r '.[] | select(.username=="'"${KEYCLOAK_PERMANENT_ADMIN_USERNAME:-emujicad}"'") | .email')
+    KEYCLOAK_ADMIN_USER_ACTUAL="${KEYCLOAK_PERMANENT_ADMIN_USERNAME:-emujicad}"
 fi
-print_info "Keycloak admin email: $KEYCLOAK_ADMIN_EMAIL_KC"
+print_info "Keycloak user ($KEYCLOAK_ADMIN_USER_ACTUAL) email: $KEYCLOAK_ADMIN_EMAIL_KC"
 
 # 3. Conflict Analysis
 print_info "Analyzing synchronization safety..."
@@ -90,18 +95,25 @@ if [ "$GRAFANA_ADMIN_EMAIL" == "$KEYCLOAK_ADMIN_EMAIL_KC" ]; then
     ALLOW_LOOKUP=$(grep "GF_AUTH_GENERIC_OAUTH_ALLOW_OAUTH_SIGNIN_WITH_EMAIL_LOOKUP" "${PROJECT_DIR}/docker-compose.yml" || echo "Not Found")
     
     if [[ "$ALLOW_LOOKUP" == *"true"* ]]; then
-        print_success "EMAILS MATCH and Lookup is ENABLED. This is the correct configuration."
-        print_success "Grafana will find the existing user by email and log them in."
+        print_success "EMAILS MATCH and Lookup is ENABLED. You will log in as the internal Super Admin."
     else
         print_warning "EMAILS MATCH but 'email lookup' might be DISABLED or MISSING in docker-compose.yml."
-        print_warning "Current config setting: $ALLOW_LOOKUP"
-        print_warning "If lookup is false, this login WILL FAIL with 'User sync failed'."
         exit 1
     fi
 else
-    print_warning "EMAILS DO NOT MATCH ($GRAFANA_ADMIN_EMAIL vs $KEYCLOAK_ADMIN_EMAIL_KC)"
-    print_info "This is generally SAFE as long as the accounts are intended to be separate."
-    print_info "However, if you intend for the Keycloak user to BE the Grafana admin, they must match."
+    print_info "EMAILS DO NOT MATCH ($GRAFANA_ADMIN_EMAIL vs $KEYCLOAK_ADMIN_EMAIL_KC)"
+    
+    # Check for Role Mapping (The robust way to handle this)
+    ROLE_MAPPING=$(grep "GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH" "${PROJECT_DIR}/docker-compose.yml" || echo "Not Found")
+    
+    if [[ "$ROLE_MAPPING" == *"grafana-admin"* ]]; then
+        print_success "SAFE: Emails differ, but OIDC Role Mapping is DETECTED."
+        print_success "User '$KEYCLOAK_ADMIN_USER_ACTUAL' should receive Admin rights via Role Mapping."
+    else
+        print_warning "⚠️  EMAILS DIFFER and NO Role Mapping detected."
+        print_warning "You might log in as a Viewer/Editor without Admin rights."
+        # This is a warning, not a hard failure, as maybe they want a viewer account.
+    fi
 fi
 
-print_success "OIDC Sync verification passed (No immediate blocker detected)."
+print_success "OIDC Sync verification passed."
