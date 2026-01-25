@@ -165,13 +165,13 @@ backup_postgres() {
     log "Backupeando base de datos PostgreSQL: $DB_NAME"
     
     # Verificar que el contenedor de PostgreSQL está corriendo
-    if ! docker ps --filter "name=${DB_POSTGRESDB_HOST}" --format '{{.Status}}' | grep -q "Up"; then
+    if ! docker ps --filter "name=${POSTGRES_HOST_INTERNAL}" --format '{{.Status}}' | grep -q "Up"; then
         log_warning "PostgreSQL no está corriendo, omitiendo backup de BD"
         return 0
     fi
     
     # Obtener nombre real del contenedor (puede tener prefijo)
-    local PG_CONTAINER=$(docker ps --filter "name=${DB_POSTGRESDB_HOST}" --format '{{.Names}}' | head -1)
+    local PG_CONTAINER=$(docker ps --filter "name=${POSTGRES_HOST_INTERNAL}" --format '{{.Names}}' | head -1)
 
     docker exec "$PG_CONTAINER" \
         pg_dump -U "$DB_USER" "$DB_NAME" | gzip > "$BACKUP_FILE" || {
@@ -192,6 +192,8 @@ backup_config() {
     log "Backupeando configuraciones"
     
     tar czf "$BACKUP_FILE" \
+        --exclude='*.log' \
+        --exclude='*.tmp' \
         -C "$PROJECT_DIR" \
         docker-compose.yml \
         .env.example \
@@ -199,9 +201,7 @@ backup_config() {
         haproxy/ \
         monitoring/ \
         modsecurity/ \
-        scripts/ \
-        --exclude='*.log' \
-        --exclude='*.tmp' 2>/dev/null || {
+        scripts/ || {
         log_error "Error al hacer backup de configuraciones"
         return 1
     }

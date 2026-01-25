@@ -917,6 +917,21 @@ cleanup_orphaned_resources() {
                 fi
             fi
             
+            # PROTECCIÓN: Preguntar sobre imágenes antes de borrar
+            local delete_images="n"
+            if [ "$clean_type" = "all" ]; then
+                 echo ""
+                 print_warning "⚠️  OPCIÓN DE LIMPIEZA DE IMÁGENES LOCALES"
+                 print_info "   Borrar las imágenes liberará espacio, pero requerirá descargarlas nuevamente (varios GBs)."
+                 read -p "¿Deseas borrar también las IMÁGENES locales? (s/N) " -n 1 -r
+                 echo ""
+                 if [[ "$REPLY" =~ ^[Ss]$ ]]; then
+                     delete_images="s"
+                 else
+                     print_info "✅ Se conservarán las imágenes locales."
+                 fi
+            fi
+
             # Eliminar contenedores detenidos
             if [ -n "$stopped_containers" ]; then
                 print_info "Eliminando contenedores detenidos..."
@@ -1021,6 +1036,11 @@ cleanup_orphaned_resources() {
 
         local existing_volumes=()
         for volume in "${project_volumes[@]}"; do
+            # PROTECCiÓN: Omitir ollama_storage de la lista automática
+            if [ "$volume" == "ollama_storage" ]; then
+                continue
+            fi
+            
             local volume_with_prefix="${project_name}_${volume}"
             if $DOCKER_CMD volume inspect "$volume_with_prefix" >/dev/null 2>&1; then
                 existing_volumes+=("$volume_with_prefix")
@@ -1063,8 +1083,8 @@ cleanup_orphaned_resources() {
         fi
     fi
     
-    # Limpiar imágenes (solo si clean_type es "all")
-    if [ "$clean_type" = "all" ]; then
+    # Limpiar imágenes (solo si clean_type es "all" Y el usuario confirmó)
+    if [ "$clean_type" = "all" ] && [ "$delete_images" = "s" ]; then
         print_info "🖼️  Buscando imágenes del proyecto..."
         # Obtener imágenes usadas por los servicios del proyecto
         local project_images=()

@@ -164,6 +164,15 @@ my-selfhosted-ai-kit/
 - Added recursive dependency tracking
 - Improved error handling for undefined services
 
+### 2026-01-25: Comprehensive Security Hardening & Zero Defaults
+- **Secrets Management**: Removed ALL default credentials from `docker-compose.yml`, `auth-manager.sh`, `stack-manager.sh`, and `backup-manager.sh`.
+- **Strict Validation**: Implemented `check_required_vars()` across all script managers. System now fails fast with clear errors if critical variables are missing.
+- **Zero Defaults Policy**: Removed silent fallbacks (`:-`) for sensitive credentials and service accounts. The stack now enforces strict `.env` definition for all Admin, Database, and OIDC secret variables.
+- **Fail-Secure Architecture**: No silent fallbacks. Admin accounts, databases, and encryption keys MUST be defined in `.env`.
+- **Validation Standardization**: Unified error handling and validation logic across `validate-system.sh` and stack managers.
+- **Clean Slate Verification**: Performed a full destructive purge (`clean all`) and successful redeployment to verify repo-completeness and "First Run" stability.
+- **Identity Standardization**: Established "Ender Mujica" (`emujicad`) as the standard identity across all SSO consumers (Grafana, OpenWebUI, Jenkins).
+
 ## Known Issues & Limitations
 
 1. **No HTTPS/SSL by default**: HAProxy is configured but requires manual SSL setup

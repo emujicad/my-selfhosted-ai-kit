@@ -544,11 +544,13 @@ docker compose --profile gpu-nvidia --profile monitoring --profile infrastructur
 ## 🔒 Security
 
 ### Recommendations:
-1. **Change default passwords** in the `.env` file
+1. **Configure `.env`**: You MUST copy `.env.example` and set your own values. The system will NOT start with missing variables.
 2. **Don't expose ports** to the Internet without additional configuration
 3. **Use HTTPS** in production
 4. **Keep containers updated**
-5. **Environment Variables**: The system enforces strict environment variable checking. Ensure your `.env` file is populated; defaults like `admin` are disabled for security.
+5. **Environment Variables**: The system enforces **STRICT** environment variable checking.
+   - **No Defaults**: Variables like `POSTGRES_USER` or `KEYCLOAK_ADMIN_PASSWORD` have NO default values.
+   - **Validation**: Scripts like `stack-manager.sh` will fail immediately if `.env` is incomplete.
 
 ### Sensitive variables:
 - `POSTGRES_PASSWORD`: Database password
@@ -606,16 +608,16 @@ docker compose --profile security up -d keycloak-init
 This usually happens if the Keycloak user doesn't have an email address.
 ```bash
 # Set email for admin user
-docker exec keycloak /opt/keycloak/bin/kcadm.sh update users/$(docker exec keycloak /opt/keycloak/bin/kcadm.sh get users -r master -q username=admin --fields id --format csv --noquotes) -r master -s email=admin@example.com -s emailVerified=true
+docker exec keycloak /opt/keycloak/bin/kcadm.sh update users/$(docker exec keycloak /opt/keycloak/bin/kcadm.sh get users -r master -q username=admin --fields id --format csv --noquotes) -r master -s email=emujicad@gmail.com -s emailVerified=true
 ```
 
 ### Problem: Grafana Login Failed ("User sync failed")
 This happens if Grafana cannot map the Keycloak user to an existing local user.
 **Ensure the Grafana admin email matches the Keycloak admin email.**
-1. Check Keycloak email (e.g., `admin@example.com`).
+1. Check Keycloak email (e.g., `emujicad@gmail.com`).
 2. Update `.env` to match:
    ```bash
-   GRAFANA_ADMIN_EMAIL=admin@example.com
+   GRAFANA_ADMIN_EMAIL=emujicad@gmail.com
    ```
 3. Restart Grafana:
    ```bash

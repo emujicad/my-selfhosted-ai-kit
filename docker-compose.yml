@@ -320,7 +320,7 @@ services:
     container_name: pgvector
     networks: [ 'genai-network' ]
     environment:
-      POSTGRES_USER: ${PGVECTOR_USER:-user}
+      POSTGRES_USER: ${PGVECTOR_USER?Variable not set}
       POSTGRES_PASSWORD: ${PGVECTOR_PASSWORD?Variable not set}
       POSTGRES_DB: ${PGVECTOR_DB:-pgvector_db}
     ports:
@@ -353,13 +353,13 @@ services:
       - "${PORT_OPEN_WEBUI_HOST:-3000}:${PORT_OPEN_WEBUI_CONTAINER:-8080}"
     environment:
       # Redis Cache Config
+      # Redis Cache Config
+      # Redis Cache Config
       - CACHE_TYPE=${OPEN_WEBUI_CACHE_TYPE:-redis}
       - REDIS_URL=${OPEN_WEBUI_REDIS_URL:-redis://redis:6379/0}
       - RAG_SYSTEM_CONTEXT=${OPEN_WEBUI_RAG_SYSTEM_CONTEXT:-true}
       - USE_EMBEDDING_CACHE=${OPEN_WEBUI_USE_EMBEDDING_CACHE:-true}
       # OLLAMA_BASE_URL: URL interna para conectar con Ollama desde el contenedor
-      # IMPORTANTE: Si OLLAMA_URL_INTERNAL está vacía en .env, debe tener un valor o no estar definida
-      # Si está definida pero vacía, Docker Compose la pasa como cadena vacía y ${VAR:-default} no funciona
       - OLLAMA_BASE_URL=${OLLAMA_URL_INTERNAL:-http://ollama:11434}
       - USER_AGENT=${OPEN_WEBUI_USER_AGENT:-OpenWebUI/0.6.13}
       - CORS_ALLOW_ORIGIN=${OPEN_WEBUI_URL_PUBLIC:-http://localhost:3000}
@@ -467,11 +467,12 @@ services:
     environment:
       - N8N_RUNNERS_ENABLED=${N8N_RUNNERS_ENABLED:-true}
       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=${N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS:-true}
+      - N8N_BASIC_AUTH_ACTIVE=false
       # Configuración OIDC/OAuth con Keycloak
       - N8N_AUTH_TYPE=${N8N_AUTH_TYPE:-oidc}
       - N8N_OIDC_ISSUER=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}
       - N8N_OIDC_CLIENT_ID=${N8N_OIDC_CLIENT_ID:-n8n}
-      - N8N_OIDC_CLIENT_SECRET=${N8N_OIDC_CLIENT_SECRET:-change_me_n8n_client_secret}
+      - N8N_OIDC_CLIENT_SECRET=${N8N_OIDC_CLIENT_SECRET?Variable not set}
       # URLs explícitas - authorization usa localhost (navegador), token/userinfo usan keycloak (interno)
       - N8N_OIDC_AUTHORIZATION_URL=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/auth
       - N8N_OIDC_TOKEN_URL=${KEYCLOAK_URL_INTERNAL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/token
@@ -1205,7 +1206,7 @@ services:
     container_name: keycloak
     profiles: [ "security", "gen-ai", "monitoring", "ci-cd" ]
     environment:
-      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN_USER:-admin}
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN_USER?Variable not set}
       - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD?Variable not set}
       - KC_DB=${KEYCLOAK_DB_TYPE:-postgres}
       - KC_DB_URL=jdbc:postgresql://${POSTGRES_HOST_INTERNAL:-postgres}:${POSTGRES_PORT_INTERNAL:-5432}/${KEYCLOAK_DB_NAME:-keycloak}?connectTimeout=10&socketTimeout=60
@@ -1332,12 +1333,12 @@ services:
     networks:
       - genai-network
     environment:
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
       - POSTGRES_DB=${POSTGRES_DB:-postgres}
       - GRAFANA_DB_NAME=${GRAFANA_DB_NAME:-grafana}
       - GRAFANA_DB_USER=${GRAFANA_DB_USER:-grafana}
-      - GRAFANA_DB_PASSWORD=${GRAFANA_DB_PASSWORD:-grafana}
+      - GRAFANA_DB_PASSWORD=${GRAFANA_DB_PASSWORD?Variable not set}
       - PGSSLMODE=disable
     entrypoint: /bin/sh
     command:
@@ -1411,13 +1412,12 @@ services:
       - N8N_URL_PUBLIC=${N8N_URL_PUBLIC:-http://localhost:5678}
       - OPEN_WEBUI_URL_PUBLIC=${OPEN_WEBUI_URL_PUBLIC:-http://localhost:3000}
       - JENKINS_URL_PUBLIC=${JENKINS_URL_PUBLIC:-http://localhost:8081}
-      # Secrets para clientes OIDC
       - GRAFANA_OAUTH_CLIENT_SECRET=${GRAFANA_OAUTH_CLIENT_SECRET}
       - N8N_OIDC_CLIENT_SECRET=${N8N_OIDC_CLIENT_SECRET}
       - OPEN_WEBUI_OAUTH_CLIENT_SECRET=${OPEN_WEBUI_OAUTH_CLIENT_SECRET}
       - JENKINS_OIDC_CLIENT_SECRET=${JENKINS_OIDC_CLIENT_SECRET}
       # Credenciales de Postgres para inyección de user_auth en Grafana
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - GRAFANA_DB_NAME=${GRAFANA_DB_NAME:-grafana}
     entrypoint: /bin/sh
@@ -1526,7 +1526,7 @@ services:
            
            if [ $$USER_READY -eq 1 ]; then
                # Inyectar mapeo directamente en la base de datos de Grafana
-               PGPASSWORD="$${POSTGRES_PASSWORD}" psql -h postgres -U "$${POSTGRES_USER}" -d "$${GRAFANA_DB_NAME:-grafana}" -c "
+               PGPASSWORD="$${POSTGRES_PASSWORD}" psql -h postgres -U "$${POSTGRES_USER}" -d "$${GRAFANA_DB_NAME?Variable not set}" -c "
                  INSERT INTO user_auth (user_id, auth_module, auth_id, created, o_auth_access_token, o_auth_refresh_token, o_auth_token_type, o_auth_expiry, o_auth_id_token)
                  SELECT id, 'oauth_generic_oauth', '$$ADMIN_ID', NOW(), '', '', '', null, ''
                  FROM \"user\" 
@@ -1640,14 +1640,15 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - WATCHTOWER_CLEANUP=${WATCHTOWER_CLEANUP:-true}
-      - WATCHTOWER_SCHEDULE=${WATCHTOWER_SCHEDULE:-0 0 2 * * *} # Actualizar a las 2 AM
-      - WATCHTOWER_NOTIFICATIONS=${WATCHTOWER_NOTIFICATIONS:-email}
-      - WATCHTOWER_EMAIL_FROM=${WATCHTOWER_EMAIL_FROM:-watchtower@yourdomain.com}
-      - WATCHTOWER_EMAIL_TO=${WATCHTOWER_EMAIL_TO:-admin@yourdomain.com}
-      - WATCHTOWER_EMAIL_SERVER=${WATCHTOWER_EMAIL_SERVER:-smtp.gmail.com}
-      - WATCHTOWER_EMAIL_SERVER_PORT=${WATCHTOWER_EMAIL_SERVER_PORT:-587}
-      - WATCHTOWER_EMAIL_SERVER_USER=${WATCHTOWER_EMAIL_SERVER_USER:-your-email@gmail.com}
-      - WATCHTOWER_EMAIL_SERVER_PASSWORD=${WATCHTOWER_EMAIL_SERVER_PASSWORD:-your-app-password}
+      - WATCHTOWER_SCHEDULE=${WATCHTOWER_SCHEDULE:-0 0 2 * * *}
+      - WATCHTOWER_NOTIFICATIONS=${WATCHTOWER_NOTIFICATIONS?Variable not set}
+      - WATCHTOWER_EMAIL_FROM=${WATCHTOWER_EMAIL_FROM?Variable not set}
+      - WATCHTOWER_NOTIFICATION_EMAIL_FROM=${WATCHTOWER_EMAIL_FROM?Variable not set}
+      - WATCHTOWER_EMAIL_TO=${WATCHTOWER_EMAIL_TO?Variable not set}
+      - WATCHTOWER_EMAIL_SERVER=${WATCHTOWER_EMAIL_SERVER?Variable not set}
+      - WATCHTOWER_EMAIL_SERVER_PORT=${WATCHTOWER_EMAIL_SERVER_PORT?Variable not set}
+      - WATCHTOWER_EMAIL_SERVER_USER=${WATCHTOWER_EMAIL_SERVER_USER?Variable not set}
+      - WATCHTOWER_EMAIL_SERVER_PASSWORD=${WATCHTOWER_EMAIL_SERVER_PASSWORD?Variable not set}
     networks:
       - monitoring-network
     logging:
@@ -1683,10 +1684,10 @@ services:
       - JENKINS_OPTS=--httpPort=8082
       # Variables para script de inicialización OIDC
       - JENKINS_URL_PUBLIC=${JENKINS_URL_PUBLIC:-http://localhost:8081}
-      - JENKINS_ADMIN_USER=${JENKINS_ADMIN_USER:-admin}
-      - JENKINS_ADMIN_PASSWORD=${JENKINS_ADMIN_PASSWORD:-admin}
+      - JENKINS_ADMIN_USER=${JENKINS_ADMIN_USER?Variable not set}
+      - JENKINS_ADMIN_PASSWORD=${JENKINS_ADMIN_PASSWORD?Variable not set}
       - JENKINS_OIDC_CLIENT_ID=${JENKINS_OIDC_CLIENT_ID:-jenkins}
-      - JENKINS_OIDC_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET_JENKINS:-changeme}
+      - JENKINS_OIDC_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET_JENKINS?Variable not set}
       - JENKINS_OIDC_SCOPES=${JENKINS_OIDC_SCOPES:-openid email profile}
       - KEYCLOAK_URL_PUBLIC=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}
       - KEYCLOAK_REALM=${KEYCLOAK_REALM:-master}

@@ -268,17 +268,17 @@ action_create_admin() {
     print_header "CREATING PERMANENT ADMIN USER"
     check_keycloak_running
     
-    local NEW_USER="${KEYCLOAK_PERMANENT_ADMIN_USERNAME}"
-    local NEW_PASS="${KEYCLOAK_PERMANENT_ADMIN_PASSWORD}"
-    local NEW_EMAIL="${KEYCLOAK_PERMANENT_ADMIN_EMAIL}"
+    local NEW_USER="${KEYCLOAK_ADMIN_USER}"
+    local NEW_PASS="${KEYCLOAK_ADMIN_PASSWORD}"
+    local NEW_EMAIL="${KEYCLOAK_ADMIN_EMAIL}"
     local NEW_FIRST="${KEYCLOAK_ADMIN_FIRST_NAME}"
     local NEW_LAST="${KEYCLOAK_ADMIN_LAST_NAME}"
     
     # Validate required variables for admin creation
     check_required_vars \
-        "KEYCLOAK_PERMANENT_ADMIN_USERNAME" \
-        "KEYCLOAK_PERMANENT_ADMIN_PASSWORD" \
-        "KEYCLOAK_PERMANENT_ADMIN_EMAIL" \
+        "KEYCLOAK_ADMIN_USER" \
+        "KEYCLOAK_ADMIN_PASSWORD" \
+        "KEYCLOAK_ADMIN_EMAIL" \
         "KEYCLOAK_ADMIN_FIRST_NAME" \
         "KEYCLOAK_ADMIN_LAST_NAME"
 
