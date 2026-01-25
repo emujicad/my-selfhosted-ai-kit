@@ -159,6 +159,12 @@ my-selfhosted-ai-kit/
 - Created profile_dependencies.mmd (stack-manager dependencies)
 - Updated perfiles.mmd with current architecture
 
+### 2026-01-25: Monitoring & Proxy Stability Fixes
+- **Prometheus Scrape Path**: Standardized `metrics_path: /prometheus/metrics` to align with the new base path, resolving false "Down" alerts.
+- **AlertManager Stability**: Fixed startup crash by correcting `web.external-url` scheme (`http://localhost/` prefix).
+- **HAProxy DNS Resilience**: Implemented dynamic `resolvers docker` block and added `init-addr last,libc,none` to AlertManager server to ensure resolution persists across container restarts.
+- **Healthcheck Standardization**: Updated all `docker-compose.yml` healthcheck URLs to include the respective sub-path prefixes.
+
 ### 2026-01-22: Stack Manager Enhancement
 - Implemented automatic dependency resolution
 - Added recursive dependency tracking
@@ -227,6 +233,6 @@ docker compose logs -f [service]
 
 ---
 
-**Last Updated**: 2026-01-24  
+**Last Updated**: 2026-01-25  
 **Maintained By**: admin-user  
 **AI Assistant**: Antigravity (Google DeepMind)
