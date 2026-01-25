@@ -133,12 +133,15 @@ my-selfhosted-ai-kit/
 - **Architecture**: Decoupled HAProxy from strict monitoring dependencies for flexible startup
 
 
-### 2026-01-25: Backup System Consolidation & Jenkins OIDC
-- **Backup Runner**: Refactored `backup` service to use DooD with `docker:cli` for robust automation
-- **Network Fix**: Connected Jenkins and Backup services to `genai-network` for internet access (plugins/apk)
-- **PostgreSQL**: Enhanced `pg_dump` logic in `backup-manager.sh` to work reliably via DooD `docker exec`
-- **Jenkins OIDC**: Fully automated OIDC setup via `init.groovy.d` scripts (Admin creation + OIDC Realm)
-- **n8n OIDC**: Documented Community Edition limitation (License required for SSO)
+### 2026-01-25: Backup System Consolidation & Jenkins OIDC Automation
+- **Backup Runner**: Refactored `backup` service to use DooD with `docker:cli` for robust automation.
+- **Jenkins OIDC Automation**:
+  - **Custom Image**: Created `config/jenkins/Dockerfile` and `plugins.txt` for automatic plugin installation.
+  - **Init Scripts**: Automated Admin creation, OIDC Realm setup, and System URL configuration via `init.groovy.d`.
+  - **Dependency Fix**: Aligned Docker Compose profiles (`gen-ai`, `monitoring`, `ci-cd`) for Keycloak services to resolve cross-profile dependency issues.
+- **Network Fix**: Connected Jenkins and Backup services to `genai-network` for internet access (plugins/apk).
+- **PostgreSQL**: Enhanced `pg_dump` logic in `backup-manager.sh` to work reliably via DooD `docker exec`.
+- **n8n OIDC**: Documented Community Edition limitation (License required for SSO).
 
 ### 2026-01-25: Keycloak Security Hardening
 - **Permanent Admin**: Created `keycloak-create-permanent-admin.sh` to automate admin migration
