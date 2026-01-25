@@ -137,7 +137,8 @@ my-selfhosted-ai-kit/
 - **Backup Runner**: Refactored `backup` service to use DooD with `docker:cli` for robust automation
 - **Network Fix**: Connected Jenkins and Backup services to `genai-network` for internet access (plugins/apk)
 - **PostgreSQL**: Enhanced `pg_dump` logic in `backup-manager.sh` to work reliably via DooD `docker exec`
-- **Jenkins OIDC**: Added automated plugin installation and configuration to `auth-manager.sh`
+- **Jenkins OIDC**: Fully automated OIDC setup via `init.groovy.d` scripts (Admin creation + OIDC Realm)
+- **n8n OIDC**: Documented Community Edition limitation (License required for SSO)
 
 ### 2026-01-25: Keycloak Security Hardening
 - **Permanent Admin**: Created `keycloak-create-permanent-admin.sh` to automate admin migration

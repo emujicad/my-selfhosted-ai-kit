@@ -14,8 +14,8 @@ Complete guide for integrating Keycloak with all services in the stack, includin
 4. [Service Integrations](#service-integrations)
    - [Grafana + Keycloak](#grafana--keycloak) ✅
    - [Open WebUI + Keycloak](#open-webui--keycloak) ✅
-   - [n8n + Keycloak](#n8n--keycloak) ⏳
-   - [Jenkins + Keycloak](#jenkins--keycloak) ⏳
+   - [n8n + Keycloak (Licensing Note)](#n8n--keycloak) ⚠️
+   - [Jenkins + Keycloak](#jenkins--keycloak) ✅
 5. [Troubleshooting](#troubleshooting)
 6. [Database Issues](#database-issues)
 7. [References](#references)
@@ -45,8 +45,8 @@ OIDC clients and secrets are configured automatically. You only need to run manu
 |---------|--------|-------|
 | **Grafana** | ✅ Complete | Works perfectly. Clients created automatically by `keycloak-init` |
 | **Open WebUI** | ✅ Complete | Emulated OIDC Environment solution implemented |
-| **n8n** | ✅ Configured | Clients created automatically. Pending login testing |
-| **Jenkins** | ✅ Configured | Clients created automatically. Pending login testing |
+| **n8n** | ⚠️ Limited | OIDC configs disabled (Community Edition limitation) |
+| **Jenkins** | ✅ Complete | Fully automated via `init.groovy.d` scripts. |
 
 ---
 
@@ -532,3 +532,57 @@ Open WebUI looks for a specific list of roles in the token.
 We have dedicated tests to ensure this "Contract" is never broken:
 1.  **`scripts/tests/test-roles-mapping.sh`**: Static analysis that ensures `docker-compose.yml` contains the correct mapping rules.
 2.  **`scripts/tests/test-keycloak-claims.sh`**: Integration test that logs in, decodes a real token, and verifies that Keycloak is actually sending the roles.
+
+---
+
+## n8n + Keycloak
+
+### ⚠️ Licensing Limitation (Community Edition)
+
+**Current Status**: disabled in `.env`.
+
+The integration of OIDC (SSO) in n8n is an **Enterprise** feature. The Community Edition (free) installed in this stack **does not support** logging in with Keycloak, surfacing the error:
+`[license SDK] Skipping renewal on init: license cert is not initialized`
+
+### Enabling OIDC (If License Purchased)
+
+If you upgrade to a paid n8n license in the future, follow these steps to enable SSO:
+
+1. **Uncomment Configuration**:
+   Edit `.env` and uncomment the `N8N_AUTH_TYPE=oidc` line:
+   ```bash
+   # .env
+   N8N_AUTH_TYPE=oidc
+   N8N_OIDC_CLIENT_ID=n8n
+   # ... other variables are already set correctly ...
+   ```
+
+2. **Restart n8n**:
+   ```bash
+   docker compose restart n8n
+   ```
+
+3. **Verify**:
+   The login screen will now show a "Sign in with Keycloak" button.
+
+### Current Authentication Method
+For now, default to **Email/Password** authentication.
+- **URL**: http://localhost:5678
+- **User**: Setup the owner account on first login.
+
+---
+
+## Jenkins + Keycloak
+
+### ✅ Fully Automated Support
+Jenkins integration is now **100% automated** in this stack.
+- **Admin**: Created automatically (user: `admin`, pass: from `.env`).
+- **Setup Wizard**: Disabled automatically.
+- **OIDC**: Configured automatically via `init.groovy.d/02-auth-oidc.groovy`.
+- **Plugin**: `oic-auth` installed.
+
+### Access
+1.  **URL**: http://localhost:8081
+2.  **Login**: Click **"Log in with Keycloak"** (or use fallback `admin`/`admin` if needed).
+3.  **Role**: The first user logged in via OIDC usually gets Create permission, or Admin if configured strategies allow. The `02-auth-oidc.groovy` script sets `FullControlOnceLoggedInAuthorizationStrategy`, meaning **any valid Keycloak user becomes an Admin**.
+    *   *Security Note*: For production, you should refine the `AuthorizationStrategy` in `config/jenkins/init.groovy.d/02-auth-oidc.groovy`.

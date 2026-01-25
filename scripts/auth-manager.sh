@@ -316,7 +316,7 @@ action_fix_clients() {
 action_setup_jenkins() {
     print_header "SETTING UP JENKINS OIDC"
     
-    if ! docker ps | grep -q "jenkins"; then
+    if ! docker ps --filter "name=jenkins" --format '{{.Status}}' | grep -q "Up"; then
         print_error "Jenkins container is NOT running."
         echo "   Please start the stack first: ./scripts/stack-manager.sh start"
         exit 1
@@ -374,6 +374,9 @@ Jenkins.instance.setAuthorizationStrategy(strategy)
 Jenkins.instance.save()
 println "OIDC Security Realm Configured Successfully"
 EOF
+
+    # Create directory if it doesn't exist
+    docker exec jenkins mkdir -p /var/jenkins_home/init.groovy.d
 
     # Copy script to container
     docker cp /tmp/jenkins_oidc_setup.groovy jenkins:/var/jenkins_home/init.groovy.d/auth-oidc.groovy

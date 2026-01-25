@@ -1656,7 +1656,7 @@ services:
 
   # Jenkins - CI/CD Pipeline
   jenkins:
-    image: jenkins/jenkins:lts
+    image: jenkins/jenkins:2.541.1-lts
     container_name: jenkins
     profiles: [ "ci-cd" ]
     ports:
@@ -1664,8 +1664,10 @@ services:
       - "${PORT_JENKINS_AGENT_HOST:-50000}:${PORT_JENKINS_AGENT_CONTAINER:-50000}"
     volumes:
       - jenkins_data:/var/jenkins_home
+      - ./config/jenkins/init.groovy.d:/var/jenkins_home/init.groovy.d:ro
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
       - JENKINS_OPTS=--httpPort=8082
       # Variables para script de inicialización OIDC
       - JENKINS_URL_PUBLIC=${JENKINS_URL_PUBLIC:-http://localhost:8081}
