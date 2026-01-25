@@ -1416,6 +1416,10 @@ services:
       - N8N_OIDC_CLIENT_SECRET=${N8N_OIDC_CLIENT_SECRET}
       - OPEN_WEBUI_OAUTH_CLIENT_SECRET=${OPEN_WEBUI_OAUTH_CLIENT_SECRET}
       - JENKINS_OIDC_CLIENT_SECRET=${JENKINS_OIDC_CLIENT_SECRET}
+      - KEYCLOAK_ADMIN_EMAIL=${KEYCLOAK_ADMIN_EMAIL?Variable not set}
+      - KEYCLOAK_ADMIN_FIRST_NAME=${KEYCLOAK_ADMIN_FIRST_NAME?Variable not set}
+      - KEYCLOAK_ADMIN_LAST_NAME=${KEYCLOAK_ADMIN_LAST_NAME?Variable not set}
+      - GRAFANA_ADMIN_EMAIL=${GRAFANA_ADMIN_EMAIL?Variable not set}
       # Credenciales de Postgres para inyección de user_auth en Grafana
       - POSTGRES_USER=${POSTGRES_USER?Variable not set}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -1490,17 +1494,17 @@ services:
           --user "$${KEYCLOAK_ADMIN_USER}" \
           --password "$${KEYCLOAK_ADMIN_PASSWORD}" > /dev/null 2>&1 && echo "   ✅ Credenciales configuradas" || echo "   ❌ Error configurando credenciales"
 
-        # Asegurar email del admin (Crítico para Grafana)
-        echo "📧 Configurando email del administrador..."
+        # Asegurar email y datos personales del admin (Crítico para Grafana y consistencia)
+        echo "📧 Configurando datos del administrador ($${KEYCLOAK_ADMIN_USER})..."
         ADMIN_ID=$$(docker exec keycloak /opt/keycloak/bin/kcadm.sh get users -r master -q username="$${KEYCLOAK_ADMIN_USER}" --fields id --format csv --noquotes)
         if [ ! -z "$$ADMIN_ID" ]; then
-           # Solo actualizar email si es el admin por defecto
-           if [ "$${KEYCLOAK_ADMIN_USER}" == "admin" ]; then
-              docker exec keycloak /opt/keycloak/bin/kcadm.sh update users/$$ADMIN_ID -r master -s email="admin@example.com" -s emailVerified=true > /dev/null 2>&1
-              echo "   ✅ Email del administrador configurado: admin@example.com"
-           else
-              echo "   ✅ Usando email existente para usuario: $${KEYCLOAK_ADMIN_USER}"
-           fi
+           # Siempre actualizar datos básicos para asegurar consistencia
+           docker exec keycloak /opt/keycloak/bin/kcadm.sh update users/$$ADMIN_ID -r master \
+             -s email="$${KEYCLOAK_ADMIN_EMAIL}" \
+             -s firstName="$${KEYCLOAK_ADMIN_FIRST_NAME}" \
+             -s lastName="$${KEYCLOAK_ADMIN_LAST_NAME}" \
+             -s emailVerified=true > /dev/null 2>&1
+           echo "   ✅ Datos del administrador configurados ($${KEYCLOAK_ADMIN_EMAIL})"
            
            # Esperar a que la BD de Grafana tenga el usuario admin (creado al arranque de Grafana)
            # En clean slate, Grafana puede tardar hasta 90 segundos en inicializar
@@ -1511,7 +1515,7 @@ services:
            
            while [ $$RETRY_COUNT -lt $$MAX_RETRIES ]; do
               # Verificar si el usuario 'admin' o con email 'admin@example.com' existe
-              if PGPASSWORD="$${POSTGRES_PASSWORD}" psql -h postgres -U "$${POSTGRES_USER}" -d "$${GRAFANA_DB_NAME:-grafana}" -tAc "SELECT 1 FROM \"user\" WHERE email='admin@example.com' OR login='admin'" 2>/dev/null | grep -q 1; then
+              if PGPASSWORD="$${POSTGRES_PASSWORD}" psql -h postgres -U "$${POSTGRES_USER}" -d "$${GRAFANA_DB_NAME:-grafana}" -tAc "SELECT 1 FROM \"user\" WHERE email='$$GRAFANA_ADMIN_EMAIL' OR email='admin@example.com' OR login='admin'" 2>/dev/null | grep -q 1; then
                  USER_READY=1
                  echo "      ✅ Usuario detectado después de $$((RETRY_COUNT * 2))s"
                  break
@@ -1530,7 +1534,7 @@ services:
                  INSERT INTO user_auth (user_id, auth_module, auth_id, created, o_auth_access_token, o_auth_refresh_token, o_auth_token_type, o_auth_expiry, o_auth_id_token)
                  SELECT id, 'oauth_generic_oauth', '$$ADMIN_ID', NOW(), '', '', '', null, ''
                  FROM \"user\" 
-                 WHERE email='admin@example.com' OR login='admin'
+                 WHERE email='$$GRAFANA_ADMIN_EMAIL' OR email='admin@example.com' OR login='admin'
                  AND NOT EXISTS (SELECT 1 FROM user_auth WHERE auth_id='$$ADMIN_ID');
                " 2>/dev/null && echo "   ✅ Enlace de usuario inyectado en DB Grafana" || echo "   ⚠️ Error inyectando enlace"
            else
@@ -1700,7 +1704,7 @@ services:
       - backend-network
       - genai-network
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/login" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:8082/login" ]
       interval: 30s
       timeout: 10s
       retries: 3

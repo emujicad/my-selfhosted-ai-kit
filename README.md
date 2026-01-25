@@ -76,6 +76,8 @@ nano .env
 - `OPEN_WEBUI_OIDC_USER_EMAIL`: Your admin email
 - `OPEN_WEBUI_OIDC_USER_NAME`: Your display name
 
+**Identity Standardization**: The stack now uses a unified identity (Ender Mujica by default) across all SSO services. Configure `KEYCLOAK_ADMIN_USER`, `KEYCLOAK_ADMIN_EMAIL`, etc., in your `.env` to customize your admin profile.
+
 See [**Configuration Guide**](docs/CONFIGURATION.md) for more details on dynamic generation.
 
 # n8n Configuration
