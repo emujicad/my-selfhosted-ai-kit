@@ -249,12 +249,12 @@ generate_oidc_userinfo() {
     local OIDC_CONFIG_DIR="$PROJECT_DIR/config/open-webui-oidc"
     local USERINFO_FILE="$OIDC_CONFIG_DIR/userinfo.json"
     
-    # Valores por defecto si no están en .env
-    local USER_EMAIL="${OPEN_WEBUI_OIDC_USER_EMAIL:-admin@example.com}"
-    local USER_USERNAME="${OPEN_WEBUI_OIDC_USER_USERNAME:-admin}"
-    local USER_NAME="${OPEN_WEBUI_OIDC_USER_NAME:-Admin User}"
-    local GIVEN_NAME="${OPEN_WEBUI_OIDC_USER_GIVEN_NAME:-Admin}"
-    local FAMILY_NAME="${OPEN_WEBUI_OIDC_USER_FAMILY_NAME:-User}"
+    # Valores desde .env (validados previamente en validate_before_start)
+    local USER_EMAIL="${OPEN_WEBUI_OIDC_USER_EMAIL}"
+    local USER_USERNAME="${OPEN_WEBUI_OIDC_USER_USERNAME}"
+    local USER_NAME="${OPEN_WEBUI_OIDC_USER_NAME}"
+    local GIVEN_NAME="${OPEN_WEBUI_OIDC_USER_GIVEN_NAME}"
+    local FAMILY_NAME="${OPEN_WEBUI_OIDC_USER_FAMILY_NAME}"
     
     print_info "Generando configuración OIDC dinámica..."
     
@@ -1186,9 +1186,9 @@ auto_fix_keycloak_db() {
         set +a
     fi
     
-    local POSTGRES_USER=${POSTGRES_USER:-postgres}
-    local POSTGRES_DB=${POSTGRES_DB:-postgres}
-    local KEYCLOAK_DB_NAME=${KEYCLOAK_DB_NAME:-keycloak}
+    local POSTGRES_USER=${POSTGRES_USER}
+    local POSTGRES_DB=${POSTGRES_DB}
+    local KEYCLOAK_DB_NAME=${KEYCLOAK_DB_NAME}
     
     # Verificar que la base de datos keycloak existe
     local DB_EXISTS=$($DOCKER_CMD exec postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc \
@@ -1436,9 +1436,9 @@ cleanup_keycloak_db_before_stop() {
         set +a
     fi
     
-    local POSTGRES_USER=${POSTGRES_USER:-postgres}
-    local POSTGRES_DB=${POSTGRES_DB:-postgres}
-    local KEYCLOAK_DB_NAME=${KEYCLOAK_DB_NAME:-keycloak}
+    local POSTGRES_USER=${POSTGRES_USER}
+    local POSTGRES_DB=${POSTGRES_DB}
+    local KEYCLOAK_DB_NAME=${KEYCLOAK_DB_NAME}
     
     # Verificar que la base de datos keycloak existe
     local DB_EXISTS=$($DOCKER_CMD exec postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc \
@@ -1483,9 +1483,9 @@ diagnose_keycloak_db() {
         set +a
     fi
     
-    local POSTGRES_USER=${POSTGRES_USER:-postgres}
-    local POSTGRES_DB=${POSTGRES_DB:-postgres}
-    local KEYCLOAK_DB_NAME=${KEYCLOAK_DB_NAME:-keycloak}
+    local POSTGRES_USER=${POSTGRES_USER}
+    local POSTGRES_DB=${POSTGRES_DB}
+    local KEYCLOAK_DB_NAME=${KEYCLOAK_DB_NAME}
     
     print_header "DIAGNÓSTICO DE BASE DE DATOS DE KEYCLOAK"
     
@@ -1785,8 +1785,8 @@ start_services() {
             source .env 2>/dev/null || true
             set +a
         fi
-        local POSTGRES_USER=${POSTGRES_USER:-postgres}
-        local KEYCLOAK_DB_NAME=${KEYCLOAK_DB_NAME:-keycloak}
+        local POSTGRES_USER=${POSTGRES_USER}
+        local KEYCLOAK_DB_NAME=${KEYCLOAK_DB_NAME}
         
         # Limpiar locks múltiples veces para asegurar
         for i in 1 2 3; do
@@ -1808,9 +1808,9 @@ start_services() {
         # No se va a levantar security, pero verificar conexiones huérfanas preventivamente
         # (pueden ser de intentos anteriores que bloqueen futuros inicios)
         if $DOCKER_CMD ps --format "{{.Names}}" 2>/dev/null | grep -qE "^postgres$|postgres"; then
-            local POSTGRES_USER=${POSTGRES_USER:-postgres}
-            local POSTGRES_DB=${POSTGRES_DB:-postgres}
-            local KEYCLOAK_DB_NAME=${KEYCLOAK_DB_NAME:-keycloak}
+            local POSTGRES_USER=${POSTGRES_USER}
+            local POSTGRES_DB=${POSTGRES_DB}
+            local KEYCLOAK_DB_NAME=${KEYCLOAK_DB_NAME}
             
             # Solo verificar si hay conexiones huérfanas antiguas (>5 minutos)
             local orphaned_conns=$($DOCKER_CMD exec postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc \
@@ -1838,9 +1838,9 @@ start_services() {
             set +a
         fi
         
-        local POSTGRES_USER=${POSTGRES_USER:-postgres}
-        local POSTGRES_DB=${POSTGRES_DB:-postgres}
-        local KEYCLOAK_DB_NAME=${KEYCLOAK_DB_NAME:-keycloak}
+        local POSTGRES_USER=${POSTGRES_USER}
+        local POSTGRES_DB=${POSTGRES_DB}
+        local KEYCLOAK_DB_NAME=${KEYCLOAK_DB_NAME}
         
         # Esperar 3 segundos para que Keycloak intente iniciar
         sleep 3

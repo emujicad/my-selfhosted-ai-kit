@@ -143,8 +143,8 @@ backup_volume() {
 # Función para backup de base de datos PostgreSQL
 backup_postgres() {
     local BACKUP_SESSION_DIR=$1
-    local DB_NAME="${POSTGRES_DB:-n8n}"
-    local DB_USER="${POSTGRES_USER:-postgres}"
+    local DB_NAME="${POSTGRES_DB}"
+    local DB_USER="${POSTGRES_USER}"
     local BACKUP_FILE="${BACKUP_SESSION_DIR}/postgres_${DB_NAME}.sql.gz"
     
     log "Backupeando base de datos PostgreSQL: $DB_NAME"
@@ -398,8 +398,8 @@ restore_volume() {
 # Función para restaurar PostgreSQL
 restore_postgres() {
     local BACKUP_SESSION_DIR=$1
-    local DB_NAME="${POSTGRES_DB:-n8n}"
-    local DB_USER="${POSTGRES_USER:-postgres}"
+    local DB_NAME="${POSTGRES_DB}"
+    local DB_USER="${POSTGRES_USER}"
     local BACKUP_FILE="${BACKUP_SESSION_DIR}/postgres_${DB_NAME}.sql.gz"
     
     if [ ! -f "$BACKUP_FILE" ]; then
