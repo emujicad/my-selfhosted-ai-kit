@@ -250,6 +250,8 @@ action_create_admin() {
     local NEW_USER="${KEYCLOAK_PERMANENT_ADMIN_USERNAME:-emujicad}"
     local NEW_PASS="${KEYCLOAK_PERMANENT_ADMIN_PASSWORD:-}"
     local NEW_EMAIL="${KEYCLOAK_PERMANENT_ADMIN_EMAIL:-emujicad@gmail.com}"
+    local NEW_FIRST="${KEYCLOAK_ADMIN_FIRST_NAME:-Admin}"
+    local NEW_LAST="${KEYCLOAK_ADMIN_LAST_NAME:-User}"
     
     if [ -z "$NEW_PASS" ]; then
         print_error "KEYCLOAK_PERMANENT_ADMIN_PASSWORD not set in .env"
@@ -287,7 +289,7 @@ action_create_admin() {
     print_info "Creating user '$NEW_USER'..."
     curl -s -X POST "http://localhost:8080/admin/realms/master/users" \
         -H "Authorization: Bearer $TEMP_TOKEN" -H "Content-Type: application/json" \
-        -d "{\"username\":\"$NEW_USER\",\"email\":\"$NEW_EMAIL\",\"enabled\":true,\"firstName\":\"Admin\",\"lastName\":\"User\"}"
+        -d "{\"username\":\"$NEW_USER\",\"email\":\"$NEW_EMAIL\",\"enabled\":true,\"firstName\":\"$NEW_FIRST\",\"lastName\":\"$NEW_LAST\"}"
         
     # 4. Get New ID & Set Password
     local NEW_ID_CHECK=$(curl -s "http://localhost:8080/admin/realms/master/users?username=$NEW_USER" -H "Authorization: Bearer $TEMP_TOKEN")

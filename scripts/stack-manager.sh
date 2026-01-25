@@ -251,6 +251,7 @@ generate_oidc_userinfo() {
     
     # Valores por defecto si no están en .env
     local USER_EMAIL="${OPEN_WEBUI_OIDC_USER_EMAIL:-admin@example.com}"
+    local USER_USERNAME="${OPEN_WEBUI_OIDC_USER_USERNAME:-admin}"
     local USER_NAME="${OPEN_WEBUI_OIDC_USER_NAME:-Admin User}"
     local GIVEN_NAME="${OPEN_WEBUI_OIDC_USER_GIVEN_NAME:-Admin}"
     local FAMILY_NAME="${OPEN_WEBUI_OIDC_USER_FAMILY_NAME:-User}"
@@ -261,10 +262,10 @@ generate_oidc_userinfo() {
     
     cat > "$USERINFO_FILE" <<EOF
 {
-    "sub": "admin",
+    "sub": "$USER_USERNAME",
     "email": "$USER_EMAIL",
     "email_verified": true,
-    "preferred_username": "admin",
+    "preferred_username": "$USER_USERNAME",
     "name": "$USER_NAME",
     "given_name": "$GIVEN_NAME",
     "family_name": "$FAMILY_NAME"
