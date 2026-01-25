@@ -522,9 +522,11 @@ Grafana uses **JMESPath** to parse the JSON Token and decide the user's role.
 
 #### Open WebUI (Claim Mapping)
 Open WebUI looks for a specific list of roles in the token.
-*   **Variable**: `OPENID_ROLES_CLAIM=resource_access.open-webui.roles` (configured to look at the client specific roles)
+*   **Variable**: `OPENID_ROLES_CLAIM=roles` (Configured to look at the top-level 'roles' claim)
 *   **Variable**: `OPENID_ADMIN_ROLE=openwebui-admin`
     *   If the user has the role `openwebui-admin`, they are automatically promoted to **Admin**.
+*   **Variable**: `DEFAULT_USER_ROLE=user`
+    *   Ensures new users are activated automatically (avoids "Pending" state).
 
 ### ✅ Automated Verification
 We have dedicated tests to ensure this "Contract" is never broken:

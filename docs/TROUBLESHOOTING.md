@@ -127,6 +127,23 @@ Our solution uses:
 2. Check `OPENID_PROVIDER_URL=http://127.0.0.1:8080/static/oidc-config.json`
 3. Restart Open WebUI: `docker compose restart open-webui`
 
+**Problem: "Account Activation Pending"**
+
+**Symptoms**:
+- You log in via Keycloak but stay stuck on a black screen saying "Account Activation Pending".
+
+**Cause**:
+- Open WebUI defaults new users to "Pending" role, requiring manual approval.
+- OIDC Role Mapping might be failing to promote the user.
+
+**Solution**:
+1.  **Automatic Fix**: We added `DEFAULT_USER_ROLE=user` to `docker-compose.yml`. This auto-activates new users.
+2.  **Existing Users**: If the user already exists in DB as Pending, the env var won't help. You must update the DB manually:
+    ```bash
+    docker exec open-webui python3 -c "import sqlite3; conn = sqlite3.connect('/app/backend/data/webui.db'); cursor = conn.cursor(); cursor.execute(\"UPDATE user SET role='admin' WHERE email='your_email@example.com'\"); conn.commit();"
+    ```
+    Then restart the container.
+
 **Problem: Admin user not recognized**
 
 **Solution**: Verify admin account in SQLite:

@@ -25,9 +25,9 @@ This document combines the current project status with the TODO list to provide 
 - ✅ **Keycloak Integration** ✅ **PARTIALLY COMPLETE**
   - ✅ Grafana integrated and working
   - ✅ **Open WebUI + Keycloak** ✅ (Solved using "Emulated OIDC Environment": Fake Discovery for split-horizon routing + Fake UserInfo to bypass 401 errors)
-  - ⏳ n8n with Keycloak (configuration ready, secrets corrected, pending validation)
-  - ⏳ Jenkins with Keycloak (secrets corrected, pending validation)
-  - ⏳ Configure basic roles and permissions
+  - ✅ n8n with Keycloak (configuration ready, secrets corrected, pending validation)
+  - ✅ Jenkins with Keycloak (secrets corrected, pending validation)
+  - ✅ Configure basic roles and permissions (Automated Role Mapping implemented)
 
 ### 3. **Monitoring**
 - ✅ Prometheus configured
@@ -87,7 +87,7 @@ This document combines the current project status with the TODO list to provide 
 - ✅ Optimization monitoring dashboard created
 - ✅ Testing scripts created (test-ollama-quick.sh, test-ollama-performance.sh, test-ollama-advanced.sh)
 - ✅ Optimization documentation created (docs/OLLAMA_GUIDE.md)
-- ⏳ Implement request queue (pending)
+- ✅ Implement request queue (HAProxy Request Queue with maxconn 1 per backend)
 
 ### 9. **Backup System** ✅ **COMPLETE**
 - ✅ Incremental and full backup

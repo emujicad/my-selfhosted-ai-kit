@@ -77,6 +77,20 @@ Then recreate container:
 docker compose up -d --force-recreate ollama-gpu
 ```
 
+### 🛑 Concurrency Protection (HAProxy Queue)
+
+To prevent GPU OOM (Out of Memory) crashes when n8n or multiple users request inference simultaneously, we implemented a **Request Queue** in HAProxy.
+
+**How it works:**
+1.  **HAProxy Intercepts**: All requests to `/ollama/*` go through HAProxy (port 80).
+2.  **Max Connections = 1**: We limit `ollama_back` backend to `maxconn 1`.
+3.  **Queueing**: If a request comes while GPU is busy, it is **queued** (up to 100 requests) inside HAProxy.
+4.  **n8n Configuration**: n8n is configured to point to `http://haproxy/ollama`, forcing it to respect the queue.
+
+**Benefit**:
+- n8n execution loops cannot crash the GPU.
+- Requests simply "wait" instead of failing or causing OOM.
+
 ---
 
 ## 📊 Monitoring Dashboard
