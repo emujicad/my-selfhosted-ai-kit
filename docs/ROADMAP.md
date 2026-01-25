@@ -68,6 +68,11 @@ Este documento combina el plan de acción general con los próximos pasos detall
    - Embeddings Cache habilitado
    - Corrección de bugs en scripts de validación
 
+11. **Keycloak Permanent Admin** ✅
+   - Script automatizado de migración de admin
+   - Eliminación de usuario temporal
+   - Documentación en `docs/KEYCLOAK_PERMANENT_ADMIN.md`
+
 ---
 
 ## 🎯 Plan de Acción por Prioridades

@@ -450,6 +450,9 @@ docker system prune -a
 # Create user
 ./scripts/keycloak-manager.sh create-user
 
+# Create Permanent Admin (Recommended)
+./scripts/keycloak-create-permanent-admin.sh
+
 # View status
 ./scripts/keycloak-manager.sh status
 

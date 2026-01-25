@@ -133,6 +133,12 @@ my-selfhosted-ai-kit/
 - **Architecture**: Decoupled HAProxy from strict monitoring dependencies for flexible startup
 
 
+### 2026-01-25: Keycloak Security Hardening
+- **Permanent Admin**: Created `keycloak-create-permanent-admin.sh` to automate admin migration
+- **Security**: Replaced temporary `admin` user with secured permanent admin
+- **Documentation**: Added `docs/KEYCLOAK_PERMANENT_ADMIN.md` guide
+- **Config**: Updated `.env.example` with permanent admin section
+
 ### 2026-01-23: Diagram Improvements
 - Created architecture_complete.mmd (full system architecture)
 - Created oidc_authentication_flow.mmd (SSO sequence)
