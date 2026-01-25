@@ -16,7 +16,7 @@ echo "============================================"
 # Configuration
 KEYCLOAK_URL=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}
 REALM="master"
-USER="emujicad"
+USER="admin-user"
 PASS="${KEYCLOAK_ADMIN_PASSWORD:-TempPass123!}"
 
 echo "🎯 Target User: $USER"

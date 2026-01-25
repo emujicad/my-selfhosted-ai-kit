@@ -608,16 +608,16 @@ docker compose --profile security up -d keycloak-init
 This usually happens if the Keycloak user doesn't have an email address.
 ```bash
 # Set email for admin user
-docker exec keycloak /opt/keycloak/bin/kcadm.sh update users/$(docker exec keycloak /opt/keycloak/bin/kcadm.sh get users -r master -q username=admin --fields id --format csv --noquotes) -r master -s email=emujicad@gmail.com -s emailVerified=true
+docker exec keycloak /opt/keycloak/bin/kcadm.sh update users/$(docker exec keycloak /opt/keycloak/bin/kcadm.sh get users -r master -q username=admin --fields id --format csv --noquotes) -r master -s email=admin@example.com -s emailVerified=true
 ```
 
 ### Problem: Grafana Login Failed ("User sync failed")
 This happens if Grafana cannot map the Keycloak user to an existing local user.
 **Ensure the Grafana admin email matches the Keycloak admin email.**
-1. Check Keycloak email (e.g., `emujicad@gmail.com`).
+1. Check Keycloak email (e.g., `admin@example.com`).
 2. Update `.env` to match:
    ```bash
-   GRAFANA_ADMIN_EMAIL=emujicad@gmail.com
+   GRAFANA_ADMIN_EMAIL=admin@example.com
    ```
 3. Restart Grafana:
    ```bash

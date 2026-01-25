@@ -25,7 +25,7 @@ Este documento combina el plan de acción general con los próximos pasos detall
    - Solución "Emulated OIDC Environment" implementada
    - Fake Discovery (`oidc-config.json`) para split-horizon routing
    - Fake UserInfo (`userinfo.json`) para bypass de 401 errors
-   - Autenticación SSO totalmente funcional con admin@emujicad
+   - Autenticación SSO totalmente funcional con admin@admin-user
 
 4. **Monitoreo Completo** ✅
    - Prometheus configurado

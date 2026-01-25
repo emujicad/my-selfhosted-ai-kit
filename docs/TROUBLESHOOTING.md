@@ -148,7 +148,7 @@ Our solution uses:
 
 **Solution**: Verify admin account in SQLite:
 ```bash
-docker exec open-webui sqlite3 /app/backend/data/webui.db "SELECT * FROM user WHERE email='emujicad@gmail.com';"
+docker exec open-webui sqlite3 /app/backend/data/webui.db "SELECT * FROM user WHERE email='admin@example.com';"
 ```
 
 **See full details**: [`KEYCLOAK_GUIDE.md`](KEYCLOAK_GUIDE.md#open-webui--keycloak)

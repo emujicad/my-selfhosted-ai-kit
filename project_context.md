@@ -142,8 +142,8 @@ my-selfhosted-ai-kit/
 - **Network Fix**: Connected Jenkins and Backup services to `genai-network` for internet access (plugins/apk).
 - **PostgreSQL**: Enhanced `pg_dump` logic in `backup-manager.sh` to work reliably via DooD `docker exec`.
 - **n8n OIDC**: Documented Community Edition limitation (License required for SSO).
-  - **Grafana OIDC Fix**: Restored authentication by reverting to git HEAD. Configured robust **Role Mapping** allowing `emujicad@gmail.com` to gain Admin rights without conflicting with the internal `admin@example.com` superuser.
-  - **Identity Standardization**: Enforced "Ender Mujica" (`emujicad`) as the standard identity across Keycloak, Jenkins, Grafana, and Open WebUI via `.env` variables and `userinfo.json` emulation.
+  - **Grafana OIDC Fix**: Restored authentication by reverting to git HEAD. Configured robust **Role Mapping** allowing `admin@example.com` to gain Admin rights without conflicting with the internal `admin@example.com` superuser.
+  - **Identity Standardization**: Enforced "Admin User" (`admin-user`) as the standard identity across Keycloak, Jenkins, Grafana, and Open WebUI via `.env` variables and `userinfo.json` emulation.
     - *Note*: `userinfo.json` is now **gitignored** and auto-generated from `.env` credentials. `userinfo.json.example` serves as the template.
 
 
@@ -171,7 +171,7 @@ my-selfhosted-ai-kit/
 - **Fail-Secure Architecture**: No silent fallbacks. Admin accounts, databases, and encryption keys MUST be defined in `.env`.
 - **Validation Standardization**: Unified error handling and validation logic across `validate-system.sh` and stack managers.
 - **Clean Slate Verification**: Performed a full destructive purge (`clean all`) and successful redeployment to verify repo-completeness and "First Run" stability.
-- **Identity Standardization**: Established "Ender Mujica" (`emujicad`) as the standard identity across all SSO consumers (Grafana, OpenWebUI, Jenkins).
+- **Identity Standardization**: Established "Admin User" (`admin-user`) as the standard identity across all SSO consumers (Grafana, OpenWebUI, Jenkins).
 
 ## Known Issues & Limitations
 
@@ -223,5 +223,5 @@ docker compose logs -f [service]
 ---
 
 **Last Updated**: 2026-01-24  
-**Maintained By**: emujicad  
+**Maintained By**: admin-user  
 **AI Assistant**: Antigravity (Google DeepMind)

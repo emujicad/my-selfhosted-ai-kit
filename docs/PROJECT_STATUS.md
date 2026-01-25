@@ -29,11 +29,12 @@ This document combines the current project status with the TODO list to provide 
   - ✅ n8n with Keycloak (Documented: OIDC requires Enterprise License)
   - ✅ Configure basic roles and permissions (Automated Role Mapping implemented)
   - ✅ **Permanent Admin User Created** (Scripted & Secured) ✅
-  - ✅ **Identity Standardization**: Enforced "Ender Mujica" (`emujicad`) as the standard identity across Keycloak, Jenkins, Grafana, and Open WebUI.
-  - ✅ **Role Mapping**: Configured robust OIDC Role Mapping to safely separate internal admin accounts from personal user accounts.
-  - ✅ **Documentation**: Updated README and Context to reflect OIDC emulation security.
-  - ✅ **Security Hardening**: Removed unsafe "default" credentials from `docker-compose.yml` and scripts. System now enforces strict `.env` validation.
-  - ✅ **Grafana OIDC Fix**: Restored authentication by reverting to git HEAD and resolving Keycloak email conflicts.
+  - ✅ **Identity Standardization**: Enforced "Admin User" (`admin-user`) as the standard identity across Keycloak, Jenkins, Grafana, and Open WebUI.
+  - ✅ **Restore Grafana OIDC**: Revived OIDC login via git history investigation.
+  - ✅ **Security Hardening (Deep Clean)**: Removed all insecure default credentials from `docker-compose.yml` and scripts.
+  - ✅ **Strict Pre-flight Checks**: Updated `stack-manager.sh` to enforce `.env` variable existence (fail-fast).
+  - ✅ **HAProxy Stability**: Fixed DNS startup race condition by adding `init-addr none`.
+  - ✅ **Clean Slate Deployment**: Verified full destructive clean and redeploy flow.
 
 ### 3. **Monitoring**
 - ✅ Prometheus configured
@@ -113,9 +114,12 @@ This document combines the current project status with the TODO list to provide 
 
 ---
 
-## 📝 Pending Tasks
+## ⏳ Pending Tasks (TODO)
 
 ### 🔥 HIGH PRIORITY
+- [ ] Add certificate management (Certbot/Let's Encrypt).
+- [ ] Integrate more LLM models (DeepSeek-R1 full version).
+- [ ] Improve Grafana default dashboards.
 
 #### 🔐 Security
 

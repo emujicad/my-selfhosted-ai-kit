@@ -252,7 +252,7 @@ Open WebUI integration was solved using an "Emulated OIDC Environment" approach 
 1. **Split Horizon Routing**: Solved with "Fake Discovery" (`oidc-config.json`) that separates browser routes (`localhost:8080`) and backend (`keycloak:8080`)
 2. **UserInfo 401 Errors**: Solved with "Fake UserInfo" (`userinfo.json`) serving static profile data
 3. **User Mapping**: Resolved by direct SQLite modification to link OIDC login with existing admin account
-4. **Result**: Fully functional SSO authentication with admin@emujicad
+4. **Result**: Fully functional SSO authentication with admin@admin-user
 
 ### Configuration
 
