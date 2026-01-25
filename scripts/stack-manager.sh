@@ -2420,71 +2420,125 @@ init_volumes() {
 show_service_info() {
     print_header "INFORMACIÓN DE SERVICIOS"
     
-    # Obtener lista de todos los servicios corriendo
-    local running_services=$($DOCKER_CMD compose ps --services --filter "status=running" 2>/dev/null)
-    
+    # Obtener lista de todos los servicios corriendo con su estado
+    local running_services_status=$($DOCKER_CMD compose ps --format '{{.Service}}:{{.Status}}' 2>/dev/null)
+    local running_services=$(echo "$running_services_status" | cut -d: -f1)
+
+    # Función auxiliar para obtener el icono de estado
+    get_status_icon() {
+        local service=$1
+        local status_line=$(echo "$running_services_status" | grep "^${service}:" | cut -d: -f2-)
+        
+        if [ -z "$status_line" ]; then
+            echo ""
+            return
+        fi
+        
+        if echo "$status_line" | grep -q "(healthy)"; then
+            echo "✅"
+        elif echo "$status_line" | grep -q "(unhealthy)"; then
+            echo "❌"
+        elif echo "$status_line" | grep -q "(health: starting)"; then
+            echo "⏳"
+        else
+            # Running but no healthcheck
+            echo "running"
+        fi
+    }
+
+    # Función auxiliar para formatear la línea
+    print_service_line() {
+        local name=$1
+        local url=$2
+        local service_id=$3
+        local icon=$(get_status_icon "$service_id")
+        
+        if [ "$icon" = "running" ]; then
+            echo "  - $name: $url"
+        else
+            echo "  - $name: $url $icon"
+        fi
+    }
+
     # Servicios Base y automatización
     if echo "$running_services" | grep -qE "^postgres$"; then
         print_info "Servicios Base:"
-        echo "  - PostgreSQL: localhost:5432"
-        if echo "$running_services" | grep -qE "^postgres-exporter$"; then echo "    (Exporter: :9187)"; fi
+        print_service_line "PostgreSQL" "localhost:5432" "postgres"
+        if echo "$running_services" | grep -qE "^postgres-exporter$"; then 
+            echo "    (Exporter: :9187) $(get_status_icon "postgres-exporter")"
+        fi
         if echo "$running_services" | grep -qE "^qdrant$"; then
-             echo "  - Qdrant: http://localhost:6333"
+             print_service_line "Qdrant" "http://localhost:6333" "qdrant"
         fi
     fi
 
     if echo "$running_services" | grep -qE "^open-webui$"; then
         print_info "Servicios de IA:"
-        echo "  - Open WebUI: http://localhost:3000"
-        if echo "$running_services" | grep -qE "^openwebui-exporter$"; then echo "    (Exporter: :9890)"; fi
+        print_service_line "Open WebUI" "http://localhost:3000" "open-webui"
+        if echo "$running_services" | grep -qE "^openwebui-exporter$"; then 
+             echo "    (Exporter: :9890) $(get_status_icon "openwebui-exporter")"
+        fi
         if echo "$running_services" | grep -qE "^ollama(-gpu)?$"; then
-             echo "  - Ollama: http://localhost:11434"
-             if echo "$running_services" | grep -qE "^ollama-exporter$"; then echo "    (Exporter: :9888)"; fi
-             if echo "$running_services" | grep -qE "^nvidia-exporter$"; then echo "    (NVIDIA Exporter: :9400)"; fi
+             # Detectar si es ollama-gpu, ollama-cpu o ollama
+             local ollama_service="ollama"
+             if echo "$running_services" | grep -q "ollama-gpu"; then ollama_service="ollama-gpu"; fi
+             
+             print_service_line "Ollama" "http://localhost:11434" "$ollama_service"
+             
+             if echo "$running_services" | grep -qE "^ollama-exporter$"; then 
+                 echo "    (Exporter: :9888) $(get_status_icon "ollama-exporter")"
+             fi
+             if echo "$running_services" | grep -qE "^nvidia-exporter$"; then 
+                 echo "    (NVIDIA Exporter: :9400) $(get_status_icon "nvidia-exporter")"
+             fi
         fi
     fi
 
     if echo "$running_services" | grep -qE "^n8n$"; then
         print_info "Servicios de Automatización:"
-        echo "  - n8n: http://localhost:5678"
-        if echo "$running_services" | grep -qE "^n8n-exporter$"; then echo "    (Exporter: :9889)"; fi
+        print_service_line "n8n" "http://localhost:5678" "n8n"
+        if echo "$running_services" | grep -qE "^n8n-exporter$"; then 
+            echo "    (Exporter: :9889) $(get_status_icon "n8n-exporter")"
+        fi
     fi
     
     if echo "$running_services" | grep -qE "^jenkins$"; then
         print_info "Servicios CI/CD:"
-        echo "  - Jenkins: http://localhost:8080/jenkins"
+        print_service_line "Jenkins" "http://localhost:8080/jenkins" "jenkins"
     fi
     
     # Servicios con perfiles
     if echo "$running_services" | grep -qE "^grafana|prometheus|alertmanager|cadvisor|node-exporter$"; then
         print_info "Servicios de Monitoreo:"
-        if echo "$running_services" | grep -qE "^grafana$"; then echo "  - Grafana: http://localhost:3001"; fi
-        if echo "$running_services" | grep -qE "^prometheus$"; then echo "  - Prometheus: http://localhost:9090"; fi
-        if echo "$running_services" | grep -qE "^alertmanager$"; then echo "  - AlertManager: http://localhost:9093"; fi
-        if echo "$running_services" | grep -qE "^cadvisor$"; then echo "  - cAdvisor: http://localhost:8082"; fi
-        if echo "$running_services" | grep -qE "^node-exporter$"; then echo "  - Node Exporter: http://localhost:9100/metrics"; fi
+        if echo "$running_services" | grep -qE "^grafana$"; then print_service_line "Grafana" "http://localhost:3001" "grafana"; fi
+        if echo "$running_services" | grep -qE "^prometheus$"; then print_service_line "Prometheus" "http://localhost:9090" "prometheus"; fi
+        if echo "$running_services" | grep -qE "^alertmanager$"; then print_service_line "AlertManager" "http://localhost:9093" "alertmanager"; fi
+        if echo "$running_services" | grep -qE "^cadvisor$"; then print_service_line "cAdvisor" "http://localhost:8082" "cadvisor"; fi
+        if echo "$running_services" | grep -qE "^node-exporter$"; then print_service_line "Node Exporter" "http://localhost:9100/metrics" "node-exporter"; fi
     fi
     
     if echo "$running_services" | grep -qE "^keycloak|modsecurity$"; then
         print_info "Servicios de Seguridad:"
-        if echo "$running_services" | grep -qE "^keycloak$"; then echo "  - Keycloak: http://localhost:8080"; fi
-        if echo "$running_services" | grep -qE "^modsecurity$"; then echo "  - ModSecurity WAF: http://localhost:8080 (Proxy)"; fi
+        if echo "$running_services" | grep -qE "^keycloak$"; then print_service_line "Keycloak" "http://localhost:8080" "keycloak"; fi
+        if echo "$running_services" | grep -qE "^modsecurity$"; then print_service_line "ModSecurity WAF" "http://localhost:8080 (Proxy)" "modsecurity"; fi
     fi
     
     if echo "$running_services" | grep -qE "^redis|haproxy|pgvector$"; then
         print_info "Servicios de Infraestructura:"
         if echo "$running_services" | grep -qE "^redis$"; then 
-            echo "  - Redis: localhost:6379"
-            if echo "$running_services" | grep -qE "^redis-exporter$"; then echo "    (Exporter: :9121)"; fi
+            print_service_line "Redis" "localhost:6379" "redis"
+            if echo "$running_services" | grep -qE "^redis-exporter$"; then 
+                echo "    (Exporter: :9121) $(get_status_icon "redis-exporter")"
+            fi
         fi
-        if echo "$running_services" | grep -qE "^haproxy$"; then echo "  - HAProxy: http://localhost:80"; fi
-        if echo "$running_services" | grep -qE "^pgvector$"; then echo "  - PgVector: localhost:5433"; fi
+        if echo "$running_services" | grep -qE "^haproxy$"; then print_service_line "HAProxy" "http://localhost:80" "haproxy"; fi
+        if echo "$running_services" | grep -qE "^pgvector$"; then print_service_line "PgVector" "localhost:5433" "pgvector"; fi
     fi
     
     if echo "$running_services" | grep -qE "^backup|sync$"; then
         print_info "Utilidades:"
-        if echo "$running_services" | grep -qE "^backup$"; then echo "  - Backup Service: (Background)"; fi
-        if echo "$running_services" | grep -qE "^sync$"; then echo "  - Sync Service: (Background)"; fi
+        if echo "$running_services" | grep -qE "^backup$"; then print_service_line "Backup Service" "(Background)" "backup"; fi
+        if echo "$running_services" | grep -qE "^sync$"; then print_service_line "Sync Service" "(Background)" "sync"; fi
     fi
 }
 
