@@ -954,7 +954,7 @@ services:
     networks:
       - monitoring-network
     healthcheck:
-      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9400/metrics" ]
+      test: [ "CMD-SHELL", "grep -q \":24B8\" /proc/net/tcp6 || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -995,7 +995,7 @@ services:
     command: python3 /app/ollama-exporter.py
     # Depende de cualquier servicio Ollama que esté activo (gpu-nvidia o cpu)
     healthcheck:
-      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9888/health" ]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:9888/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -1033,7 +1033,7 @@ services:
     # No depende de n8n directamente para permitir que el exporter funcione
     # incluso si n8n no está corriendo (simplemente reportará n8n_up=0)
     healthcheck:
-      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9889/health" ]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:9889/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -1071,7 +1071,7 @@ services:
     # No depende de open-webui directamente para permitir que el exporter funcione
     # incluso si open-webui no está corriendo (simplemente reportará openwebui_up=0)
     healthcheck:
-      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9890/health" ]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:9890/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
