@@ -2021,6 +2021,37 @@ start_services() {
         print_info "Estado de servicios:"
         $DOCKER_CMD compose ps
         
+        # Si hay perfil chat-ai, informar URLs
+        if [[ " ${unique_profiles[@]} " =~ " chat-ai " ]]; then
+            echo ""
+            print_info "Servicios de IA disponibles:"
+            echo "  - Open WebUI: http://localhost:3000"
+            echo "  - Ollama: http://localhost:11434"
+        fi
+
+        # Si hay perfil automation, informar URLs
+        if [[ " ${unique_profiles[@]} " =~ " automation " ]]; then
+            echo ""
+            print_info "Servicios de automatización disponibles:"
+            echo "  - n8n: http://localhost:5678"
+        fi
+
+        # Si hay perfil infrastructure, informar URLs
+        if [[ " ${unique_profiles[@]} " =~ " infrastructure " ]]; then
+            echo ""
+            print_info "Servicios de infraestructura disponibles:"
+            echo "  - Redis: localhost:6379"
+            echo "  - Qdrant: http://localhost:6333"
+            echo "  - HAProxy: http://localhost:80"
+        fi
+        
+        # Si hay perfil ci-cd, informar URLs
+        if [[ " ${unique_profiles[@]} " =~ " ci-cd " ]]; then
+            echo ""
+            print_info "Servicios CI/CD disponibles:"
+            echo "  - Jenkins: http://localhost:8080/jenkins"
+        fi
+
         # Si hay perfil monitoring, informar URLs
         if [[ " ${unique_profiles[@]} " =~ " monitoring " ]]; then
             echo ""
@@ -2031,8 +2062,6 @@ start_services() {
         fi
         
         # Si hay perfil security, informar URLs
-        # NOTA: docker-compose tiene keycloak-init que crea los clientes automáticamente
-        # Este script solo informa, NO crea clientes (docker-compose lo hace)
         if [[ " ${unique_profiles[@]} " =~ " security " ]]; then
             echo ""
             print_info "Servicios de seguridad disponibles:"
