@@ -369,7 +369,7 @@ validate_before_start() {
 # Función para obtener dependencias de un perfil
 # Retorna los perfiles de los que depende un perfil dado
 get_profile_dependencies() {
-    local profile=$1
+    local profile=${1:-}
     case "$profile" in
         chat-ai)
             # Open WebUI requiere Keycloak (auth), Redis (cache), Ollama (IA)
@@ -435,7 +435,7 @@ resolve_dependencies() {
 
 # Función para expandir presets
 expand_preset() {
-    local preset=$1
+    local preset=${1:-}
     case "$preset" in
         default)
             echo "gpu-nvidia monitoring infrastructure security automation chat-ai"
@@ -460,7 +460,7 @@ expand_preset() {
 
 # Función para construir comando docker compose con perfiles
 build_compose_command() {
-    local action=$1
+    local action=${1:-}
     shift
     local input_profiles=("$@")
     
@@ -2288,7 +2288,7 @@ show_status() {
 
 # Función para mostrar logs
 show_logs() {
-    local service=$1
+    local service=${1:-}
     if [ -z "$service" ]; then
         print_info "Mostrando logs de todos los servicios..."
         $DOCKER_CMD compose logs -f
