@@ -40,8 +40,8 @@ check_required_vars() {
 # Configuration
 KEYCLOAK_URL="http://localhost:8080"
 REALM="${KEYCLOAK_REALM:-master}"
-USER="${KEYCLOAK_PERMANENT_ADMIN_USERNAME:-emujicad}"
-PASS="${KEYCLOAK_PERMANENT_ADMIN_PASSWORD:-TempPass123!}"
+USER="${KEYCLOAK_ADMIN_USER}"
+PASS="${KEYCLOAK_ADMIN_PASSWORD}"
 
 # Validate Critical Vars
 check_required_vars "KEYCLOAK_ADMIN_USER" "KEYCLOAK_ADMIN_PASSWORD"

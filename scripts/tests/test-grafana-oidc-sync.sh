@@ -90,18 +90,18 @@ print_info "Grafana internal admin email: $GRAFANA_ADMIN_EMAIL"
 # 2. Check Keycloak Users
 print_info "Checking Keycloak users..."
 # Initialize variable to avoid unbound error
-KEYCLOAK_ADMIN_USER_ACTUAL="${KEYCLOAK_ADMIN_USER:-admin}"
+KEYCLOAK_ADMIN_USER_ACTUAL="${KEYCLOAK_ADMIN_USER}"
 
 # Authenticate kcadm
-kcadm config credentials --server http://localhost:8080 --realm master --user "${KEYCLOAK_ADMIN_USER:-admin}" --password "${KEYCLOAK_ADMIN_PASSWORD}" >/dev/null 2>&1
+kcadm config credentials --server http://localhost:8080 --realm master --user "${KEYCLOAK_ADMIN_USER}" --password "${KEYCLOAK_ADMIN_PASSWORD}" >/dev/null 2>&1
 
 KEYCLOAK_USERS=$(kcadm get users -r master --fields username,email,enabled)
-KEYCLOAK_ADMIN_EMAIL_KC=$(echo "$KEYCLOAK_USERS" | jq -r '.[] | select(.username=="'"${KEYCLOAK_ADMIN_USER:-admin}"'") | .email')
+KEYCLOAK_ADMIN_EMAIL_KC=$(echo "$KEYCLOAK_USERS" | jq -r '.[] | select(.username=="'"${KEYCLOAK_ADMIN_USER}"'") | .email')
 
 if [ -z "$KEYCLOAK_ADMIN_EMAIL_KC" ] || [ "$KEYCLOAK_ADMIN_EMAIL_KC" == "null" ]; then
-    # Fallback: check if we are using a custom admin
-    KEYCLOAK_ADMIN_EMAIL_KC=$(echo "$KEYCLOAK_USERS" | jq -r '.[] | select(.username=="'"${KEYCLOAK_PERMANENT_ADMIN_USERNAME:-emujicad}"'") | .email')
-    KEYCLOAK_ADMIN_USER_ACTUAL="${KEYCLOAK_PERMANENT_ADMIN_USERNAME:-emujicad}"
+    # Fallback: check if we are using the main admin
+    KEYCLOAK_ADMIN_EMAIL_KC=$(echo "$KEYCLOAK_USERS" | jq -r '.[] | select(.username=="'"${KEYCLOAK_ADMIN_USER}"'") | .email')
+    KEYCLOAK_ADMIN_USER_ACTUAL="${KEYCLOAK_ADMIN_USER}"
 fi
 print_info "Keycloak user ($KEYCLOAK_ADMIN_USER_ACTUAL) email: $KEYCLOAK_ADMIN_EMAIL_KC"
 
