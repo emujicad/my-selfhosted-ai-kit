@@ -29,6 +29,7 @@ This document combines the current project status with the TODO list to provide 
   - ✅ n8n with Keycloak (Documented: OIDC requires Enterprise License)
   - ✅ Configure basic roles and permissions (Automated Role Mapping implemented)
   - ✅ **Permanent Admin User Created** (Scripted & Secured) ✅
+  - ✅ **Grafana OIDC Fix**: Restored authentication by reverting to git HEAD and resolving Keycloak email conflicts.
 
 ### 3. **Monitoring**
 - ✅ Prometheus configured
@@ -117,6 +118,8 @@ This document combines the current project status with the TODO list to provide 
 - [ ] **Complete Keycloak Integration**
   - [x] Grafana with Keycloak ✅
   - [x] Open WebUI with Keycloak ✅ (Emulated OIDC Environment solution)
+  - [ ] Monitor Grafana OIDC stability for 24h
+  - [ ] Verify other services (Jenkins, Open WebUI) verify OIDC integration remains stable (Regression testing)
   - [ ] Test n8n with Keycloak (configuration ready)
   - [ ] Test Jenkins with Keycloak (initialization script ready)
   - [x] Configure basic roles and permissions ✅ (Auto-mapped in docker-compose.yml)
