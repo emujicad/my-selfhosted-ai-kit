@@ -1,3 +1,8 @@
+// EXAMPLE FILE - DO NOT MODIFY MANUALLY
+// This file serves as a template for userinfo.json.
+// The actual 'userinfo.json' is automatically generated/updated by scripts/stack-manager.sh
+// using the 'OIDC User Emulation' values from your .env file.
+// For more details, see docs/CONFIGURATION.md.
 {
     "sub": "YOUR_USERNAME",
     "email": "your_email@example.com",
