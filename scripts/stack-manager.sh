@@ -556,7 +556,7 @@ cleanup_created_containers() {
         while IFS= read -r container; do
             if [ -n "$container" ]; then
                 if $DOCKER_CMD rm -f "$container" >/dev/null 2>&1; then
-                    print_success "   ✅ Eliminado: $container"
+                    print_success "   Eliminado: $container"
                     cleaned=$((cleaned + 1))
                 else
                     print_warning "   ⚠️  No se pudo eliminar: $container"
@@ -818,6 +818,11 @@ cleanup_orphaned_resources() {
         fi
         
         for volume in "${project_volumes[@]}"; do
+            # Omitir ollama_storage de la lista general (se pregunta aparte)
+            if [ "$volume" == "ollama_storage" ]; then
+                continue
+            fi
+
             local volume_with_prefix="${project_name}_${volume}"
             if $DOCKER_CMD volume inspect "$volume_with_prefix" >/dev/null 2>&1; then
                 existing_volumes+=("$volume_with_prefix")
@@ -869,7 +874,7 @@ cleanup_orphaned_resources() {
                 if [ -n "$container" ]; then
                     echo "   - $container"
                     if $DOCKER_CMD rm -f "$container" >/dev/null 2>&1; then
-                        print_success "   ✅ Eliminado: $container"
+                        print_success "   Eliminado: $container"
                         cleaned_items+=("contenedor huérfano: $container")
                     else
                         print_warning "   ⚠️  No se pudo eliminar: $container"
@@ -938,13 +943,28 @@ cleanup_orphaned_resources() {
                  fi
             fi
 
+            # PROTECCIÓN: Preguntar sobre modelos de Ollama antes de borrar
+            local delete_models="n"
+            if [ "$clean_type" = "all" ] || [ "$clean_type" = "storage" ]; then
+                 echo ""
+                 print_warning "⚠️  OPCIÓN DE LIMPIEZA DE MODELOS OLLAMA"
+                 print_info "   Borrar los modelos requerirá descargarlos nuevamente (varios GBs)."
+                 read -p "¿Deseas borrar también los MODELOS LLM descargados? (s/N) " -n 1 -r
+                 echo ""
+                 if [[ "$REPLY" =~ ^[Ss]$ ]]; then
+                     delete_models="s"
+                 else
+                     print_info "✅ Se conservarán los modelos LLM (ollama_storage)."
+                 fi
+            fi
+
             # Eliminar contenedores detenidos
             if [ -n "$stopped_containers" ]; then
                 print_info "Eliminando contenedores detenidos..."
                 while IFS= read -r container; do
                     if [ -n "$container" ]; then
                         if $DOCKER_CMD rm -f "$container" >/dev/null 2>&1; then
-                            print_success "   ✅ Eliminado: $container"
+                            print_success "   Eliminado: $container"
                             cleaned_items+=("contenedor detenido: $container")
                         else
                             print_warning "   ⚠️  No se pudo eliminar: $container"
@@ -960,7 +980,7 @@ cleanup_orphaned_resources() {
                 while IFS= read -r container; do
                     if [ -n "$container" ]; then
                         if $DOCKER_CMD rm -f "$container" >/dev/null 2>&1; then
-                            print_success "   ✅ Eliminado: $container"
+                            print_success "   Eliminado: $container"
                             cleaned_items+=("contenedor creado: $container")
                         else
                             print_warning "   ⚠️  No se pudo eliminar: $container"
@@ -1015,7 +1035,7 @@ cleanup_orphaned_resources() {
             print_info "Eliminando redes..."
             for network in "${empty_networks[@]}"; do
                 if $DOCKER_CMD network rm "$network" >/dev/null 2>&1; then
-                    print_success "   ✅ Eliminada: $network"
+                    print_success "   Eliminada: $network"
                     cleaned_items+=("red del proyecto: $network")
                 else
                     print_warning "   ⚠️  No se pudo eliminar: $network"
@@ -1077,7 +1097,7 @@ cleanup_orphaned_resources() {
             print_info "Eliminando volúmenes..."
             for volume in "${existing_volumes[@]}"; do
                 if $DOCKER_CMD volume rm "$volume" >/dev/null 2>&1; then
-                    print_success "   ✅ Eliminado: $volume"
+                    print_success "   Eliminado: $volume"
                     cleaned_items+=("volumen: $volume")
                 else
                     print_warning "   ⚠️  No se pudo eliminar: $volume"
@@ -1085,7 +1105,30 @@ cleanup_orphaned_resources() {
                 fi
             done
         else
-            print_info "✅ No se encontraron volúmenes del proyecto para eliminar"
+        fi
+        
+        # Eliminar modelos de Ollama (solo si se confirmó)
+        if [ "$delete_models" = "s" ]; then
+            print_info "🗑️  Eliminando volumen de modelos Ollama..."
+            local volume="ollama_storage"
+            local volume_with_prefix="${project_name}_${volume}"
+            local target_volume=""
+            
+            if $DOCKER_CMD volume inspect "$volume_with_prefix" >/dev/null 2>&1; then
+                target_volume="$volume_with_prefix"
+            elif $DOCKER_CMD volume inspect "$volume" >/dev/null 2>&1; then
+                target_volume="$volume"
+            fi
+            
+            if [ -n "$target_volume" ]; then
+                if $DOCKER_CMD volume rm "$target_volume" >/dev/null 2>&1; then
+                    print_success "   Eliminado: $target_volume"
+                    cleaned_items+=("volumen modelos: $target_volume")
+                else
+                    print_warning "   ⚠️  No se pudo eliminar: $target_volume"
+                    failed_items+=("volumen modelos: $target_volume")
+                fi
+            fi
         fi
     fi
     
@@ -1130,7 +1173,7 @@ cleanup_orphaned_resources() {
                 # Capturar error para análisis
                 local rmi_output
                 if rmi_output=$($DOCKER_CMD rmi "$image" 2>&1); then
-                    print_success "   ✅ Eliminada: $image"
+                    print_success "   Eliminada: $image"
                     cleaned_items+=("imagen: $image")
                 else
                     # Analizar si es error de uso (conflicto)
@@ -1138,7 +1181,7 @@ cleanup_orphaned_resources() {
                         print_info "   ℹ️  Omitida: $image (en uso por otro contenedor/proyecto)"
                         # No lo agregamos a failed_items porque es un comportamiento correcto/seguro
                     elif echo "$rmi_output" | grep -qE "No such image"; then
-                         print_success "   ✅ Ya eliminada: $image"
+                         print_success "   Ya eliminada: $image"
                          # Considerarlo éxito (ya no está)
                     else
                         print_warning "   ⚠️  No se pudo eliminar: $image"
@@ -1157,7 +1200,7 @@ cleanup_orphaned_resources() {
     if [ $found_any -eq 0 ]; then
         print_info "✅ No se encontraron recursos huérfanos para limpiar"
     elif [ ${#cleaned_items[@]} -gt 0 ] && [ ${#failed_items[@]} -eq 0 ]; then
-        print_success "✅ Limpieza completada exitosamente"
+        print_success "Limpieza completada exitosamente"
         print_info "📋 Recursos limpiados (${#cleaned_items[@]}):"
         for item in "${cleaned_items[@]}"; do
             echo "   ✅ $item"
