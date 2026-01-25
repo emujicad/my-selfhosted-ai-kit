@@ -278,6 +278,44 @@ EOF
 validate_before_start() {
     print_header "VALIDACIÓN PREVIA"
     
+    local ENV_FILE="${PROJECT_DIR}/.env"
+    
+    # 1. Check for .env file
+    if [ ! -f "$ENV_FILE" ]; then
+        print_error "No .env file found!"
+        print_info "Please copy .env.example to .env and configure it."
+        exit 1
+    fi
+    
+    # Load .env variables
+    source "$ENV_FILE"
+    
+    # 2. Strict Variable Validation
+    local REQUIRED_VARS=(
+        "POSTGRES_USER"
+        "POSTGRES_PASSWORD"
+        "POSTGRES_DB"
+        "KEYCLOAK_ADMIN_USER"
+        "KEYCLOAK_ADMIN_PASSWORD"
+        "GRAFANA_ADMIN_EMAIL"
+        "GRAFANA_ADMIN_PASSWORD"
+        "N8N_ENCRYPTION_KEY"
+        "N8N_USER_MANAGEMENT_JWT_SECRET"
+    )
+    
+    local MISSING_VARS=0
+    for VAR in "${REQUIRED_VARS[@]}"; do
+        if [ -z "${!VAR:-}" ]; then
+            print_error "Missing required variable: $VAR"
+            MISSING_VARS=1
+        fi
+    done
+    
+    if [ "$MISSING_VARS" -eq 1 ]; then
+        print_error "Critical environment variables are missing in .env."
+        print_info "Security enforcement does not allow default values for credentials."
+        exit 1
+    fi
     # Corregir automáticamente variables de .env que necesitan comillas
     auto_fix_env_quotes
     

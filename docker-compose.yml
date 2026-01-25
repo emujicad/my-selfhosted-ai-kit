@@ -672,7 +672,7 @@ services:
       - GF_DATABASE_SSL_MODE=disable
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD?Variable not set}
       - GF_LOG_LEVEL=debug
-      - GF_SECURITY_ADMIN_EMAIL=${GRAFANA_ADMIN_EMAIL:-admin@example.com}
+      - GF_SECURITY_ADMIN_EMAIL=${GRAFANA_ADMIN_EMAIL?Variable not set}
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_AUTH_GENERIC_OAUTH_ENABLED=${GRAFANA_AUTH_GENERIC_OAUTH_ENABLED:-true}
       - GF_AUTH_GENERIC_OAUTH_NAME=${GRAFANA_OAUTH_NAME:-Keycloak}
@@ -1404,8 +1404,8 @@ services:
       - genai-network
       - security-network
     environment:
-      - KEYCLOAK_ADMIN_USER=${KEYCLOAK_ADMIN_USER:-admin}
-      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      - KEYCLOAK_ADMIN_USER=${KEYCLOAK_ADMIN_USER?Variable not set}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD?Variable not set}
       - KEYCLOAK_REALM=${KEYCLOAK_REALM:-master}
       - GRAFANA_URL_PUBLIC=${GRAFANA_URL_PUBLIC:-http://localhost:3001}
       - N8N_URL_PUBLIC=${N8N_URL_PUBLIC:-http://localhost:5678}

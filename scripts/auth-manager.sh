@@ -62,8 +62,14 @@ if [ -f "$ENV_FILE" ]; then source "$ENV_FILE"; fi
 
 KEYCLOAK_REALM="${KEYCLOAK_REALM:-master}"
 # Support both KEYCLOAK_ADMIN (standard) and KEYCLOAK_ADMIN_USER (.env variance)
-ADMIN_USER="${KEYCLOAK_ADMIN:-${KEYCLOAK_ADMIN_USER:-admin}}"
-ADMIN_PASS="${KEYCLOAK_ADMIN_PASSWORD:-}"
+# Validate required variables
+if [ -z "${KEYCLOAK_ADMIN_USER:-}" ] || [ -z "${KEYCLOAK_ADMIN_PASSWORD:-}" ]; then
+    echo "❌ ERROR: KEYCLOAK_ADMIN_USER or KEYCLOAK_ADMIN_PASSWORD not set in .env"
+    exit 1
+fi
+
+ADMIN_USER="${KEYCLOAK_ADMIN_USER}"
+ADMIN_PASS="${KEYCLOAK_ADMIN_PASSWORD}"
 
 # Function to run kcadm.sh command
 kcadm() {
