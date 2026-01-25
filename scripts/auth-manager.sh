@@ -93,8 +93,8 @@ check_keycloak_running() {
     local DOCKER_CMD="docker"
     if ! docker ps > /dev/null 2>&1; then DOCKER_CMD="sudo docker"; fi
 
-    if ! $DOCKER_CMD ps | grep -q "keycloak"; then
-        print_error "Keycloak container is NOT running."
+    if ! $DOCKER_CMD ps --filter "name=^keycloak$" --filter "status=running" | grep -q "keycloak"; then
+        print_error "Keycloak container is NOT running or not ready."
         echo "   Please start the stack first: ./scripts/stack-manager.sh start"
         exit 1
     fi
@@ -105,7 +105,7 @@ check_keycloak_running() {
     local RETRY_COUNT=0
     
     while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-        if curl -s -f http://localhost:8080/health/ready > /dev/null 2>&1; then
+        if curl -s -f http://localhost:8080/realms/master > /dev/null 2>&1; then
             print_success "Keycloak is running and ready"
             return 0
         fi
@@ -150,10 +150,32 @@ create_role_mapper() {
             -s name=$mapper_name \
             -s protocol=openid-connect \
             -s protocolMapper=oidc-usermodel-client-role-mapper \
-            -s 'config."claim.name"=roles' \
+            -s 'config."claim.name"=resource_access.'"$service_name"'.roles' \
             -s 'config."jsonType.label"=String' \
             -s 'config."multivalued"=true' \
             -s "config.\"client.id\"=$service_name" > /dev/null 2>&1; then
+            echo "   + Mapper '$mapper_name' created"
+        else
+            print_error "Failed to create mapper '$mapper_name'"
+        fi
+    fi
+}
+
+create_audience_mapper() {
+    local client_id=$1
+    local service_name=$2
+    local mapper_name="${service_name}-audience"
+    
+    if kcadm get clients/$client_id/protocol-mappers/models -r "$KEYCLOAK_REALM" 2>/dev/null | grep -q "$mapper_name"; then
+        echo "   - Mapper '$mapper_name' already exists"
+    else
+        if kcadm create clients/$client_id/protocol-mappers/models -r "$KEYCLOAK_REALM" \
+            -s name=$mapper_name \
+            -s protocol=openid-connect \
+            -s protocolMapper=oidc-audience-mapper \
+            -s "config.\"included.client.audience\"=$service_name" \
+            -s 'config."id.token.claim"=true' \
+            -s 'config."access.token.claim"=true' > /dev/null 2>&1; then
             echo "   + Mapper '$mapper_name' created"
         else
             print_error "Failed to create mapper '$mapper_name'"
@@ -179,6 +201,7 @@ setup_service_roles() {
     done
     
     create_role_mapper "$CLIENT_ID" "$client_key"
+    create_audience_mapper "$CLIENT_ID" "$client_key"
 }
 
 action_setup_roles() {
@@ -189,10 +212,10 @@ action_setup_roles() {
     # Groups
     print_info "Setting up Groups..."
     for group in "super-admins" "admins" "users" "viewers"; do
-        if kcadm get groups -r "$KEYCLOAK_REALM" -q name="$group" 2>/dev/null | grep -q "\"name\" : \"$group\""; then
+        if kcadm get groups -r "$KEYCLOAK_REALM" 2>/dev/null | grep -q "\"name\" : \"$group\""; then
             echo "   - Group '$group' already exists"
         else
-            kcadm create groups -r "$KEYCLOAK_REALM" -s name="$group"
+            kcadm create groups -r "$KEYCLOAK_REALM" -s name="$group" || echo "   - Group '$group' creation continued"
             echo "   + Group '$group' created"
         fi
     done
