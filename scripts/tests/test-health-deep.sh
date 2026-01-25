@@ -54,7 +54,22 @@ wait_for_url "Grafana" "http://localhost:3001/api/health" 30 || ((ERRORS++))
 
 # 3. Open WebUI (Port 3000)
 # Endpoint: /healthz
+# We also check the main page for "Activation Pending" to avoid false positives
+echo -n "   ⏳ Waiting for Open WebUI ($URL)... "
 wait_for_url "Open WebUI" "http://localhost:3000/healthz" 30 || ((ERRORS++))
+
+# Content Check: Ensure we aren't stuck in "Pending" state
+CONTENT=$(curl -s -L "http://localhost:3000/auth/")
+if echo "$CONTENT" | grep -q "Account Activation Pending"; then
+    echo "   ❌ FAILURE: Open WebUI is UP but showing 'Account Activation Pending'."
+    echo "      Fix: Set DEFAULT_USER_ROLE=user in docker-compose.yml"
+    ((ERRORS++))
+elif echo "$CONTENT" | grep -q "Internal Server Error"; then
+    echo "   ❌ FAILURE: Open WebUI is UP but showing 'Internal Server Error'."
+    ((ERRORS++))
+else
+    echo "   ✅ Content Check: Login page seems normal."
+fi
 
 # 4. Ollama (via HAProxy Queue on Port 80)
 # Endpoint: /ollama/ (Should return "Ollama is running")
