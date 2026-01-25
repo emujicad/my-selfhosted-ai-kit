@@ -164,13 +164,14 @@ my-selfhosted-ai-kit/
 - Added recursive dependency tracking
 - Improved error handling for undefined services
 
-### 2026-01-25: Comprehensive Identity & Security Hardening
-- **Zero Defaults Policy**: Removed ALL hardcoded credentials and identity fallbacks from `docker-compose.yml` and scripts. Mandatory variables now use `${VAR?}` markers.
-- **Identity Standardization**: Established "Ender Mujica" (`emujicad`) as the standard identity across all SSO consumers (Grafana, OpenWebUI, Jenkins, Keycloak).
-- **Keycloak Auto-Initialization**: Enhanced `keycloak-init` to automatically propagate names (`Ender`, `Mujica`) and email (`emujicad@gmail.com`) to the admin user on first boot.
-- **Jenkins Fixes**: Corrected Jenkins healthcheck port (8082) and automated OIDC integration for the `emujicad` user.
-- **Grafana OIDC**: Updated database mapping logic to robustly link the Keycloak admin identity with the Grafana internal superuser using both email and username lookups.
-- **Privacy Enforcement**: Verified that personal identity exists ONLY in the gitignored `.env` file, ensuring no data leaks in the public repository while maintaining local functionality.
+### 2026-01-25: Comprehensive Security Hardening & Zero Defaults
+- **Secrets Management**: Removed ALL default credentials from `docker-compose.yml`, `auth-manager.sh`, `stack-manager.sh`, and `backup-manager.sh`.
+- **Strict Validation**: Implemented `check_required_vars()` across all script managers. System now fails fast with clear errors if critical variables are missing.
+- **Zero Defaults Policy**: Removed silent fallbacks (`:-`) for sensitive credentials and service accounts. The stack now enforces strict `.env` definition for all Admin, Database, and OIDC secret variables.
+- **Fail-Secure Architecture**: No silent fallbacks. Admin accounts, databases, and encryption keys MUST be defined in `.env`.
+- **Validation Standardization**: Unified error handling and validation logic across `validate-system.sh` and stack managers.
+- **Clean Slate Verification**: Performed a full destructive purge (`clean all`) and successful redeployment to verify repo-completeness and "First Run" stability.
+- **Identity Standardization**: Established "Admin User" (`admin-user`) as the standard identity across all SSO consumers (Grafana, OpenWebUI, Jenkins).
 
 ## Known Issues & Limitations
 
@@ -221,6 +222,6 @@ docker compose logs -f [service]
 
 ---
 
-**Last Updated**: 2026-01-25  
-**Maintained By**: Ender Mujica (emujicad)  
+**Last Updated**: 2026-01-24  
+**Maintained By**: admin-user  
 **AI Assistant**: Antigravity (Google DeepMind)
