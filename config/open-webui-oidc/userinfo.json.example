@@ -1,9 +1,9 @@
 {
-    "sub": "admin",
-    "email": "admin@example.com",
+    "sub": "YOUR_USERNAME",
+    "email": "your_email@example.com",
     "email_verified": true,
-    "preferred_username": "admin",
-    "name": "Admin User",
-    "given_name": "Admin",
-    "family_name": "User"
+    "preferred_username": "YOUR_USERNAME",
+    "name": "Your Full Name",
+    "given_name": "First Name",
+    "family_name": "Last Name"
 }

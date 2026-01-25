@@ -554,6 +554,7 @@ docker compose --profile gpu-nvidia --profile monitoring --profile infrastructur
 - `POSTGRES_PASSWORD`: Database password
 - `N8N_ENCRYPTION_KEY`: Key to encrypt n8n data
 - `N8N_USER_MANAGEMENT_JWT_SECRET`: Key for JWT tokens
+- **OIDC Emulation**: `config/open-webui-oidc/userinfo.json` contains sensitive user identity data. It is **auto-generated** from `.env` and should NEVER be committed to git. Use `.env` to manage these values.
 
 ## 🐛 Troubleshooting
 
