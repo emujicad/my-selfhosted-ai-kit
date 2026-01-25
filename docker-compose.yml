@@ -628,6 +628,8 @@ services:
       - '--web.console.templates=/etc/prometheus/consoles'
       - '--storage.tsdb.retention.time=200h'
       - '--web.enable-lifecycle'
+      - '--web.external-url=/prometheus/'
+      - '--web.route-prefix=/prometheus/'
     networks:
       - monitoring-network
       - genai-network
@@ -695,7 +697,8 @@ services:
       - GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH=contains(roles[*], 'grafana-admin') && 'Admin' || contains(roles[*], 'grafana-editor') && 'Editor' || 'Viewer'
       # SIGNOUT_REDIRECT_URL debe usar localhost porque el navegador del usuario necesita acceder
       - GF_AUTH_SIGNOUT_REDIRECT_URL=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/logout
-      - GF_SERVER_ROOT_URL=${GRAFANA_URL_PUBLIC:-http://localhost:3001}
+      - GF_SERVER_ROOT_URL=${GRAFANA_URL_PUBLIC:-http://localhost/grafana}
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
       - GF_USERS_AUTO_LOGIN=${GRAFANA_USERS_AUTO_LOGIN:-false}
       - GF_AUTH_DISABLE_LOGIN_FORM=${GRAFANA_AUTH_DISABLE_LOGIN_FORM:-true} # Solo Keycloak OAuth (más seguro)
     networks:
@@ -740,6 +743,8 @@ services:
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
       - '--storage.path=/alertmanager'
+      - '--web.external-url=/alertmanager/'
+      - '--web.route-prefix=/alertmanager/'
     networks:
       - monitoring-network
       - genai-network
@@ -1408,7 +1413,7 @@ services:
       - KEYCLOAK_ADMIN_USER=${KEYCLOAK_ADMIN_USER?Variable not set}
       - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD?Variable not set}
       - KEYCLOAK_REALM=${KEYCLOAK_REALM:-master}
-      - GRAFANA_URL_PUBLIC=${GRAFANA_URL_PUBLIC:-http://localhost:3001}
+      - GRAFANA_URL_PUBLIC=${GRAFANA_URL_PUBLIC:-http://localhost/grafana}
       - N8N_URL_PUBLIC=${N8N_URL_PUBLIC:-http://localhost:5678}
       - OPEN_WEBUI_URL_PUBLIC=${OPEN_WEBUI_URL_PUBLIC:-http://localhost:3000}
       - JENKINS_URL_PUBLIC=${JENKINS_URL_PUBLIC:-http://localhost:8081}
