@@ -769,7 +769,7 @@ cleanup_orphaned_resources() {
     
     # Para 'clean all', mostrar un resumen completo y pedir una sola confirmación
     if [ "$clean_type" = "all" ]; then
-        print_warning "⚠️  LIMPIEZA COMPLETA - OPERACIÓN MUY DESTRUCTIVA"
+        print_warning "LIMPIEZA COMPLETA - OPERACIÓN MUY DESTRUCTIVA"
         print_info "Se eliminará TODO del proyecto:"
         echo ""
         
@@ -846,9 +846,9 @@ cleanup_orphaned_resources() {
         fi
         
         echo ""
-        print_warning "⚠️  ADVERTENCIA: Esto eliminará TODOS los recursos del proyecto"
-        print_warning "⚠️  Esto incluye: contenedores, redes, volúmenes (datos persistentes) e imágenes"
-        print_warning "⚠️  Esta operación NO se puede deshacer"
+        print_warning "ADVERTENCIA: Esto eliminará TODOS los recursos del proyecto"
+        print_warning "Esto incluye: contenedores, redes, volúmenes (datos persistentes) e imágenes"
+        print_warning "Esta operación NO se puede deshacer"
         echo ""
         read -p "¿Estás ABSOLUTAMENTE seguro de que quieres continuar? (escribe 'SI' para confirmar): " -r
         echo
@@ -894,7 +894,7 @@ cleanup_orphaned_resources() {
         
         if [ -n "$stopped_containers" ] || [ -n "$created_containers" ]; then
             found_any=1
-            print_warning "⚠️  LIMPIEZA DE CONTENEDORES - OPERACIÓN DESTRUCTIVA"
+            print_warning "LIMPIEZA DE CONTENEDORES - OPERACIÓN DESTRUCTIVA"
             print_info "Contenedores que se eliminarán:"
             
             if [ -n "$stopped_containers" ]; then
@@ -918,7 +918,7 @@ cleanup_orphaned_resources() {
             echo ""
             # Solo pedir confirmación si NO es 'clean all' (ya se pidió antes)
             if [ "$clean_type" != "all" ]; then
-                print_warning "⚠️  ADVERTENCIA: Esto eliminará los contenedores del proyecto"
+                print_warning "ADVERTENCIA: Esto eliminará los contenedores del proyecto"
                 echo ""
                 read -p "¿Estás seguro de que quieres continuar? (escribe 'SI' para confirmar): " -r
                 echo
@@ -932,7 +932,7 @@ cleanup_orphaned_resources() {
             local delete_images="n"
             if [ "$clean_type" = "all" ]; then
                  echo ""
-                 print_warning "⚠️  OPCIÓN DE LIMPIEZA DE IMÁGENES LOCALES"
+                 print_warning "OPCIÓN DE LIMPIEZA DE IMÁGENES LOCALES"
                  print_info "   Borrar las imágenes liberará espacio, pero requerirá descargarlas nuevamente (varios GBs)."
                  read -p "¿Deseas borrar también las IMÁGENES locales? (s/N) " -n 1 -r
                  echo ""
@@ -947,7 +947,7 @@ cleanup_orphaned_resources() {
             local delete_models="n"
             if [ "$clean_type" = "all" ] || [ "$clean_type" = "storage" ]; then
                  echo ""
-                 print_warning "⚠️  OPCIÓN DE LIMPIEZA DE MODELOS OLLAMA"
+                 print_warning "OPCIÓN DE LIMPIEZA DE MODELOS OLLAMA"
                  print_info "   Borrar los modelos requerirá descargarlos nuevamente (varios GBs)."
                  read -p "¿Deseas borrar también los MODELOS LLM descargados? (s/N) " -n 1 -r
                  echo ""
@@ -1016,13 +1016,13 @@ cleanup_orphaned_resources() {
             
             # Solo pedir confirmación si NO es 'clean all' (ya se pidió antes)
             if [ "$clean_type" != "all" ]; then
-                print_warning "⚠️  LIMPIEZA DE REDES - OPERACIÓN DESTRUCTIVA"
+                print_warning "LIMPIEZA DE REDES - OPERACIÓN DESTRUCTIVA"
                 print_info "Redes del proyecto que se eliminarán:"
                 for network in "${empty_networks[@]}"; do
                     echo "   - $network"
                 done
                 echo ""
-                print_warning "⚠️  ADVERTENCIA: Esto eliminará las redes del proyecto"
+                print_warning "ADVERTENCIA: Esto eliminará las redes del proyecto"
                 echo ""
                 read -p "¿Estás seguro de que quieres continuar? (escribe 'SI' para confirmar): " -r
                 echo
@@ -1047,7 +1047,7 @@ cleanup_orphaned_resources() {
     
     # Limpiar almacenamiento/volúmenes (si clean_type es "all" o "storage")
     if [ "$clean_type" = "all" ] || [ "$clean_type" = "storage" ]; then
-        print_warning "⚠️  LIMPIEZA DE ALMACENAMIENTO - ESTO ELIMINARÁ DATOS PERSISTENTES"
+        print_warning "LIMPIEZA DE ALMACENAMIENTO - ESTO ELIMINARÁ DATOS PERSISTENTES"
         print_info "Volúmenes del proyecto que se eliminarán:"
         local project_volumes=("n8n_storage" "postgres_storage" "qdrant_storage" "pgvector_data" "open_webui_storage" "n8n_data" "shared_data" "prometheus_data" "grafana_data" "alertmanager_data" "backup_data" "redis_data" "jenkins_data" "haproxy_data" "keycloak_data" "modsecurity_data" "cadvisor_data" "node_exporter_data" "postgres_exporter_data" "config_data" "ssl_certs_data" "logs_data" "grafana_provisioning_data" "prometheus_rules_data" "ollama_storage")
         
@@ -1083,8 +1083,8 @@ cleanup_orphaned_resources() {
             # Solo pedir confirmación si NO es 'clean all' (ya se pidió antes)
             if [ "$clean_type" != "all" ]; then
                 echo ""
-                print_warning "⚠️  ADVERTENCIA: Esto eliminará TODOS los datos persistentes del proyecto"
-                print_warning "⚠️  Esto incluye: bases de datos, configuraciones, logs, backups, etc."
+                print_warning "ADVERTENCIA: Esto eliminará TODOS los datos persistentes del proyecto"
+                print_warning "Esto incluye: bases de datos, configuraciones, logs, backups, etc."
                 echo ""
                 read -p "¿Estás seguro de que quieres continuar? (escribe 'SI' para confirmar): " -r
                 echo
@@ -1157,8 +1157,8 @@ cleanup_orphaned_resources() {
                     echo "   - $image"
                 done
                 echo ""
-                print_warning "⚠️  ADVERTENCIA: Esto eliminará las imágenes del proyecto"
-                print_warning "⚠️  Tendrás que descargarlas nuevamente en el próximo start"
+                print_warning "ADVERTENCIA: Esto eliminará las imágenes del proyecto"
+                print_warning "Tendrás que descargarlas nuevamente en el próximo start"
                 echo ""
                 read -p "¿Estás seguro de que quieres continuar? (escribe 'SI' para confirmar): " -r
                 echo
@@ -1212,7 +1212,7 @@ cleanup_orphaned_resources() {
             echo "   ❌ $item"
         done
     else
-        print_warning "⚠️  Limpieza parcial: algunos recursos se limpiaron, otros fallaron"
+        print_warning "Limpieza parcial: algunos recursos se limpiaron, otros fallaron"
         print_info "📋 Recursos limpiados exitosamente (${#cleaned_items[@]}):"
         for item in "${cleaned_items[@]}"; do
             echo "   ✅ $item"
