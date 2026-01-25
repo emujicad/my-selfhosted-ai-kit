@@ -12,6 +12,7 @@ graph TB
     
     subgraph "Automation & Workflow"
         N8N["⚙️ n8n<br/>Workflow Automation<br/>Port 5678"]
+        Jenkins["🔧 Jenkins<br/>CI/CD Pipeline<br/>Port 8081"]
     end
     
     subgraph "Security & Auth"
@@ -46,6 +47,7 @@ graph TB
     HAProxy -->|Route /grafana| Grafana
     HAProxy -->|Route /auth| Keycloak
     HAProxy -->|Route /prometheus| Prometheus
+    HAProxy -->|Route /jenkins| Jenkins
     
     %% AI Services
     OpenWebUI -->|Generate| Ollama
@@ -57,6 +59,8 @@ graph TB
     N8N -->|Call Models| Ollama
     N8N -->|OIDC Auth| Keycloak
     N8N -->|Store Workflows| PostgreSQL
+    
+    Jenkins -->|OIDC Auth| Keycloak
     
     %% Monitoring
     Grafana -->|Query Metrics| Prometheus
@@ -96,4 +100,4 @@ graph TB
     class Prometheus,Grafana,AlertManager monitoring
     class NvidiaExp,OllamaExp,N8NExp,OpenWebUIExp,RedisExp,PostgresExp exporters
     class User,HAProxy frontend
-    class N8N ai
+    class N8N,Jenkins ai

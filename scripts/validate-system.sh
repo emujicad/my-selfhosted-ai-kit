@@ -81,6 +81,7 @@ check_env() {
         "OLLAMA_HOST_INTERNAL" "OLLAMA_PORT_INTERNAL"
         "OPEN_WEBUI_URL_PUBLIC"
         "KEYCLOAK_ADMIN_USER" "KEYCLOAK_ADMIN_PASSWORD"
+        "JENKINS_URL_PUBLIC" "KEYCLOAK_CLIENT_SECRET_JENKINS"
     )
 
     for VAR in "${CRITICAL_VARS[@]}"; do
@@ -210,7 +211,13 @@ check_config() {
     local_check_file "monitoring/prometheus.yml"
     local_check_file "monitoring/prometheus/alerts.yml"
     
-    # 3. Docker Compose
+    # 3. Jenkins (CI/CD)
+    echo "--- Jenkins Automation ---"
+    local_check_file "config/jenkins/Dockerfile"
+    local_check_file "config/jenkins/plugins.txt"
+    local_check_dir "config/jenkins/init.groovy.d"
+    
+    # 4. Docker Compose
     echo "--- Docker Compose ---"
     local_check_file "docker-compose.yml"
     if [ -f "${PROJECT_DIR}/docker-compose.yml" ]; then

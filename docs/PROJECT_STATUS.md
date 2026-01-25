@@ -22,11 +22,11 @@ This document combines the current project status with the TODO list to provide 
 - ✅ Keycloak-only login (secure mode)
 - ✅ **Secrets Hardening**: Removed insecure default values from `docker-compose.yml`
 - ✅ Strict validation of critical environment variables
-- ✅ **Keycloak Integration** ✅ **PARTIALLY COMPLETE**
+- ✅ **Keycloak Integration** ✅ **COMPLETE**
   - ✅ Grafana integrated and working
-  - ✅ **Open WebUI + Keycloak** ✅ (Solved using "Emulated OIDC Environment": Fake Discovery for split-horizon routing + Fake UserInfo to bypass 401 errors)
-  - ✅ n8n with Keycloak (configuration ready, secrets corrected, pending validation)
-  - ✅ Jenkins with Keycloak (secrets corrected, pending validation)
+  - ✅ **Open WebUI + Keycloak** ✅ (Solved using "Emulated OIDC Environment")
+  - ✅ **Jenkins with Keycloak** ✅ (100% Automated via Dockerfile + Init Scripts)
+  - ✅ n8n with Keycloak (Documented: OIDC requires Enterprise License)
   - ✅ Configure basic roles and permissions (Automated Role Mapping implemented)
   - ✅ **Permanent Admin User Created** (Scripted & Secured) ✅
 
@@ -57,6 +57,8 @@ This document combines the current project status with the TODO list to provide 
 - ✅ Keycloak scripts consolidated into `auth-manager.sh`
 - ✅ Validation scripts integrated into `stack-manager.sh`
 - ✅ Master script `stack-manager.sh` for complete stack management
+- ✅ **Cross-Profile Dependency Resolution** (Keycloak services available in all profiles)
+- ✅ **Jenkins Automation**: Automated plugin install and OIDC init scripts
 - ✅ **Automatic dependency resolution** between profiles in `stack-manager.sh`
   - ✅ `get_profile_dependencies()` function to map profile dependencies
   - ✅ `resolve_dependencies()` function for recursive resolution

@@ -314,84 +314,33 @@ action_fix_clients() {
 # =============================================================================
 
 action_setup_jenkins() {
-    print_header "SETTING UP JENKINS OIDC"
+    print_header "JENKINS OIDC AUTOMATION SYNC"
     
-    if ! docker ps --filter "name=jenkins" --format '{{.Status}}' | grep -q "Up"; then
-        print_error "Jenkins container is NOT running."
-        echo "   Please start the stack first: ./scripts/stack-manager.sh start"
+    print_info "Ensuring Jenkins is running with latest automation files..."
+    
+    # 1. Trigger Docker Build (Automated Plugin Install)
+    print_info "Building Custom Jenkins Image (Automating Plugin Installation)..."
+    if ! docker compose --profile ci-cd build jenkins; then
+        print_error "Failed to build Jenkins image. Check Dockerfile and internet connection."
         exit 1
     fi
 
-    # 1. Install Plugins
-    print_info "Installing/Verifying 'oic-auth' plugin..."
-    if docker exec jenkins jenkins-plugin-cli --plugins oic-auth configuration-as-code; then
-        print_success "Plugins installed/verified."
-    else
-        print_error "Failed to install plugins."
+    # 2. Recreate Container (Applying Init Scripts)
+    print_info "Recreating Jenkins container (Applying OIDC Init Scripts)..."
+    if ! docker compose --profile ci-cd up -d jenkins; then
+        print_error "Failed to start Jenkins. Check docker-compose.yml and logs."
         exit 1
     fi
 
-    # 2. Configure OIDC via Groovy Init Script
-    print_info "Configuring OIDC Security Realm..."
-    
-    # Create temporary groovy script
-    cat <<EOF > /tmp/jenkins_oidc_setup.groovy
-import hudson.security.*
-import org.jenkinsci.plugins.oic.*
-import jenkins.model.*
-
-def env = System.getenv()
-def clientId = env['JENKINS_OIDC_CLIENT_ID']
-def clientSecret = env['JENKINS_OIDC_CLIENT_SECRET']
-def keycloakUrl = env['KEYCLOAK_URL_PUBLIC'] ?: "http://localhost:8080"
-def realmName = env['KEYCLOAK_REALM'] ?: "master"
-
-println "Configuring OIDC for Client ID: \${clientId}"
-
-def tokenServerUrl = "\${keycloakUrl}/realms/\${realmName}/protocol/openid-connect/token"
-def authServerUrl = "\${keycloakUrl}/realms/\${realmName}/protocol/openid-connect/auth"
-def userInfoUrl = "\${keycloakUrl}/realms/\${realmName}/protocol/openid-connect/userinfo"
-def jwksUrl = "\${keycloakUrl}/realms/\${realmName}/protocol/openid-connect/certs"
-
-def oicRealm = new OicSecurityRealm(
-    clientId,
-    clientSecret,
-    tokenServerUrl,
-    authServerUrl,
-    userInfoUrl,
-    jwksUrl,
-    "openid email profile", // scopes
-    false, // disable ssl verification
-    "preferred_username", // user name field
-    "name", // full name field
-    "email", // email field
-    null  // groups field
-)
-
-def strategy = new FullControlOnceLoggedInAuthorizationStrategy()
-Jenkins.instance.setSecurityRealm(oicRealm)
-Jenkins.instance.setAuthorizationStrategy(strategy)
-Jenkins.instance.save()
-println "OIDC Security Realm Configured Successfully"
-EOF
-
-    # Create directory if it doesn't exist
-    docker exec jenkins mkdir -p /var/jenkins_home/init.groovy.d
-
-    # Copy script to container
-    docker cp /tmp/jenkins_oidc_setup.groovy jenkins:/var/jenkins_home/init.groovy.d/auth-oidc.groovy
-    
-    # 3. Restart to apply
-    print_info "Restarting Jenkins to apply changes..."
-    if docker restart jenkins; then
-        print_success "Jenkins restarted."
-        print_info "Please check logs: docker logs -f jenkins"
+    # 3. Verification
+    print_info "Waiting for Jenkins to apply OIDC configuration..."
+    sleep 5
+    if docker logs jenkins 2>&1 | grep -q "OIDC Security Realm Configured Successfully"; then
+        print_success "Jenkins OIDC configured successfully via Automation Scripts."
     else
-        print_error "Failed to restart Jenkins."
+        print_warning "Could not verify OIDC success in logs immediately."
+        print_info "Please check: docker logs jenkins"
     fi
-     
-    # Cleanup
-    rm -f /tmp/jenkins_oidc_setup.groovy
 }
 
 # =============================================================================
