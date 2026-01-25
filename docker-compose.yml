@@ -1202,7 +1202,7 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:latest
     container_name: keycloak
-    profiles: [ "security" ]
+    profiles: [ "security", "gen-ai", "monitoring", "ci-cd" ]
     environment:
       - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN_USER:-admin}
       - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD?Variable not set}
@@ -1270,7 +1270,7 @@ services:
   keycloak-db-init:
     image: postgres:16-alpine
     container_name: keycloak-db-init
-    profiles: [ "security" ]
+    profiles: [ "security", "gen-ai", "monitoring", "ci-cd" ]
     networks:
       - genai-network
     environment:
@@ -1396,7 +1396,7 @@ services:
   keycloak-init:
     image: alpine:latest
     container_name: keycloak-init
-    profiles: [ "security" ]
+    profiles: [ "security", "gen-ai", "monitoring", "ci-cd" ]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
@@ -1656,9 +1656,11 @@ services:
 
   # Jenkins - CI/CD Pipeline
   jenkins:
-    image: jenkins/jenkins:2.541.1-lts
+    build:
+      context: ./config/jenkins
+      dockerfile: Dockerfile
     container_name: jenkins
-    profiles: [ "ci-cd" ]
+    profiles: [ "ci-cd", "gen-ai" ] # Include gen-ai to resolve keycloak dependency
     ports:
       - "${PORT_JENKINS_HOST:-8081}:8082"
       - "${PORT_JENKINS_AGENT_HOST:-50000}:${PORT_JENKINS_AGENT_CONTAINER:-50000}"
@@ -1674,7 +1676,7 @@ services:
       - JENKINS_ADMIN_USER=${JENKINS_ADMIN_USER:-admin}
       - JENKINS_ADMIN_PASSWORD=${JENKINS_ADMIN_PASSWORD:-admin}
       - JENKINS_OIDC_CLIENT_ID=${JENKINS_OIDC_CLIENT_ID:-jenkins}
-      - JENKINS_OIDC_CLIENT_SECRET=${JENKINS_OIDC_CLIENT_SECRET:-}
+      - JENKINS_OIDC_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET_JENKINS:-changeme}
       - JENKINS_OIDC_SCOPES=${JENKINS_OIDC_SCOPES:-openid email profile}
       - KEYCLOAK_URL_PUBLIC=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}
       - KEYCLOAK_REALM=${KEYCLOAK_REALM:-master}
