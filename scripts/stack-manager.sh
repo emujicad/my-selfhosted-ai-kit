@@ -2282,8 +2282,6 @@ restart_services() {
 
 # Función para mostrar estado
 show_status() {
-    print_header "ESTADO DE SERVICIOS"
-    
     # Verificar si hay servicios corriendo
     local running_services=$($DOCKER_CMD compose ps --services --filter "status=running" 2>/dev/null)
     
@@ -2292,6 +2290,7 @@ show_status() {
         return 0
     fi
     
+    print_header "ESTADO DE SERVICIOS"
     $DOCKER_CMD compose ps
 }
 
