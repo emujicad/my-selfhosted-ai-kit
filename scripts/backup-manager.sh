@@ -150,13 +150,13 @@ backup_postgres() {
     log "Backupeando base de datos PostgreSQL: $DB_NAME"
     
     # Verificar que el contenedor de PostgreSQL está corriendo
-    if ! docker ps --filter "name=${DB_POSTGRESDB_HOST:-postgres}" --format '{{.Status}}' | grep -q "Up"; then
+    if ! docker ps --filter "name=${DB_POSTGRESDB_HOST}" --format '{{.Status}}' | grep -q "Up"; then
         log_warning "PostgreSQL no está corriendo, omitiendo backup de BD"
         return 0
     fi
     
     # Obtener nombre real del contenedor (puede tener prefijo)
-    local PG_CONTAINER=$(docker ps --filter "name=${DB_POSTGRESDB_HOST:-postgres}" --format '{{.Names}}' | head -1)
+    local PG_CONTAINER=$(docker ps --filter "name=${DB_POSTGRESDB_HOST}" --format '{{.Names}}' | head -1)
 
     docker exec "$PG_CONTAINER" \
         pg_dump -U "$DB_USER" "$DB_NAME" | gzip > "$BACKUP_FILE" || {

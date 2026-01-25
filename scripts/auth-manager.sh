@@ -253,11 +253,11 @@ action_create_admin() {
     print_header "CREATING PERMANENT ADMIN USER"
     check_keycloak_running
     
-    local NEW_USER="${KEYCLOAK_PERMANENT_ADMIN_USERNAME:-emujicad}"
-    local NEW_PASS="${KEYCLOAK_PERMANENT_ADMIN_PASSWORD:-}"
-    local NEW_EMAIL="${KEYCLOAK_PERMANENT_ADMIN_EMAIL:-emujicad@gmail.com}"
-    local NEW_FIRST="${KEYCLOAK_ADMIN_FIRST_NAME:-Admin}"
-    local NEW_LAST="${KEYCLOAK_ADMIN_LAST_NAME:-User}"
+    local NEW_USER="${KEYCLOAK_PERMANENT_ADMIN_USERNAME}"
+    local NEW_PASS="${KEYCLOAK_PERMANENT_ADMIN_PASSWORD}"
+    local NEW_EMAIL="${KEYCLOAK_PERMANENT_ADMIN_EMAIL}"
+    local NEW_FIRST="${KEYCLOAK_ADMIN_FIRST_NAME}"
+    local NEW_LAST="${KEYCLOAK_ADMIN_LAST_NAME}"
     
     if [ -z "$NEW_PASS" ]; then
         print_error "KEYCLOAK_PERMANENT_ADMIN_PASSWORD not set in .env"
