@@ -71,6 +71,21 @@ fi
 ADMIN_USER="${KEYCLOAK_ADMIN_USER}"
 ADMIN_PASS="${KEYCLOAK_ADMIN_PASSWORD}"
 
+# Function to validate environment variables
+check_required_vars() {
+    local missing_vars=0
+    for var in "$@"; do
+        if [ -z "${!var:-}" ]; then
+            echo "❌ Error: Variable '$var' is required but not set in .env"
+            missing_vars=1
+        fi
+    done
+    if [ $missing_vars -eq 1 ]; then
+        echo "❌ Please configure required variables in your .env file."
+        exit 1
+    fi
+}
+
 # Function to run kcadm.sh command
 kcadm() {
     local DOCKER_CMD="docker"
@@ -259,10 +274,13 @@ action_create_admin() {
     local NEW_FIRST="${KEYCLOAK_ADMIN_FIRST_NAME}"
     local NEW_LAST="${KEYCLOAK_ADMIN_LAST_NAME}"
     
-    if [ -z "$NEW_PASS" ]; then
-        print_error "KEYCLOAK_PERMANENT_ADMIN_PASSWORD not set in .env"
-        exit 1
-    fi
+    # Validate required variables for admin creation
+    check_required_vars \
+        "KEYCLOAK_PERMANENT_ADMIN_USERNAME" \
+        "KEYCLOAK_PERMANENT_ADMIN_PASSWORD" \
+        "KEYCLOAK_PERMANENT_ADMIN_EMAIL" \
+        "KEYCLOAK_ADMIN_FIRST_NAME" \
+        "KEYCLOAK_ADMIN_LAST_NAME"
 
     # 1. Get Token (Temporary Admin)
     local TEMP_TOKEN=$(curl -s -X POST "http://localhost:8080/realms/master/protocol/openid-connect/token" \

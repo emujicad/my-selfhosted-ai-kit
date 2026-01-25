@@ -41,6 +41,21 @@ log_warning() {
     echo -e "${YELLOW}⚠️${NC} $1"
 }
 
+# Function to validate environment variables
+check_required_vars() {
+    local missing_vars=0
+    for var in "$@"; do
+        if [ -z "${!var:-}" ]; then
+            log_error "Variable requerida no definida: $var"
+            missing_vars=1
+        fi
+    done
+    if [ $missing_vars -eq 1 ]; then
+        log_error "Por favor configura las variables requeridas en tu archivo .env"
+        exit 1
+    fi
+}
+
 # Función de ayuda
 show_help() {
     echo -e "${BLUE}=============================================================================${NC}"
@@ -287,6 +302,9 @@ cmd_backup() {
         source "${PROJECT_DIR}/.env" || true
     fi
     
+    # Validar variables críticas
+    check_required_vars "POSTGRES_DB" "POSTGRES_USER"
+    
     # Lista de volúmenes base a respaldar
     # NOTA: ollama_storage se excluye porque los modelos se pueden volver a descargar
     VOLUME_BASES=(
@@ -469,6 +487,9 @@ cmd_restore() {
     if [ -f "${PROJECT_DIR}/.env" ]; then
         source "${PROJECT_DIR}/.env"
     fi
+    
+    # Validar variables críticas
+    check_required_vars "POSTGRES_DB" "POSTGRES_USER"
     
     # Lista de volúmenes a restaurar
     # NOTA: ollama_storage se excluye porque los modelos se pueden volver a descargar
