@@ -29,6 +29,9 @@ This document combines the current project status with the TODO list to provide 
   - ✅ n8n with Keycloak (Documented: OIDC requires Enterprise License)
   - ✅ Configure basic roles and permissions (Automated Role Mapping implemented)
   - ✅ **Permanent Admin User Created** (Scripted & Secured) ✅
+  - ✅ **Identity Standardization**: Enforced "Ender Mujica" (`emujicad`) as the standard identity across Keycloak, Jenkins, Grafana, and Open WebUI.
+  - ✅ **Role Mapping**: Configured robust OIDC Role Mapping to safely separate internal admin accounts from personal user accounts.
+  - ✅ **Documentation**: Updated README and Context to reflect OIDC emulation security.
   - ✅ **Grafana OIDC Fix**: Restored authentication by reverting to git HEAD and resolving Keycloak email conflicts.
 
 ### 3. **Monitoring**
