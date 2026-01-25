@@ -1245,11 +1245,13 @@ cleanup_orphaned_resources() {
         fi
         
         # Tabla de recursos limpiados
-        print_info "📋 Recursos limpiados ($total_cleaned)"
-        if [ $count_deleted_containers -gt 0 ]; then echo "   - 📦 Contenedores: $count_deleted_containers"; fi
-        if [ $count_deleted_images -gt 0 ];     then echo "   - 🖼️  Imágenes: $count_deleted_images"; fi
-        if [ $count_deleted_networks -gt 0 ];   then echo "   - 🌐 Redes: $count_deleted_networks"; fi
-        if [ $count_deleted_volumes -gt 0 ];    then echo "   - 💾 Volúmenes: $count_deleted_volumes"; fi
+        if [ $total_cleaned -gt 0 ]; then
+            print_info "📋 Recursos limpiados ($total_cleaned)"
+            if [ $count_deleted_containers -gt 0 ]; then echo "   - 📦 Contenedores: $count_deleted_containers"; fi
+            if [ $count_deleted_images -gt 0 ];     then echo "   - 🖼️  Imágenes: $count_deleted_images"; fi
+            if [ $count_deleted_networks -gt 0 ];   then echo "   - 🌐 Redes: $count_deleted_networks"; fi
+            if [ $count_deleted_volumes -gt 0 ];    then echo "   - 💾 Volúmenes: $count_deleted_volumes"; fi
+        fi
         
         # Tabla de recursos preservados (si hay)
         if [ $total_preserved -gt 0 ]; then
