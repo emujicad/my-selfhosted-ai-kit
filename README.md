@@ -351,9 +351,9 @@ Once the services are running, you can access:
 | **n8n** | http://localhost:5678 | Workflow automation |
 | **Qdrant** | http://localhost:6333 | Vector database |
 | **pgvector** | localhost:5433 | PostgreSQL with vectors |
-| **Grafana** | http://localhost:3001 | Monitoring dashboards (monitoring profile) |
-| **Prometheus** | http://localhost:9090 | System metrics (monitoring profile) |
-| **AlertManager** | http://localhost:9093 | Alert management (monitoring profile) |
+| **Grafana** | [http://localhost/grafana](http://localhost/grafana) | Monitoring dashboards (Auth via Keycloak) |
+| **Prometheus** | [http://localhost/prometheus](http://localhost/prometheus) | System metrics |
+| **AlertManager** | [http://localhost/alertmanager](http://localhost/alertmanager) | Alert management |
 | **cAdvisor** | http://localhost:8082 | Container metrics (monitoring profile) |
 | **Node Exporter** | http://localhost:9100 | Host metrics (monitoring profile) |
 | **HAProxy** | http://localhost:80 | Load balancer (infrastructure profile) |

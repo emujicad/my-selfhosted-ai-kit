@@ -634,7 +634,7 @@ services:
       - monitoring-network
       - genai-network
     healthcheck:
-      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy" ]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/prometheus/-/healthy" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -743,13 +743,13 @@ services:
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
       - '--storage.path=/alertmanager'
-      - '--web.external-url=/alertmanager/'
+      - '--web.external-url=http://localhost/alertmanager/'
       - '--web.route-prefix=/alertmanager/'
     networks:
       - monitoring-network
       - genai-network
     healthcheck:
-      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9093/-/healthy" ]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9093/alertmanager/-/healthy" ]
       interval: 30s
       timeout: 10s
       retries: 3
