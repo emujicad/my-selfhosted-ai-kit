@@ -143,6 +143,7 @@ my-selfhosted-ai-kit/
 - **PostgreSQL**: Enhanced `pg_dump` logic in `backup-manager.sh` to work reliably via DooD `docker exec`.
 - **n8n OIDC**: Documented Community Edition limitation (License required for SSO).
   - **Grafana OIDC Fix**: Restored authentication by reverting to git HEAD. Configured robust **Role Mapping** allowing `emujicad@gmail.com` to gain Admin rights without conflicting with the internal `admin@example.com` superuser.
+  - **Identity Standardization**: Enforced "Ender Mujica" (`emujicad`) as the standard identity across Keycloak, Jenkins, Grafana, and Open WebUI via `.env` variables and `userinfo.json` emulation.
 
 
 ### 2026-01-25: Keycloak Security Hardening
