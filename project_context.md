@@ -173,6 +173,10 @@ my-selfhosted-ai-kit/
 - **Clean Slate Verification**: Performed a full destructive purge (`clean all`) and successful redeployment to verify repo-completeness and "First Run" stability.
 - **Identity Standardization**: Established "Admin User" (`admin-user`) as the standard identity across all SSO consumers (Grafana, OpenWebUI, Jenkins).
 - **Cleanup Safety & Reporting**: Enhanced `stack-manager.sh` with granular protection prompts (Images/Models default=Keep) and refactored reporting to show structured summary of Deleted vs Preserved resources.
+- **CLI & Monitoring Polish**:
+  - **Robust Healthchecks**: Fixed `UNHEALTHY` status for Exporters by implementing native `grep` checks for NVIDIA (avoiding missing `wget`) and forcing IPv4 (`127.0.0.1`) for Python exporters to bypass IPv6 resolution issues.
+  - **Enhanced Information**: Updated `stack-manager.sh` `info` and `start` commands to display **all** active services (including Exporters, Utilities, and WAF) using dynamic global detection instead of profile-based lists.
+  - **Smart Status**: `status` command now suppresses empty headers when no services are running.
 
 ## Known Issues & Limitations
 
