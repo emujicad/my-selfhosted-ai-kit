@@ -762,6 +762,15 @@ cleanup_orphaned_resources() {
     local cleaned_items=()
     local failed_items=()
     
+    # Contadores para el resumen
+    local count_deleted_containers=0
+    local count_deleted_images=0
+    local count_deleted_networks=0
+    local count_deleted_volumes=0
+    
+    local count_preserved_images=0
+    local count_preserved_volumes=0
+    
     # Verificar que todos los contenedores estén detenidos
     if ! check_all_containers_stopped; then
         return 1
@@ -966,6 +975,7 @@ cleanup_orphaned_resources() {
                         if $DOCKER_CMD rm -f "$container" >/dev/null 2>&1; then
                             print_success "   Eliminado: $container"
                             cleaned_items+=("contenedor detenido: $container")
+                            count_deleted_containers=$((count_deleted_containers + 1))
                         else
                             print_warning "   ⚠️  No se pudo eliminar: $container"
                             failed_items+=("contenedor detenido: $container")
@@ -982,6 +992,7 @@ cleanup_orphaned_resources() {
                         if $DOCKER_CMD rm -f "$container" >/dev/null 2>&1; then
                             print_success "   Eliminado: $container"
                             cleaned_items+=("contenedor creado: $container")
+                            count_deleted_containers=$((count_deleted_containers + 1))
                         else
                             print_warning "   ⚠️  No se pudo eliminar: $container"
                             failed_items+=("contenedor creado: $container")
@@ -1037,6 +1048,7 @@ cleanup_orphaned_resources() {
                 if $DOCKER_CMD network rm "$network" >/dev/null 2>&1; then
                     print_success "   Eliminada: $network"
                     cleaned_items+=("red del proyecto: $network")
+                    count_deleted_networks=$((count_deleted_networks + 1))
                 else
                     print_warning "   ⚠️  No se pudo eliminar: $network"
                     failed_items+=("red del proyecto: $network")
@@ -1099,6 +1111,7 @@ cleanup_orphaned_resources() {
                 if $DOCKER_CMD volume rm "$volume" >/dev/null 2>&1; then
                     print_success "   Eliminado: $volume"
                     cleaned_items+=("volumen: $volume")
+                    count_deleted_volumes=$((count_deleted_volumes + 1))
                 else
                     print_warning "   ⚠️  No se pudo eliminar: $volume"
                     failed_items+=("volumen: $volume")
@@ -1124,18 +1137,28 @@ cleanup_orphaned_resources() {
                 if $DOCKER_CMD volume rm "$target_volume" >/dev/null 2>&1; then
                     print_success "   Eliminado: $target_volume"
                     cleaned_items+=("volumen modelos: $target_volume")
+                    count_deleted_volumes=$((count_deleted_volumes + 1))
                 else
                     print_warning "   ⚠️  No se pudo eliminar: $target_volume"
                     failed_items+=("volumen modelos: $target_volume")
                 fi
             fi
         fi
+        fi
+        
+        # Contar volumen de modelos preservado si no se borró
+        if [ "$delete_models" != "s" ]; then
+             local volume="ollama_storage"
+             local volume_with_prefix="${project_name}_${volume}"
+             if $DOCKER_CMD volume inspect "$volume_with_prefix" >/dev/null 2>&1 || $DOCKER_CMD volume inspect "$volume" >/dev/null 2>&1; then
+                 count_preserved_volumes=$((count_preserved_volumes + 1))
+             fi
+        fi
     fi
     
-    # Limpiar imágenes (solo si clean_type es "all" Y el usuario confirmó)
-    if [ "$clean_type" = "all" ] && [ "$delete_images" = "s" ]; then
-        print_info "🖼️  Buscando imágenes del proyecto..."
-        # Obtener imágenes usadas por los servicios del proyecto
+    # Limpiar imágenes (solo si clean_type es "all")
+    if [ "$clean_type" = "all" ]; then
+        # Calcular imágenes del proyecto siempre (para borrar o para contar preservadas)
         local project_images=()
         local compose_images=$($DOCKER_CMD compose config --images 2>/dev/null || echo "")
         
@@ -1146,6 +1169,10 @@ cleanup_orphaned_resources() {
                 fi
             done <<< "$compose_images"
         fi
+
+        # Si el usuario confirmó borrar imágenes
+        if [ "$delete_images" = "s" ]; then
+            print_info "🖼️  Buscando imágenes del proyecto..."
         
         if [ ${#project_images[@]} -gt 0 ]; then
             found_any=1
@@ -1175,6 +1202,7 @@ cleanup_orphaned_resources() {
                 if rmi_output=$($DOCKER_CMD rmi "$image" 2>&1); then
                     print_success "   Eliminada: $image"
                     cleaned_items+=("imagen: $image")
+                    count_deleted_images=$((count_deleted_images + 1))
                 else
                     # Analizar si es error de uso (conflicto)
                     if echo "$rmi_output" | grep -qE "conflict|reference|used by"; then
@@ -1191,37 +1219,54 @@ cleanup_orphaned_resources() {
                 fi
             done
         else
-            print_info "✅ No se encontraron imágenes del proyecto para eliminar"
+        else
+            # Si NO se borran imágenes, contarlas como preservadas
+            count_preserved_images=${#project_images[@]}
+            if [ "$count_preserved_images" -gt 0 ]; then
+                 print_info "✅ Imágenes conservadas ($count_preserved_images)"
+            fi
         fi
     fi
     
     # Mostrar resumen final
+    # Mostrar resumen final
     echo ""
     if [ $found_any -eq 0 ]; then
         print_info "✅ No se encontraron recursos huérfanos para limpiar"
-    elif [ ${#cleaned_items[@]} -gt 0 ] && [ ${#failed_items[@]} -eq 0 ]; then
-        print_success "Limpieza completada exitosamente"
-        print_info "📋 Recursos limpiados (${#cleaned_items[@]}):"
-        for item in "${cleaned_items[@]}"; do
-            echo "   ✅ $item"
-        done
-    elif [ ${#cleaned_items[@]} -eq 0 ] && [ ${#failed_items[@]} -gt 0 ]; then
-        print_warning "❌ No se pudo limpiar ningún recurso huérfano"
-        print_warning "📋 Recursos que fallaron (${#failed_items[@]}):"
-        for item in "${failed_items[@]}"; do
-            echo "   ❌ $item"
-        done
     else
-        print_warning "Limpieza parcial: algunos recursos se limpiaron, otros fallaron"
-        print_info "📋 Recursos limpiados exitosamente (${#cleaned_items[@]}):"
-        for item in "${cleaned_items[@]}"; do
-            echo "   ✅ $item"
-        done
-        echo ""
-        print_warning "📋 Recursos que fallaron (${#failed_items[@]}):"
-        for item in "${failed_items[@]}"; do
-            echo "   ❌ $item"
-        done
+        local total_cleaned=${#cleaned_items[@]}
+        local total_failed=${#failed_items[@]}
+        local total_preserved=$((count_preserved_images + count_preserved_volumes))
+        
+        if [ $total_failed -eq 0 ]; then
+             print_success "Limpieza completada exitosamente"
+        else
+             print_warning "Limpieza completada con algunos errores"
+        fi
+        
+        # Tabla de recursos limpiados
+        print_info "📋 Recursos limpiados ($total_cleaned)"
+        if [ $count_deleted_containers -gt 0 ]; then echo "   - 📦 Contenedores: $count_deleted_containers"; fi
+        if [ $count_deleted_images -gt 0 ];     then echo "   - 🖼️  Imágenes: $count_deleted_images"; fi
+        if [ $count_deleted_networks -gt 0 ];   then echo "   - 🌐 Redes: $count_deleted_networks"; fi
+        if [ $count_deleted_volumes -gt 0 ];    then echo "   - 💾 Volúmenes: $count_deleted_volumes"; fi
+        
+        # Tabla de recursos preservados (si hay)
+        if [ $total_preserved -gt 0 ]; then
+            echo ""
+            print_info "📋 Recursos NO eliminados ($total_preserved)"
+            if [ $count_preserved_images -gt 0 ];  then echo "   - 🖼️  Imágenes: $count_preserved_images"; fi
+            if [ $count_preserved_volumes -gt 0 ]; then echo "   - 💾 Volúmenes: $count_preserved_volumes (Modelos Ollama)"; fi
+        fi
+        
+        # Listar errores si los hubo
+        if [ $total_failed -gt 0 ]; then
+            echo ""
+            print_warning "📋 Recursos que fallaron ($total_failed):"
+            for item in "${failed_items[@]}"; do
+                echo "   ❌ $item"
+            done
+        fi
     fi
     
     # Mostrar recordatorio para reconfigurar Keycloak roles si se hizo clean all
