@@ -2145,6 +2145,15 @@ monitor_models() {
 # Función para validación automática completa (integra auto-validate.sh)
 auto_validate() {
     print_header "VALIDACIÓN AUTOMÁTICA COMPLETA"
+    
+    # OIDC Sync Verification (Specialized)
+    if [ -f "$SCRIPT_DIR/tests/test-grafana-oidc-sync.sh" ]; then
+        print_info "🔍 Verificando sincronización OIDC Grafana-Keycloak..."
+        if ! bash "$SCRIPT_DIR/tests/test-grafana-oidc-sync.sh"; then
+             print_warning "⚠️ La verificación de sincronización OIDC detectó advertencias (revisar output arriba). El despliegue continuará."
+        fi
+    fi
+
     if [ -f "$SCRIPT_DIR/auto-validate.sh" ]; then
         bash "$SCRIPT_DIR/auto-validate.sh"
     else
