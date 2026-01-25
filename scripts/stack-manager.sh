@@ -2420,14 +2420,27 @@ init_volumes() {
 show_service_info() {
     print_header "INFORMACIÓN DE SERVICIOS"
     
-    # Servicios base
+    # Servicios Base y automatización
     if $DOCKER_CMD compose ps postgres 2>/dev/null | grep -q "Up"; then
         print_info "Servicios Base:"
         echo "  - PostgreSQL: localhost:5432"
-        echo "  - Open WebUI: http://localhost:3000"
-        echo "  - n8n: http://localhost:5678"
         echo "  - Qdrant: http://localhost:6333"
-        echo ""
+    fi
+
+    if $DOCKER_CMD compose ps open-webui 2>/dev/null | grep -q "Up"; then
+        print_info "Servicios de IA:"
+        echo "  - Open WebUI: http://localhost:3000"
+        echo "  - Ollama: http://localhost:11434"
+    fi
+
+    if $DOCKER_CMD compose ps n8n 2>/dev/null | grep -q "Up"; then
+        print_info "Servicios de Automatización:"
+        echo "  - n8n: http://localhost:5678"
+    fi
+    
+    if $DOCKER_CMD compose ps jenkins 2>/dev/null | grep -q "Up"; then
+        print_info "Servicios CI/CD:"
+        echo "  - Jenkins: http://localhost:8080/jenkins"
     fi
     
     # Servicios con perfiles
@@ -2436,20 +2449,17 @@ show_service_info() {
         echo "  - Grafana: http://localhost:3001"
         echo "  - Prometheus: http://localhost:9090"
         echo "  - AlertManager: http://localhost:9093"
-        echo ""
     fi
     
     if $DOCKER_CMD compose --profile security ps keycloak 2>/dev/null | grep -q "Up"; then
         print_info "Servicios de Seguridad:"
         echo "  - Keycloak: http://localhost:8080"
-        echo ""
     fi
     
     if $DOCKER_CMD compose --profile infrastructure ps redis 2>/dev/null | grep -q "Up"; then
         print_info "Servicios de Infraestructura:"
         echo "  - Redis: localhost:6379"
         echo "  - HAProxy: http://localhost:80"
-        echo ""
     fi
 }
 
