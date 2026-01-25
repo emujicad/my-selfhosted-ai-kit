@@ -385,10 +385,14 @@ services:
       - OPENID_PROVIDER_URL=http://127.0.0.1:8080/static/oidc-config.json # Fake Discovery endpoint
       - OPENID_REDIRECT_URI=${OPEN_WEBUI_URL_PUBLIC:-http://localhost:3000}/oauth/oidc/callback
       - OPENID_SCOPES=${OPEN_WEBUI_OAUTH_SCOPES:-openid profile email}
-      # Role Mapping: Keycloak -> Open WebUI
-      # Maps 'openwebui-admin' -> Admin
-      - OPENID_ROLES_CLAIM=resource_access.open-webui.roles
+      - OPENID_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET_OPEN_WEBUI}
+      - OPENID_SCOPES=openid email profile roles
+      # Verified via test-keycloak-claims: roles are at top level
+      - OPENID_ROLES_CLAIM=roles
+      # Role mapping
       - OPENID_ADMIN_ROLE=openwebui-admin
+      - DEFAULT_USER_ROLE=user # Auto-activate new users (ignore pending state)
+      - ENABLE_SIGNUP=true
       - OPENID_SIGN_OUT_REDIRECT_URL=${KEYCLOAK_URL_PUBLIC:-http://localhost:8080}/realms/${KEYCLOAK_REALM:-master}/protocol/openid-connect/logout
     volumes:
       - open_webui_storage:/app/backend/data # Datos persistentes
