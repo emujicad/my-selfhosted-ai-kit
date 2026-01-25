@@ -49,7 +49,29 @@ kcadm() {
 # Main Verification Logic
 # =============================================================================
 
-print_header "TEST: Grafana OIDC User Sync Safety"
+# Function to validate environment variables
+check_required_vars() {
+    local missing_vars=0
+    for var in "$@"; do
+        if [ -z "${!var:-}" ]; then
+            print_error "Variable '$var' is required but not set in .env"
+            missing_vars=1
+        else
+            # Placeholder validation
+            local value="${!var}"
+            if [[ "$value" == *"change_me"* ]] || [[ "$value" == *"your-"* ]]; then
+                 print_warning "Variable '$var' seems to use a placeholder value: $value"
+            fi
+        fi
+    done
+    if [ $missing_vars -eq 1 ]; then
+        print_error "Please configure required variables in your .env file."
+        exit 1
+    fi
+}
+
+# Validate Critical Vars
+check_required_vars "GRAFANA_ADMIN_PASSWORD" "KEYCLOAK_ADMIN_USER" "KEYCLOAK_ADMIN_PASSWORD"
 
 # 1. Check Grafana Admin Email via API
 print_info "Checking Grafana internal users..."
@@ -78,8 +100,8 @@ KEYCLOAK_ADMIN_EMAIL_KC=$(echo "$KEYCLOAK_USERS" | jq -r '.[] | select(.username
 
 if [ -z "$KEYCLOAK_ADMIN_EMAIL_KC" ] || [ "$KEYCLOAK_ADMIN_EMAIL_KC" == "null" ]; then
     # Fallback: check if we are using a custom admin
-    KEYCLOAK_ADMIN_EMAIL_KC=$(echo "$KEYCLOAK_USERS" | jq -r '.[] | select(.username=="'"${KEYCLOAK_PERMANENT_ADMIN_USERNAME:-admin-user}"'") | .email')
-    KEYCLOAK_ADMIN_USER_ACTUAL="${KEYCLOAK_PERMANENT_ADMIN_USERNAME:-admin-user}"
+    KEYCLOAK_ADMIN_EMAIL_KC=$(echo "$KEYCLOAK_USERS" | jq -r '.[] | select(.username=="'"${KEYCLOAK_PERMANENT_ADMIN_USERNAME:-emujicad}"'") | .email')
+    KEYCLOAK_ADMIN_USER_ACTUAL="${KEYCLOAK_PERMANENT_ADMIN_USERNAME:-emujicad}"
 fi
 print_info "Keycloak user ($KEYCLOAK_ADMIN_USER_ACTUAL) email: $KEYCLOAK_ADMIN_EMAIL_KC"
 

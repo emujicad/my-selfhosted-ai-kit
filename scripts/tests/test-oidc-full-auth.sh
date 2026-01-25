@@ -16,11 +16,35 @@ NC='\033[0m'
 echo -e "${BLUE}🧪 TEST: End-to-End OIDC Authentication Flow${NC}"
 echo "=================================================="
 
+# Function to validate environment variables
+check_required_vars() {
+    local missing_vars=0
+    for var in "$@"; do
+        if [ -z "${!var:-}" ]; then
+            echo -e "${RED}❌ Error: Variable '$var' is required but not set in .env${NC}"
+            missing_vars=1
+        else
+            # Placeholder validation
+            local value="${!var}"
+            if [[ "$value" == *"change_me"* ]] || [[ "$value" == *"your-"* ]]; then
+                 echo -e "${YELLOW}⚠️  Warning: Variable '$var' seems to use a placeholder value: $value${NC}"
+            fi
+        fi
+    done
+    if [ $missing_vars -eq 1 ]; then
+        echo -e "${RED}❌ Please configure required variables in your .env file.${NC}"
+        exit 1
+    fi
+}
+
 # Configuration
 KEYCLOAK_URL="http://localhost:8080"
 REALM="${KEYCLOAK_REALM:-master}"
-USER="${KEYCLOAK_PERMANENT_ADMIN_USERNAME:-admin-user}"
+USER="${KEYCLOAK_PERMANENT_ADMIN_USERNAME:-emujicad}"
 PASS="${KEYCLOAK_PERMANENT_ADMIN_PASSWORD:-TempPass123!}"
+
+# Validate Critical Vars
+check_required_vars "KEYCLOAK_ADMIN_USER" "KEYCLOAK_ADMIN_PASSWORD"
 
 # 1. Test for different clients
 CLIENTS=("grafana" "open-webui" "jenkins")

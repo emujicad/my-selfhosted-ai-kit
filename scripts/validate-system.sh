@@ -62,8 +62,14 @@ check_required_vars() {
     local missing_vars=0
     for var in "$@"; do
         if [ -z "${!var:-}" ]; then
-            print_error "Variable '$var' is required but not set/empty in .env"
+            print_error "Variable '$var' is required but not set in .env"
             missing_vars=1
+        else
+            # Placeholder validation
+            local value="${!var}"
+            if [[ "$value" == *"change_me"* ]] || [[ "$value" == *"your-"* ]]; then
+                 print_warning "Variable '$var' seems to use a placeholder value: $value"
+            fi
         fi
     done
     return $missing_vars

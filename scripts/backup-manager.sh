@@ -42,12 +42,19 @@ log_warning() {
 }
 
 # Function to validate environment variables
+# Función para validar variables requeridas
 check_required_vars() {
     local missing_vars=0
     for var in "$@"; do
         if [ -z "${!var:-}" ]; then
             log_error "Variable requerida no definida: $var"
             missing_vars=1
+        else
+            # Validación de placeholders
+            local value="${!var}"
+            if [[ "$value" == *"change_me"* ]] || [[ "$value" == *"your-"* ]]; then
+                 log_warning "La variable '$var' parece usar un valor por defecto: $value"
+            fi
         fi
     done
     if [ $missing_vars -eq 1 ]; then
