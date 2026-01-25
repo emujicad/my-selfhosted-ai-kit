@@ -1,5 +1,7 @@
 # 🚀 Guía del Stack Manager
 
+**Última actualización**: 2026-01-25
+
 ## 📋 Descripción
 
 `scripts/stack-manager.sh` es el script maestro para gestionar el stack completo de servicios Docker Compose con diferentes perfiles y combinaciones.
@@ -332,4 +334,4 @@ Para más información sobre funcionalidades específicas:
 - **Validación**: Ver `docs/VALIDATION_GUIDE.md`
 - **Keycloak**: Ver `docs/KEYCLOAK_GUIDE.md`
 - **Monitoreo**: Ver `docs/GRAFANA_MONITORING_GUIDE.md`
-
+```

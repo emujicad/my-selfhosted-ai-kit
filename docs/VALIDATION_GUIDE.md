@@ -1,5 +1,7 @@
 # 🔍 Guía Completa de Validación
 
+**Última actualización**: 2026-01-25
+
 ## 📋 Índice
 
 1. [Validación Rápida](#validación-rápida) ⚡

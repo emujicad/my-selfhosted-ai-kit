@@ -2,7 +2,7 @@
 
 Complete guide for integrating Keycloak with all services in the stack, including troubleshooting and automatic fixes.
 
-**Last updated**: 2026-01-24
+**Last updated**: 2026-01-25
 
 ---
 
@@ -489,7 +489,7 @@ Improvements in `docker-compose.yml` help prevent the problem:
 
 ---
 
-**Last updated**: 2026-01-24
+**Last updated**: 2026-01-25
 
 ---
 

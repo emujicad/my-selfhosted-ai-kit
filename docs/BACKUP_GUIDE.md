@@ -193,6 +193,4 @@ Estos volúmenes **NO se respaldan** porque contienen datos temporales o regener
 
 ---
 
-**Última actualización**: 2026-01-24
-
-
+**Last updated**: 2026-01-25

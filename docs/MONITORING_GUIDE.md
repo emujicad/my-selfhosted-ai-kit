@@ -2,7 +2,7 @@
 
 Complete guide for monitoring the entire stack with Prometheus, Grafana, exporters, and alerting.
 
-**Last updated**: 2026-01-24
+**Last updated**: 2026-01-25
 
 ---
 

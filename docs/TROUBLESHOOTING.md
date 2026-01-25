@@ -2,7 +2,7 @@
 
 Comprehensive troubleshooting guide for all services in the stack.
 
-**Last updated**: 2026-01-24
+**Last updated**: 2026-01-25
 
 ---
 

@@ -1,6 +1,6 @@
 # 🚀 Roadmap - My Self-Hosted AI Kit
 
-**Última actualización**: 2026-01-24
+**Última actualización**: 2026-01-25
 
 Este documento combina el plan de acción general con los próximos pasos detallados para el proyecto. Está organizado por prioridades y proporciona una guía completa para implementar todas las funcionalidades pendientes.
 

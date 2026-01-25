@@ -2,7 +2,7 @@
 
 Complete guide for optimizing, monitoring, and testing Ollama performance in this stack.
 
-**Last updated**: 2026-01-24
+**Last updated**: 2026-01-25
 
 ---
 
@@ -457,4 +457,4 @@ After validating optimizations:
 
 ---
 
-*Last updated: 2026-01-24*
+*Last updated: 2026-01-25*
