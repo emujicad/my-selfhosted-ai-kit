@@ -2427,6 +2427,7 @@ show_service_info() {
     if echo "$running_services" | grep -qE "^postgres$"; then
         print_info "Servicios Base:"
         echo "  - PostgreSQL: localhost:5432"
+        if echo "$running_services" | grep -qE "^postgres-exporter$"; then echo "    (Exporter: :9187)"; fi
         if echo "$running_services" | grep -qE "^qdrant$"; then
              echo "  - Qdrant: http://localhost:6333"
         fi
@@ -2435,14 +2436,18 @@ show_service_info() {
     if echo "$running_services" | grep -qE "^open-webui$"; then
         print_info "Servicios de IA:"
         echo "  - Open WebUI: http://localhost:3000"
+        if echo "$running_services" | grep -qE "^openwebui-exporter$"; then echo "    (Exporter: :9890)"; fi
         if echo "$running_services" | grep -qE "^ollama(-gpu)?$"; then
              echo "  - Ollama: http://localhost:11434"
+             if echo "$running_services" | grep -qE "^ollama-exporter$"; then echo "    (Exporter: :9888)"; fi
+             if echo "$running_services" | grep -qE "^nvidia-exporter$"; then echo "    (NVIDIA Exporter: :9400)"; fi
         fi
     fi
 
     if echo "$running_services" | grep -qE "^n8n$"; then
         print_info "Servicios de Automatización:"
         echo "  - n8n: http://localhost:5678"
+        if echo "$running_services" | grep -qE "^n8n-exporter$"; then echo "    (Exporter: :9889)"; fi
     fi
     
     if echo "$running_services" | grep -qE "^jenkins$"; then
@@ -2468,7 +2473,10 @@ show_service_info() {
     
     if echo "$running_services" | grep -qE "^redis|haproxy|pgvector$"; then
         print_info "Servicios de Infraestructura:"
-        if echo "$running_services" | grep -qE "^redis$"; then echo "  - Redis: localhost:6379"; fi
+        if echo "$running_services" | grep -qE "^redis$"; then 
+            echo "  - Redis: localhost:6379"
+            if echo "$running_services" | grep -qE "^redis-exporter$"; then echo "    (Exporter: :9121)"; fi
+        fi
         if echo "$running_services" | grep -qE "^haproxy$"; then echo "  - HAProxy: http://localhost:80"; fi
         if echo "$running_services" | grep -qE "^pgvector$"; then echo "  - PgVector: localhost:5433"; fi
     fi
