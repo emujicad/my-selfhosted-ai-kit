@@ -447,7 +447,8 @@ Todos los datos se almacenan en volúmenes persistentes de Docker:
   - Rate limiting (100 req/10s por IP) - Protección DDoS
   - Routing basado en paths (backends específicos por servicio)
   - Timeouts optimizados
-  - Logging y estadísticas mejoradas
+  - Logging - Estadísticas y logging mejorados
+  - **Cola de Peticiones GPU**: Previene OOM poniendo en cola las inferencias (`maxconn 1`)
   - Opciones de balanceo mejoradas
 
 ### Monitoreo (perfil `monitoring`)

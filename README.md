@@ -481,6 +481,7 @@ All data is stored in persistent Docker volumes:
   - Optimized timeouts
   - Enhanced logging and statistics
   - Improved load balancing options
+  - **Request Queue for GPU**: Prevents OOM by queuing inference requests (`maxconn 1`)
 
 ### Monitoring (profile `monitoring`)
 - **Prometheus**: Metrics collector
