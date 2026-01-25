@@ -2420,46 +2420,53 @@ init_volumes() {
 show_service_info() {
     print_header "INFORMACIÓN DE SERVICIOS"
     
+    # Obtener lista de todos los servicios corriendo
+    local running_services=$($DOCKER_CMD compose ps --services --filter "status=running" 2>/dev/null)
+    
     # Servicios Base y automatización
-    if $DOCKER_CMD compose ps postgres 2>/dev/null | grep -q "Up"; then
+    if echo "$running_services" | grep -qE "^postgres$"; then
         print_info "Servicios Base:"
         echo "  - PostgreSQL: localhost:5432"
-        echo "  - Qdrant: http://localhost:6333"
+        if echo "$running_services" | grep -qE "^qdrant$"; then
+             echo "  - Qdrant: http://localhost:6333"
+        fi
     fi
 
-    if $DOCKER_CMD compose ps open-webui 2>/dev/null | grep -q "Up"; then
+    if echo "$running_services" | grep -qE "^open-webui$"; then
         print_info "Servicios de IA:"
         echo "  - Open WebUI: http://localhost:3000"
-        echo "  - Ollama: http://localhost:11434"
+        if echo "$running_services" | grep -qE "^ollama(-gpu)?$"; then
+             echo "  - Ollama: http://localhost:11434"
+        fi
     fi
 
-    if $DOCKER_CMD compose ps n8n 2>/dev/null | grep -q "Up"; then
+    if echo "$running_services" | grep -qE "^n8n$"; then
         print_info "Servicios de Automatización:"
         echo "  - n8n: http://localhost:5678"
     fi
     
-    if $DOCKER_CMD compose ps jenkins 2>/dev/null | grep -q "Up"; then
+    if echo "$running_services" | grep -qE "^jenkins$"; then
         print_info "Servicios CI/CD:"
         echo "  - Jenkins: http://localhost:8080/jenkins"
     fi
     
     # Servicios con perfiles
-    if $DOCKER_CMD compose --profile monitoring ps prometheus 2>/dev/null | grep -q "Up"; then
+    if echo "$running_services" | grep -qE "^grafana|prometheus|alertmanager$"; then
         print_info "Servicios de Monitoreo:"
-        echo "  - Grafana: http://localhost:3001"
-        echo "  - Prometheus: http://localhost:9090"
-        echo "  - AlertManager: http://localhost:9093"
+        if echo "$running_services" | grep -qE "^grafana$"; then echo "  - Grafana: http://localhost:3001"; fi
+        if echo "$running_services" | grep -qE "^prometheus$"; then echo "  - Prometheus: http://localhost:9090"; fi
+        if echo "$running_services" | grep -qE "^alertmanager$"; then echo "  - AlertManager: http://localhost:9093"; fi
     fi
     
-    if $DOCKER_CMD compose --profile security ps keycloak 2>/dev/null | grep -q "Up"; then
+    if echo "$running_services" | grep -qE "^keycloak$"; then
         print_info "Servicios de Seguridad:"
         echo "  - Keycloak: http://localhost:8080"
     fi
     
-    if $DOCKER_CMD compose --profile infrastructure ps redis 2>/dev/null | grep -q "Up"; then
+    if echo "$running_services" | grep -qE "^redis|haproxy$"; then
         print_info "Servicios de Infraestructura:"
-        echo "  - Redis: localhost:6379"
-        echo "  - HAProxy: http://localhost:80"
+        if echo "$running_services" | grep -qE "^redis$"; then echo "  - Redis: localhost:6379"; fi
+        if echo "$running_services" | grep -qE "^haproxy$"; then echo "  - HAProxy: http://localhost:80"; fi
     fi
 }
 
