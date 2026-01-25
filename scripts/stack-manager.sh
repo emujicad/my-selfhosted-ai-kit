@@ -2504,7 +2504,7 @@ show_service_info() {
     
     if echo "$running_services" | grep -qE "^jenkins$"; then
         print_info "Servicios CI/CD:"
-        print_service_line "Jenkins" "http://localhost:8080/jenkins" "jenkins"
+        print_service_line "Jenkins" "http://localhost:8081" "jenkins"
     fi
     
     # Servicios con perfiles
