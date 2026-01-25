@@ -57,6 +57,18 @@ print_info() {
     echo -e "${CYAN}ℹ️  $1${NC}"
 }
 
+# Standardized validation function
+check_required_vars() {
+    local missing_vars=0
+    for var in "$@"; do
+        if [ -z "${!var:-}" ]; then
+            print_error "Variable '$var' is required but not set/empty in .env"
+            missing_vars=1
+        fi
+    done
+    return $missing_vars
+}
+
 # =============================================================================
 # Logic: Environment Variables (--env)
 # =============================================================================
@@ -84,17 +96,24 @@ check_env() {
         "JENKINS_URL_PUBLIC" "KEYCLOAK_CLIENT_SECRET_JENKINS"
     )
 
+    # Validar variables críticas usando la función estandarizada
+    local MISSING=0
+    
+    check_required_vars "${CRITICAL_VARS[@]}" || MISSING=1
+    
+    # Validaciones adicionales específicas (placeholders)
     for VAR in "${CRITICAL_VARS[@]}"; do
         local VALUE="${!VAR:-}"
-        
-        if [ -z "$VALUE" ]; then
-            print_error "$VAR is empty or undefined"
-        elif [[ "$VALUE" == *"change_me"* ]] || [[ "$VALUE" == *"your-"* ]]; then
+        if [[ "$VALUE" == *"change_me"* ]] || [[ "$VALUE" == *"your-"* ]]; then
             if [[ "$VAR" == *"PASSWORD"* ]] || [[ "$VAR" == *"SECRET"* ]]; then
                  print_warning "$VAR seems to use a placeholder value"
             fi
         fi
     done
+    
+    if [ "$MISSING" -eq 1 ]; then
+        return 1
+    fi
 
     # Verify constructed URLs (check logic)
     if [ -z "${OLLAMA_URL_INTERNAL:-}" ]; then

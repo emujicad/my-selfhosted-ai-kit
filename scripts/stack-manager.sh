@@ -242,6 +242,18 @@ auto_fix_env_quotes() {
     return 0
 }
 
+# Standardized validation function
+check_required_vars() {
+    local missing_vars=0
+    for var in "$@"; do
+        if [ -z "${!var:-}" ]; then
+            print_error "Variable '$var' is required but not set in .env"
+            missing_vars=1
+        fi
+    done
+    return $missing_vars
+}
+
 # Función para validar antes de levantar
 # Función para generar dinámicamente userinfo.json para Open WebUI
 # Esto evita subir información personal (email, nombre) al repositorio de Git
@@ -301,15 +313,15 @@ validate_before_start() {
         "GRAFANA_ADMIN_PASSWORD"
         "N8N_ENCRYPTION_KEY"
         "N8N_USER_MANAGEMENT_JWT_SECRET"
+        "OPEN_WEBUI_OIDC_USER_EMAIL"
+        "OPEN_WEBUI_OIDC_USER_USERNAME"
+        "OPEN_WEBUI_OIDC_USER_NAME"
+        "OPEN_WEBUI_OIDC_USER_GIVEN_NAME"
+        "OPEN_WEBUI_OIDC_USER_FAMILY_NAME"
     )
     
     local MISSING_VARS=0
-    for VAR in "${REQUIRED_VARS[@]}"; do
-        if [ -z "${!VAR:-}" ]; then
-            print_error "Missing required variable: $VAR"
-            MISSING_VARS=1
-        fi
-    done
+    check_required_vars "${REQUIRED_VARS[@]}" || MISSING_VARS=1
     
     if [ "$MISSING_VARS" -eq 1 ]; then
         print_error "Critical environment variables are missing in .env."
