@@ -18,7 +18,10 @@ NC='\033[0m'
 
 # Configuración
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Asegurar que estamos en el directorio del proyecto
+cd "$PROJECT_DIR"
 BACKUP_DIR="${PROJECT_DIR}/backups"
 
 # Funciones de logging
@@ -116,10 +119,16 @@ backup_volume() {
     
     log "Backupeando volumen: $VOLUME_NAME"
     
+    # Calcular ruta del host para DooD (si aplica)
+    local HOST_SESSION_DIR="$BACKUP_SESSION_DIR"
+    if [ -n "${HOST_BACKUP_PATH:-}" ]; then
+        HOST_SESSION_DIR="${HOST_BACKUP_PATH}/$(basename "$BACKUP_SESSION_DIR")"
+    fi
+    
     # Crear contenedor temporal para backup
     docker run --rm \
         -v "$VOLUME_NAME":/source:ro \
-        -v "$BACKUP_SESSION_DIR":/backup \
+        -v "$HOST_SESSION_DIR":/backup \
         alpine:latest \
         tar czf "/backup/${VOLUME_NAME}.tar.gz" -C /source . 2>/dev/null || {
         log_error "Error al hacer backup del volumen $VOLUME_NAME"
@@ -141,12 +150,15 @@ backup_postgres() {
     log "Backupeando base de datos PostgreSQL: $DB_NAME"
     
     # Verificar que el contenedor de PostgreSQL está corriendo
-    if ! docker compose ps postgres | grep -q "Up"; then
+    if ! docker ps --filter "name=${DB_POSTGRESDB_HOST:-postgres}" --format '{{.Status}}' | grep -q "Up"; then
         log_warning "PostgreSQL no está corriendo, omitiendo backup de BD"
         return 0
     fi
     
-    docker compose exec -T postgres \
+    # Obtener nombre real del contenedor (puede tener prefijo)
+    local PG_CONTAINER=$(docker ps --filter "name=${DB_POSTGRESDB_HOST:-postgres}" --format '{{.Names}}' | head -1)
+
+    docker exec "$PG_CONTAINER" \
         pg_dump -U "$DB_USER" "$DB_NAME" | gzip > "$BACKUP_FILE" || {
         log_error "Error al hacer backup de PostgreSQL"
         return 1

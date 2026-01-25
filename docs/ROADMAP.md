@@ -85,7 +85,7 @@ Este documento combina el plan de acción general con los próximos pasos detall
 - ✅ Grafana: Completado y funcionando
 - ✅ Open WebUI: Completado (Emulated OIDC Environment)
 - ✅ n8n: Configuración lista, clientes OIDC creados automáticamente
-- ✅ Jenkins: Script de inicialización listo, clientes OIDC creados automáticamente
+- ✅ Jenkins: Script de inicialización listo, OIDC automatizado y plugins instalados
 
 **Tareas pendientes:**
 

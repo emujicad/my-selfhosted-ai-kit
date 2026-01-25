@@ -310,6 +310,88 @@ action_fix_clients() {
 }
 
 # =============================================================================
+# Logic: Jenkins Setup (--setup-jenkins)
+# =============================================================================
+
+action_setup_jenkins() {
+    print_header "SETTING UP JENKINS OIDC"
+    
+    if ! docker ps | grep -q "jenkins"; then
+        print_error "Jenkins container is NOT running."
+        echo "   Please start the stack first: ./scripts/stack-manager.sh start"
+        exit 1
+    fi
+
+    # 1. Install Plugins
+    print_info "Installing/Verifying 'oic-auth' plugin..."
+    if docker exec jenkins jenkins-plugin-cli --plugins oic-auth configuration-as-code; then
+        print_success "Plugins installed/verified."
+    else
+        print_error "Failed to install plugins."
+        exit 1
+    fi
+
+    # 2. Configure OIDC via Groovy Init Script
+    print_info "Configuring OIDC Security Realm..."
+    
+    # Create temporary groovy script
+    cat <<EOF > /tmp/jenkins_oidc_setup.groovy
+import hudson.security.*
+import org.jenkinsci.plugins.oic.*
+import jenkins.model.*
+
+def env = System.getenv()
+def clientId = env['JENKINS_OIDC_CLIENT_ID']
+def clientSecret = env['JENKINS_OIDC_CLIENT_SECRET']
+def keycloakUrl = env['KEYCLOAK_URL_PUBLIC'] ?: "http://localhost:8080"
+def realmName = env['KEYCLOAK_REALM'] ?: "master"
+
+println "Configuring OIDC for Client ID: \${clientId}"
+
+def tokenServerUrl = "\${keycloakUrl}/realms/\${realmName}/protocol/openid-connect/token"
+def authServerUrl = "\${keycloakUrl}/realms/\${realmName}/protocol/openid-connect/auth"
+def userInfoUrl = "\${keycloakUrl}/realms/\${realmName}/protocol/openid-connect/userinfo"
+def jwksUrl = "\${keycloakUrl}/realms/\${realmName}/protocol/openid-connect/certs"
+
+def oicRealm = new OicSecurityRealm(
+    clientId,
+    clientSecret,
+    tokenServerUrl,
+    authServerUrl,
+    userInfoUrl,
+    jwksUrl,
+    "openid email profile", // scopes
+    false, // disable ssl verification
+    "preferred_username", // user name field
+    "name", // full name field
+    "email", // email field
+    null  // groups field
+)
+
+def strategy = new FullControlOnceLoggedInAuthorizationStrategy()
+Jenkins.instance.setSecurityRealm(oicRealm)
+Jenkins.instance.setAuthorizationStrategy(strategy)
+Jenkins.instance.save()
+println "OIDC Security Realm Configured Successfully"
+EOF
+
+    # Copy script to container
+    docker cp /tmp/jenkins_oidc_setup.groovy jenkins:/var/jenkins_home/init.groovy.d/auth-oidc.groovy
+    
+    # 3. Restart to apply
+    print_info "Restarting Jenkins to apply changes..."
+    if docker restart jenkins; then
+        print_success "Jenkins restarted."
+        print_info "Please check logs: docker logs -f jenkins"
+    else
+        print_error "Failed to restart Jenkins."
+    fi
+     
+    # Cleanup
+    rm -f /tmp/jenkins_oidc_setup.groovy
+}
+
+# =============================================================================
 # Main Router
 # =============================================================================
 
@@ -320,6 +402,7 @@ show_help() {
     echo "  --setup-roles     Create Realms, Roles, and Groups structure"
     echo "  --create-admin    Create permanent admin user and secure account"
     echo "  --fix-clients     Recreate OIDC clients (Grafana, n8n, etc.) if broken"
+    echo "  --setup-jenkins   Install plugins and configure OIDC for Jenkins"
     echo "  --status          Check Keycloak health and status"
     echo "  --help            Show this help"
     echo ""
@@ -339,6 +422,9 @@ case "$1" in
         ;;
     --fix-clients)
         action_fix_clients
+        ;;
+    --setup-jenkins)
+        action_setup_jenkins
         ;;
     --status)
         check_keycloak_running

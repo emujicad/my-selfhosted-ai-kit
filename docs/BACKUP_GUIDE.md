@@ -70,10 +70,17 @@ Muestra todos los backups disponibles con información detallada.
 
 ## 🔄 Flujo de Trabajo Recomendado
 
-### Backup Regular
+### Backup Automático (Recomendado)
+El proyecto incluye un servicio **"Backup Runner"** (perfil `monitoring`) que ejecuta el backup automáticamente cada 24 horas.
+- **Requiere**: `docker compose --profile monitoring up -d`
+- **Ubicación**: Escribe directamente en `./backups/` en tu host.
+- **Ventaja**: No requiere configurar cron manualmente en tu máquina.
+
+### Backup Regular (Manual)
+Si prefieres control manual o quieres desactivar el runner automático:
 ```bash
-# Backup diario (agregar a cron)
-0 2 * * * cd /ruta/al/proyecto && ./scripts/backup-manager.sh backup --verify
+# Ejecutar backup cuando quieras
+./scripts/backup-manager.sh backup --verify
 ```
 
 ### Antes de Cambios Importantes
@@ -137,6 +144,16 @@ docker info
 ### Error: "Volumen no existe"
 - Algunos volúmenes pueden no existir si no se han usado
 - El script omite volúmenes inexistentes automáticamente
+
+### Nota Técnica (Docker-out-of-Docker)
+Si ejecutas este script **desde dentro de un contenedor** (como el servicio `backup`), el script detectará automáticamente el entorno.
+- **Requisito**: Debes pasar la variable de entorno `HOST_BACKUP_PATH` apuntando a la ruta absoluta en el host.
+- **Razón**: El contenedor de backup crea un contenedor `alpine` hermano que necesita montar la ruta host, no la ruta interna del contenedor.
+- **Solución**: El `docker-compose.yml` ya maneja esto automáticamente:
+  ```yaml
+  environment:
+    - HOST_BACKUP_PATH=${PWD}/backups
+  ```
 
 ### Error: "PostgreSQL no está corriendo"
 - Inicia PostgreSQL antes de restaurar:

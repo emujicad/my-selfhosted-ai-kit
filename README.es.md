@@ -20,7 +20,7 @@ Un stack completo de herramientas de Inteligencia Artificial auto-hospedadas usa
 - **pgvector**: Extensión de PostgreSQL para vectores
 
 ### Servicios opcionales:
-- **Backup automático**: Respaldo diario de datos (perfil `monitoring`)
+- **Automatic Backup Runner**: Respaldo diario automatizado y auto-contenido (perfil `monitoring`)
 - **Herramientas de desarrollo**: Contenedor con utilidades (perfil `dev`)
 
 ### Modelos de IA incluidos:

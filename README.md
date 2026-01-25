@@ -20,7 +20,7 @@ A complete stack of self-hosted Artificial Intelligence tools using Docker Compo
 - **pgvector**: PostgreSQL extension for vectors
 
 ### Optional services:
-- **Automatic backup**: Daily data backup (profile `monitoring`)
+- **Automatic Backup Runner**: Automated, self-contained daily backup (profile `monitoring`)
 - **Development tools**: Container with utilities (profile `dev`)
 
 ### Included AI models:
@@ -690,10 +690,14 @@ The `monitoring` profile adds a complete monitoring and observability stack:
 - **Function**: Manages alerts when services have problems
 - **Configured alerts**: Services down, high resource usage, critical errors
 
-#### Automatic backup
-- **Function**: Backs up data daily
-- **Location**: `backup_data` volume
-- **Frequency**: Every 24 hours
+#### Automatic Backup Runner
+- **Function**: Executes the unified `scripts/backup-manager.sh` script daily.
+- **Features**: 
+  - Uses Docker-out-of-Docker (DooD) to back up ALL volumes and configs.
+  - Verifies backup integrity automatically.
+  - Consistently uses the same logic as manual backups.
+- **Location**: `backups/` directory on host (via bind mount).
+- **Frequency**: Every 24 hours.
 
 ### Development tools
 - **Profile**: `dev`

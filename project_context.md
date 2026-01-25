@@ -133,6 +133,12 @@ my-selfhosted-ai-kit/
 - **Architecture**: Decoupled HAProxy from strict monitoring dependencies for flexible startup
 
 
+### 2026-01-25: Backup System Consolidation & Jenkins OIDC
+- **Backup Runner**: Refactored `backup` service to use DooD with `docker:cli` for robust automation
+- **Network Fix**: Connected Jenkins and Backup services to `genai-network` for internet access (plugins/apk)
+- **PostgreSQL**: Enhanced `pg_dump` logic in `backup-manager.sh` to work reliably via DooD `docker exec`
+- **Jenkins OIDC**: Added automated plugin installation and configuration to `auth-manager.sh`
+
 ### 2026-01-25: Keycloak Security Hardening
 - **Permanent Admin**: Created `keycloak-create-permanent-admin.sh` to automate admin migration
 - **Security**: Replaced temporary `admin` user with secured permanent admin
