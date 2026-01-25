@@ -226,6 +226,7 @@ This document combines the current project status with the TODO list to provide 
   - [ ] SSL certificate rotation
   - [ ] Automatic container updates
   - [ ] Automatic health checks
+  - [ ] **Pin Critical Docker Images**: Keycloak, HAProxy, Redis currently on `latest` (High Risk)
 
 ---
 
