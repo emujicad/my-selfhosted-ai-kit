@@ -324,6 +324,8 @@ validate_before_start() {
         "OPEN_WEBUI_OIDC_USER_NAME"
         "OPEN_WEBUI_OIDC_USER_GIVEN_NAME"
         "OPEN_WEBUI_OIDC_USER_FAMILY_NAME"
+        "GRAFANA_OAUTH_CLIENT_SECRET"
+        "N8N_OIDC_CLIENT_SECRET"
     )
     
     local MISSING_VARS=0

@@ -21,7 +21,7 @@
 ## Features & Improvements
 
 
-- [ ] **Security:** Add critical OIDC secrets to `REQUIRED_VARS` validation in `stack-manager.sh`.
+
 - [ ] Add Jenkins to the proxy path (`/jenkins`)
 - [ ] Implement n8n OIDC (requires license/check version)
 - [ ] Add auto-healing for crashed containers (Watchtower is active)
