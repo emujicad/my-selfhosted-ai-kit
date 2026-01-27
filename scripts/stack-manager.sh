@@ -340,28 +340,7 @@ validate_before_start() {
     # Generar archivos de configuración dinámicos sensibles
     generate_oidc_userinfo
     
-    # Verificar variables de entorno
-    if [ -f "$SCRIPT_DIR/verify-env-variables.sh" ]; then
-        print_info "Verificando variables de entorno..."
-        if ! bash "$SCRIPT_DIR/verify-env-variables.sh" > /tmp/stack-validation.log 2>&1; then
-            print_error "Errores en variables de entorno"
-            cat /tmp/stack-validation.log | grep "❌ ERROR" | head -5
-            return 1
-        fi
-        print_success "Variables de entorno OK"
-    fi
-    
-    # Validar configuración
-    if [ -f "$SCRIPT_DIR/validate-config.sh" ]; then
-        print_info "Validando configuración..."
-        local log_file="/tmp/stack-config-validation.log"
-        if ! bash "$SCRIPT_DIR/validate-config.sh" > "$log_file" 2>&1; then
-            print_warning "Algunos problemas en configuración"
-            print_info "Log de validación: $log_file"
-            return 0  # No bloqueamos, solo advertimos
-        fi
-        print_success "Configuración OK"
-    fi
+
     
     return 0
 }
@@ -2352,11 +2331,13 @@ show_logs() {
 # Función para monitorear modelos Ollama (integra verifica_modelos.sh)
 monitor_models() {
     print_header "MONITOREANDO DESCARGA DE MODELOS OLLAMA"
-    if [ -f "$SCRIPT_DIR/verifica_modelos.sh" ]; then
-        bash "$SCRIPT_DIR/verifica_modelos.sh"
+    print_warning "La función de monitoreo detallado está pendiente de reimplementación (script verifica_modelos.sh removido)."
+    
+    if docker ps | grep -q ollama; then
+        print_info "Estado actual de modelos en Ollama:"
+        docker exec ollama ollama list 2>/dev/null || echo "No se pudo conectar a Ollama"
     else
-        print_error "Script 'verifica_modelos.sh' no encontrado."
-        print_info "Puedes ejecutarlo manualmente si lo tienes: ./scripts/verifica_modelos.sh"
+        print_warning "Ollama no está en ejecución."
     fi
 }
 
