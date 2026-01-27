@@ -444,7 +444,7 @@ expand_preset() {
             echo ""
             ;;
         dev)
-            echo "cpu dev testing"
+            echo "cpu dev"
             ;;
         production)
             echo "gpu-nvidia monitoring infrastructure security automation chat-ai"
