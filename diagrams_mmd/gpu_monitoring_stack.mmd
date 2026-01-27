@@ -1,8 +1,67 @@
-flowchart TD
-    NVIDIA["gpu-nvidia\nOllama (GPU NVIDIA)"] -- nvidia --> N8N["n8n"]
-    N8N -- monitoring --> MON["monitoring"]
-    classDef ia fill:#e0f7fa,stroke:#00796b,stroke-width:2px,color:#222;
-    classDef monitoring fill:#ede7f6,stroke:#8e24aa,stroke-width:2px,color:#222;
-    class NVIDIA ia;
-    class N8N ia;
-    class MON monitoring; 
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#1a1a2e', 'primaryTextColor':'#eaeaea', 'primaryBorderColor':'#4a4a6a', 'lineColor':'#6c63ff', 'fontSize':'13px', 'fontFamily':'Inter, Segoe UI, sans-serif'}}}%%
+graph TB
+    subgraph TITLE ["🎮📊 GPU + MONITORING - AI with Full Observability"]
+        direction LR
+        CMD["docker compose --profile gpu-nvidia --profile monitoring up -d"]
+    end
+    
+    subgraph GPUNVIDIA ["🎮 gpu-nvidia"]
+        OLLAMA["🧠 Ollama GPU<br/>:11434<br/>━━━━━━━━━━<br/>• CUDA Acceleration<br/>• Multi-model support<br/>• 16GB+ VRAM"]
+        PULLER["📦 Model Puller<br/>━━━━━━━━━━<br/>• llama3.2<br/>• llama3.3<br/>• deepseek-r1:14b<br/>• all-minilm<br/>• nomic-embed-text"]
+        NVEXP["📊 nvidia-exporter<br/>:9400"]
+    end
+    
+    subgraph MONITORING ["📊 monitoring"]
+        PROM["📊 Prometheus<br/>:9090<br/>━━━━━━━━━━<br/>Scrape interval: 15s"]
+        GRAF["📈 Grafana<br/>:3001<br/>━━━━━━━━━━<br/>• Ollama Dashboard<br/>• System Overview<br/>• GPU Metrics"]
+        ALERT["🔔 AlertManager<br/>:9093"]
+        BACKUP["💾 Backup Runner"]
+    end
+    
+    subgraph EXPORTERS ["📡 Exporters"]
+        direction LR
+        OLLEXP["ollama-exp<br/>:9888"]
+        NODEEXP["node-exp<br/>:9100"]
+        CADV["cAdvisor<br/>:8082"]
+        PGEXP["postgres-exp<br/>:9187"]
+    end
+    
+    subgraph BASE ["🗄️ Base"]
+        PG["🗄️ PostgreSQL"]
+        QDRANT["🔮 Qdrant"]
+    end
+    
+    %% Model loading
+    PULLER -->|"Downloads to"| OLLAMA
+    
+    %% Metrics flow
+    NVEXP -->|"GPU Metrics"| PROM
+    OLLEXP -->|"Model Metrics"| PROM
+    NODEEXP -->|"Host Metrics"| PROM
+    CADV -->|"Container Metrics"| PROM
+    PGEXP -->|"DB Metrics"| PROM
+    
+    OLLAMA -.-> NVEXP
+    OLLAMA -.-> OLLEXP
+    
+    %% Dashboard
+    GRAF -->|"Query"| PROM
+    PROM -->|"Alerts"| ALERT
+    
+    %% Note
+    NOTE["📈 Key Metrics:<br/>━━━━━━━━━━<br/>• GPU utilization<br/>• VRAM usage<br/>• Model load time<br/>• Inference latency<br/>• Queue depth"]
+    
+    %% Styling
+    classDef title fill:#1a1a2e,stroke:#6c63ff,stroke-width:0px,color:#fff
+    classDef gpu fill:#0d47a1,stroke:#1976d2,stroke-width:2px,color:#fff
+    classDef monitoring fill:#1b5e20,stroke:#388e3c,stroke-width:2px,color:#fff
+    classDef exporters fill:#e65100,stroke:#f57c00,stroke-width:2px,color:#fff
+    classDef base fill:#37474f,stroke:#607d8b,stroke-width:2px,color:#fff
+    classDef note fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100
+    
+    class CMD title
+    class OLLAMA,PULLER,NVEXP gpu
+    class PROM,GRAF,ALERT,BACKUP monitoring
+    class OLLEXP,NODEEXP,CADV,PGEXP exporters
+    class PG,QDRANT base
+    class NOTE note

@@ -1,29 +1,109 @@
-flowchart TD
-    GPU["gpu-nvidia\nOllama (GPU NVIDIA)"] -- nvidia --> N8N["n8n"]
-    N8N -- monitoring --> MON["monitoring"]
-    N8N -- security --> SEC["security"]
-    N8N -- infrastructure --> INFRA["infrastructure"]
-    N8N -- automation --> AUTO["automation"]
-    N8N -- ci-cd --> CICD["ci-cd"]
-    N8N -- testing --> TEST["testing"]
-    N8N -- debug --> DEBUG["debug"]
-    N8N -- dev --> DEV["dev"]
-    classDef ia fill:#e0f7fa,stroke:#00796b,stroke-width:2px,color:#222;
-    classDef monitoring fill:#ede7f6,stroke:#8e24aa,stroke-width:2px,color:#222;
-    classDef security fill:#ffebee,stroke:#e53935,stroke-width:2px,color:#222;
-    classDef infra fill:#efebe9,stroke:#6d4c41,stroke-width:2px,color:#222;
-    classDef automation fill:#e0f7fa,stroke:#00bcd4,stroke-width:2px,color:#222;
-    classDef cicd fill:#eceff1,stroke:#455a64,stroke-width:2px,color:#222;
-    classDef testing fill:#f0f4c3,stroke:#cddc39,stroke-width:2px,color:#222;
-    classDef debug fill:#fce4ec,stroke:#d81b60,stroke-width:2px,color:#222;
-    classDef dev fill:#fffde7,stroke:#ffd600,stroke-width:2px,color:#222;
-    class GPU ia;
-    class N8N ia;
-    class MON monitoring;
-    class SEC security;
-    class INFRA infra;
-    class AUTO automation;
-    class CICD cicd;
-    class TEST testing;
-    class DEBUG debug;
-    class DEV dev; 
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#1a1a2e', 'primaryTextColor':'#eaeaea', 'primaryBorderColor':'#4a4a6a', 'lineColor':'#6c63ff', 'fontSize':'13px', 'fontFamily':'Inter, Segoe UI, sans-serif'}}}%%
+graph TB
+    subgraph TITLE ["🚀 FULL STACK - All Profiles Active"]
+        direction LR
+        CMD["./stack-manager.sh start full"]
+    end
+    
+    subgraph AI ["🤖 gpu-nvidia"]
+        OLLAMA["🧠 Ollama GPU<br/>:11434"]
+        PULLER["📦 Model Puller"]
+        NVEXP["📊 nvidia-exporter"]
+    end
+    
+    subgraph CHATAI ["💬 chat-ai"]
+        WEBUI["💬 Open WebUI<br/>:3000"]
+    end
+    
+    subgraph AUTOMATION ["⚙️ automation"]
+        N8N["⚙️ n8n<br/>:5678"]
+        WATCH["🔄 Watchtower"]
+        SYNC["📂 Sync"]
+    end
+    
+    subgraph CICD ["🔧 ci-cd"]
+        JENKINS["🔧 Jenkins<br/>:8081"]
+    end
+    
+    subgraph SECURITY ["🔐 security"]
+        KC["🔐 Keycloak<br/>:8080"]
+        MODSEC["🛡️ ModSecurity"]
+        KCINIT["⚙️ keycloak-init"]
+    end
+    
+    subgraph INFRASTRUCTURE ["🏗️ infrastructure"]
+        REDIS["💾 Redis<br/>:6379"]
+        HAPROXY["🔀 HAProxy<br/>:80"]
+    end
+    
+    subgraph MONITORING ["📊 monitoring"]
+        PROM["📊 Prometheus<br/>:9090"]
+        GRAF["📈 Grafana<br/>:3001"]
+        ALERT["🔔 AlertManager<br/>:9093"]
+        BACKUP["💾 Backup"]
+        NODEEXP["📡 node-exporter"]
+        CADV["📡 cAdvisor"]
+        PGEXP["📡 postgres-exp"]
+        REDEXP["📡 redis-exp"]
+        OLLEXP["📡 ollama-exp"]
+        N8NEXP["📡 n8n-exp"]
+        OWEXP["📡 webui-exp"]
+    end
+    
+    subgraph TESTING ["🧪 testing"]
+        TESTRUN["🧪 Test Runner"]
+    end
+    
+    subgraph DEBUG ["🐛 debug"]
+        DBGTOOLS["🐛 Debug Tools"]
+    end
+    
+    subgraph BASE ["🗄️ Base Services"]
+        PG["🗄️ PostgreSQL"]
+        QDRANT["🔮 Qdrant"]
+        PGVEC["📐 pgvector"]
+    end
+    
+    %% Connections
+    WEBUI --> OLLAMA
+    WEBUI --> KC
+    N8N --> OLLAMA
+    N8N --> KC
+    JENKINS --> KC
+    GRAF --> KC
+    GRAF --> PROM
+    
+    WEBUI --> PG
+    N8N --> PG
+    KC --> PG
+    WEBUI --> QDRANT
+    WEBUI --> REDIS
+    
+    HAPROXY --> WEBUI
+    HAPROXY --> GRAF
+    HAPROXY --> PROM
+    
+    %% Styling
+    classDef title fill:#1a1a2e,stroke:#6c63ff,stroke-width:0px,color:#fff
+    classDef ai fill:#0d47a1,stroke:#1976d2,stroke-width:2px,color:#fff
+    classDef chatai fill:#1565c0,stroke:#1e88e5,stroke-width:2px,color:#fff
+    classDef automation fill:#4a148c,stroke:#7b1fa2,stroke-width:2px,color:#fff
+    classDef cicd fill:#37474f,stroke:#607d8b,stroke-width:2px,color:#fff
+    classDef security fill:#b71c1c,stroke:#d32f2f,stroke-width:2px,color:#fff
+    classDef infra fill:#00695c,stroke:#00897b,stroke-width:2px,color:#fff
+    classDef monitoring fill:#1b5e20,stroke:#388e3c,stroke-width:2px,color:#fff
+    classDef testing fill:#f57f17,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef debug fill:#e65100,stroke:#f57c00,stroke-width:2px,color:#fff
+    classDef base fill:#455a64,stroke:#78909c,stroke-width:2px,color:#fff
+    
+    class CMD title
+    class OLLAMA,PULLER,NVEXP ai
+    class WEBUI chatai
+    class N8N,WATCH,SYNC automation
+    class JENKINS cicd
+    class KC,MODSEC,KCINIT security
+    class REDIS,HAPROXY infra
+    class PROM,GRAF,ALERT,BACKUP,NODEEXP,CADV,PGEXP,REDEXP,OLLEXP,N8NEXP,OWEXP monitoring
+    class TESTRUN testing
+    class DBGTOOLS debug
+    class PG,QDRANT,PGVEC base

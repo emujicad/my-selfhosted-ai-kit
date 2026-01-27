@@ -1,65 +1,74 @@
-%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#e8f5e9', 'primaryTextColor':'#1b5e20', 'primaryBorderColor':'#388e3c', 'lineColor':'#424242', 'fontSize':'16px'}}}%%
-graph TB
-    subgraph "Profile Ecosystem"
-        User(["👤 User Request"])
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#1a1a2e', 'primaryTextColor':'#eaeaea', 'primaryBorderColor':'#4a4a6a', 'lineColor':'#6c63ff', 'fontSize':'14px', 'fontFamily':'Inter, Segoe UI, sans-serif'}}}%%
+graph LR
+    subgraph INPUT ["👤 User Command"]
+        USER["./stack-manager.sh start"]
     end
     
-    subgraph "Core Profiles"
-        ChatAI["💬 chat-ai<br/>(Open WebUI + Ollama)"]
-        Automation["⚙️ automation<br/>(n8n workflows)"]
-        Monitoring["📊 monitoring<br/>(Grafana + Prometheus)"]
-        CICD["🔧 ci-cd<br/>(Jenkins)"]
+    subgraph PROFILES ["📋 Profile Selection"]
+        direction TB
+        P1["chat-ai"]
+        P2["automation"]
+        P3["monitoring"]
+        P4["ci-cd"]
     end
     
-    subgraph "Infrastructure Profiles"
-        Security["🔐 security<br/>(Keycloak + ModSecurity)"]
-        Infrastructure["🏗️ infrastructure<br/>(Redis + HAProxy)"]
-        GPUNV["🎮 gpu-nvidia<br/>(Ollama GPU-accelerated)"]
+    subgraph RESOLVER ["⚙️ Dependency Resolver"]
+        direction TB
+        R["get_profile_dependencies()"]
     end
     
-    subgraph "Development Profiles"
-        Dev["💻 dev<br/>(Dev tools)"]
-        Testing["🧪 testing<br/>(Test runners)"]
-        Debug["🐛 debug<br/>(Debug tools)"]
+    subgraph RESOLVED ["✅ Auto-Resolved Profiles"]
+        direction TB
+        
+        subgraph R1 ["chat-ai resolves to:"]
+            R1A["security"]
+            R1B["infrastructure"]
+            R1C["gpu-nvidia"]
+        end
+        
+        subgraph R2 ["automation resolves to:"]
+            R2A["security"]
+        end
+        
+        subgraph R3 ["monitoring resolves to:"]
+            R3A["security"]
+            R3B["infrastructure"]
+        end
+        
+        subgraph R4 ["ci-cd resolves to:"]
+            R4A["security"]
+        end
     end
     
-    %% User to Core Profiles
-    User -->|"./stack-manager.sh<br/>start chat-ai"| ChatAI
-    User -->|"./stack-manager.sh<br/>start automation"| Automation
+    subgraph OUTPUT ["🚀 Docker Compose"]
+        DC["docker compose --profile ... up -d"]
+    end
     
-    %% Auto-Dependency Resolution
-    ChatAI -.->|"Auto-includes"| Security
-    ChatAI -.->|"Auto-includes"| Infrastructure
-    ChatAI -.->|"Auto-includes"| GPUNV
+    USER --> PROFILES
+    P1 --> R
+    P2 --> R
+    P3 --> R
+    P4 --> R
     
-    Automation -.->|"Auto-includes"| Security
+    R --> R1
+    R --> R2
+    R --> R3
+    R --> R4
     
-    Monitoring -.->|"Auto-includes"| Security
-    
-    CICD -.->|"Auto-includes"| Security
-    
-    %% Labels for auto-resolution
-    ChatAI ---|"📦 Resolved"| ResolvedChat["Security +<br/>Infrastructure +<br/>GPU-NVIDIA"]
-    Automation ---|"📦 Resolved"| ResolvedAuto["Security"]
+    R1 --> DC
+    R2 --> DC
+    R3 --> DC
+    R4 --> DC
     
     %% Styling
-    classDef core fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#1a237e
-    classDef infra fill:#f3e5f5,stroke:#7b1fa2,stroke-width:3px,color:#4a148c
-    classDef dev fill:#fff9c4,stroke:#f57f17,stroke-width:3px,color:#f57f17
-    classDef resolved fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20
-    classDef user fill:#e0f2f1,stroke:#00796b,stroke-width:3px,color:#004d40
+    classDef input fill:#0d47a1,stroke:#1976d2,stroke-width:2px,color:#fff
+    classDef profile fill:#4a148c,stroke:#7b1fa2,stroke-width:2px,color:#fff
+    classDef resolver fill:#e65100,stroke:#f57c00,stroke-width:2px,color:#fff
+    classDef resolved fill:#1b5e20,stroke:#388e3c,stroke-width:2px,color:#fff
+    classDef output fill:#37474f,stroke:#607d8b,stroke-width:2px,color:#fff
     
-    class ChatAI,Automation,Monitoring,CICD core
-    class Security,Infrastructure,GPUNV infra
-    class Dev,Testing,Debug dev
-    class ResolvedChat,ResolvedAuto resolved
-    class User user
-    
-    %% Notes
-    Note1["💡 Before: Manual specification<br/>./stack-manager.sh start security infrastructure gpu-nvidia chat-ai"]
-    Note2["✨ After: Auto-resolution<br/>./stack-manager.sh start chat-ai"]
-    
-    Note1 -.->|"Simplified to"| Note2
-    
-    classDef note fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100
-    class Note1,Note2 note
+    class USER input
+    class P1,P2,P3,P4 profile
+    class R resolver
+    class R1A,R1B,R1C,R2A,R3A,R3B,R4A resolved
+    class DC output

@@ -1,103 +1,106 @@
-%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#e3f2fd', 'primaryTextColor':'#1a237e', 'primaryBorderColor':'#1976d2', 'lineColor':'#424242', 'secondaryColor':'#f3e5f5', 'tertiaryColor':'#e8f5e9', 'fontSize':'16px'}}}%%
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#1a1a2e', 'primaryTextColor':'#eaeaea', 'primaryBorderColor':'#4a4a6a', 'lineColor':'#6c63ff', 'fontSize':'13px', 'fontFamily':'Inter, Segoe UI, sans-serif'}}}%%
 graph TB
-    subgraph "Frontend Layer"
-        User(["👤 User"])
-        HAProxy["🌐 HAProxy<br/>Load Balancer<br/>Port 80"]
+    subgraph FRONTEND ["🌐 Frontend Layer"]
+        USER(["👤 User<br/>Browser"])
+        HAPROXY["🔀 HAProxy<br/>Load Balancer<br/>:80 / :443"]
     end
     
-    subgraph "AI Services"
-        Ollama["🤖 Ollama<br/>LLM Engine<br/>GPU-Accelerated"]
-        OpenWebUI["💬 Open WebUI<br/>Chat Interface<br/>Port 3000"]
+    subgraph SECURITY ["🔐 Security Layer"]
+        KC["🔐 Keycloak<br/>SSO Provider<br/>:8080"]
+        MODSEC["🛡️ ModSecurity<br/>WAF"]
+        KCINIT["⚙️ keycloak-init<br/>Auto-config"]
     end
     
-    subgraph "Automation & Workflow"
-        N8N["⚙️ n8n<br/>Workflow Automation<br/>Port 5678"]
-        Jenkins["🔧 Jenkins<br/>CI/CD Pipeline<br/>Port 8081"]
+    subgraph AI ["🤖 AI Services"]
+        OLLAMA["🧠 Ollama<br/>LLM Engine<br/>:11434"]
+        WEBUI["💬 Open WebUI<br/>Chat Interface<br/>:3000"]
     end
     
-    subgraph "Security & Auth"
-        Keycloak["🔐 Keycloak<br/>SSO / OIDC Provider<br/>Port 8080"]
-        ModSecurity["🛡️ ModSecurity<br/>Web Application Firewall"]
+    subgraph AUTOMATION ["⚙️ Automation"]
+        N8N["⚙️ n8n<br/>Workflows<br/>:5678"]
+        JENKINS["🔧 Jenkins<br/>CI/CD<br/>:8081→8082"]
+        WATCH["🔄 Watchtower<br/>Auto-updates"]
+        SYNC["📂 Sync<br/>Data sync"]
     end
     
-    subgraph "Infrastructure"
-        Redis["💾 Redis<br/>Cache & Sessions<br/>Port 6379"]
-        PostgreSQL["🗄️ PostgreSQL<br/>Primary Database<br/>Port 5432"]
+    subgraph MONITORING ["📊 Monitoring Stack"]
+        PROM["📊 Prometheus<br/>Metrics<br/>:9090"]
+        GRAF["📈 Grafana<br/>Dashboards<br/>:3001"]
+        ALERT["🔔 AlertManager<br/>Alerts<br/>:9093"]
+        BACKUP["💾 Backup Runner<br/>Daily backups"]
     end
     
-    subgraph "Monitoring Stack"
-        Prometheus["📊 Prometheus<br/>Metrics Storage<br/>Port 9090"]
-        Grafana["📈 Grafana<br/>Dashboards<br/>Port 4000"]
-        AlertManager["🔔 AlertManager<br/>Alerts<br/>Port 9093"]
+    subgraph EXPORTERS ["📡 Metrics Exporters"]
+        direction LR
+        NVEXP["nvidia<br/>:9400"]
+        OLLEXP["ollama<br/>:9888"]
+        N8NEXP["n8n<br/>:9889"]
+        OWEXP["webui<br/>:9890"]
+        REDEXP["redis<br/>:9121"]
+        PGEXP["postgres<br/>:9187"]
+        NODEEXP["node<br/>:9100"]
+        CADV["cAdvisor<br/>:8082"]
     end
     
-    subgraph "Exporters"
-        NvidiaExp["📡 nvidia-exporter"]
-        OllamaExp["📡 ollama-exporter"]
-        N8NExp["📡 n8n-exporter"]
-        OpenWebUIExp["📡 openwebui-exporter"]
-        RedisExp["📡 redis-exporter"]
-        PostgresExp["📡 postgres-exporter"]
+    subgraph DATA ["🗄️ Data Layer"]
+        PG["🗄️ PostgreSQL<br/>Main DB<br/>:5432"]
+        REDIS["💾 Redis<br/>Cache<br/>:6379"]
+        QDRANT["🔮 Qdrant<br/>Vectors<br/>:6333"]
+        PGVEC["📐 pgvector<br/>:5433"]
     end
     
     %% User Flow
-    User -->|HTTP/HTTPS| HAProxy
-    HAProxy -->|Route /| OpenWebUI
-    HAProxy -->|Route /n8n| N8N
-    HAProxy -->|Route /grafana| Grafana
-    HAProxy -->|Route /auth| Keycloak
-    HAProxy -->|Route /prometheus| Prometheus
-    HAProxy -->|Route /jenkins| Jenkins
+    USER -->|"HTTP/S"| HAPROXY
+    HAPROXY -->|"/chat"| WEBUI
+    HAPROXY -->|"/grafana"| GRAF
+    HAPROXY -->|"/prometheus"| PROM
+    HAPROXY -->|"/alertmanager"| ALERT
+    HAPROXY --> MODSEC
     
-    %% AI Services
-    OpenWebUI -->|Generate| Ollama
-    OpenWebUI -->|OIDC Auth| Keycloak
-    OpenWebUI -->|Cache Sessions| Redis
-    OpenWebUI -->|Store Data| PostgreSQL
+    %% AI Flow
+    WEBUI -->|"Inference"| OLLAMA
+    WEBUI -->|"OIDC"| KC
+    WEBUI -->|"Cache"| REDIS
+    WEBUI -->|"Data"| PG
+    WEBUI -->|"Embeddings"| QDRANT
     
-    %% Automation
-    N8N -->|Call Models| Ollama
-    N8N -->|OIDC Auth| Keycloak
-    N8N -->|Store Workflows| PostgreSQL
+    %% Automation Flow
+    N8N -->|"AI Calls"| OLLAMA
+    N8N -->|"OIDC"| KC
+    N8N -->|"Data"| PG
+    JENKINS -->|"OIDC"| KC
     
-    Jenkins -->|OIDC Auth| Keycloak
-    
-    %% Monitoring
-    Grafana -->|Query Metrics| Prometheus
-    Grafana -->|OIDC Auth| Keycloak
-    Prometheus -->|Send Alerts| AlertManager
+    %% Monitoring Flow
+    GRAF -->|"Query"| PROM
+    GRAF -->|"OIDC"| KC
+    PROM -->|"Alerts"| ALERT
     
     %% Exporters to Prometheus
-    NvidiaExp -.->|GPU Metrics| Prometheus
-    OllamaExp -.->|Model Metrics| Prometheus
-    N8NExp -.->|Workflow Metrics| Prometheus
-    OpenWebUIExp -.->|Chat Metrics| Prometheus
-    RedisExp -.->|Cache Metrics| Prometheus
-    PostgresExp -.->|DB Metrics| Prometheus
+    NVEXP -.-> PROM
+    OLLEXP -.-> PROM
+    N8NEXP -.-> PROM
+    OWEXP -.-> PROM
+    REDEXP -.-> PROM
+    PGEXP -.-> PROM
+    NODEEXP -.-> PROM
+    CADV -.-> PROM
     
-    %% Services to Exporters
-    Ollama -.-> NvidiaExp
-    Ollama -.-> OllamaExp
-    N8N -.-> N8NExp
-    OpenWebUI -.-> OpenWebUIExp
-    Redis -.-> RedisExp
-    PostgreSQL -.-> PostgresExp
-    
-    %% Security
-    HAProxy --> ModSecurity
+    %% Security init
+    KCINIT -->|"Configure"| KC
     
     %% Styling
-    classDef ai fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#1a237e
-    classDef security fill:#ffebee,stroke:#d32f2f,stroke-width:3px,color:#b71c1c
-    classDef infra fill:#f3e5f5,stroke:#7b1fa2,stroke-width:3px,color:#4a148c
-    classDef monitoring fill:#e8f5e9,stroke:#388e3c,stroke-width:3px,color:#1b5e20
-    classDef exporters fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100
-    classDef frontend fill:#e0f2f1,stroke:#00796b,stroke-width:3px,color:#004d40
+    classDef frontend fill:#0d47a1,stroke:#1976d2,stroke-width:2px,color:#fff
+    classDef security fill:#b71c1c,stroke:#d32f2f,stroke-width:2px,color:#fff
+    classDef ai fill:#1565c0,stroke:#1e88e5,stroke-width:2px,color:#fff
+    classDef automation fill:#4a148c,stroke:#7b1fa2,stroke-width:2px,color:#fff
+    classDef monitoring fill:#1b5e20,stroke:#388e3c,stroke-width:2px,color:#fff
+    classDef exporters fill:#e65100,stroke:#f57c00,stroke-width:2px,color:#fff
+    classDef data fill:#37474f,stroke:#607d8b,stroke-width:2px,color:#fff
     
-    class Ollama,OpenWebUI ai
-    class Keycloak,ModSecurity security
-    class Redis,PostgreSQL infra
-    class Prometheus,Grafana,AlertManager monitoring
-    class NvidiaExp,OllamaExp,N8NExp,OpenWebUIExp,RedisExp,PostgresExp exporters
-    class User,HAProxy frontend
-    class N8N,Jenkins ai
+    class USER,HAPROXY frontend
+    class KC,MODSEC,KCINIT security
+    class OLLAMA,WEBUI ai
+    class N8N,JENKINS,WATCH,SYNC automation
+    class PROM,GRAF,ALERT,BACKUP monitoring
+    class NVEXP,OLLEXP,N8NEXP,OWEXP,REDEXP,PGEXP,NODEEXP,CADV exporters
+    class PG,REDIS,QDRANT,PGVEC data

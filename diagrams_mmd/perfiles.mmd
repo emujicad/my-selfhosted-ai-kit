@@ -1,83 +1,78 @@
-%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#e8f5e9', 'primaryTextColor':'#1b5e20', 'primaryBorderColor':'#388e3c', 'lineColor':'#424242', 'fontSize':'16px'}}}%%
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#1a1a2e', 'primaryTextColor':'#eaeaea', 'primaryBorderColor':'#4a4a6a', 'lineColor':'#6c63ff', 'fontSize':'14px', 'fontFamily':'Inter, Segoe UI, sans-serif'}}}%%
 graph TB
-    subgraph "🤖 Perfiles de IA"
-        CPU["cpu<br/>Ollama (CPU)"]
-        NVIDIA["gpu-nvidia<br/>Ollama (GPU NVIDIA)"]
-        AMD["gpu-amd<br/>Ollama (GPU AMD)"]
+    subgraph TITLE [" "]
+        direction LR
+        T["🎯 MY SELF-HOSTED AI KIT - Profile Architecture"]
     end
     
-    subgraph "🔧 Servicios Base (sin perfil específico)"
-        QDRANT["qdrant<br/>Base de datos vectorial"]
-        PGVECTOR["pgvector<br/>Extensión PostgreSQL"]
-        POSTGRES["postgres<br/>Base de datos relacional"]
+    subgraph AI ["🤖 AI Profiles"]
+        direction TB
+        CPU["<b>cpu</b><br/>━━━━━━━━━━━<br/>🖥️ Ollama CPU"]
+        NVIDIA["<b>gpu-nvidia</b><br/>━━━━━━━━━━━<br/>🎮 Ollama GPU<br/>📦 Model Puller<br/>📊 NVIDIA Exporter"]
+        AMD["<b>gpu-amd</b><br/>━━━━━━━━━━━<br/>🎮 Ollama AMD"]
     end
     
-    subgraph "📦 Perfiles de Aplicaciones"
-        CHATAI["chat-ai<br/>💬 Open WebUI"]
-        AUTO["automation<br/>⚙️ n8n, Watchtower, Sync"]
-        CICD["ci-cd<br/>🔧 Jenkins"]
+    subgraph APPS ["📦 Application Profiles"]
+        direction TB
+        CHATAI["<b>chat-ai</b><br/>━━━━━━━━━━━<br/>💬 Open WebUI"]
+        AUTO["<b>automation</b><br/>━━━━━━━━━━━<br/>⚙️ n8n<br/>🔄 Watchtower<br/>📂 Sync"]
+        CICD["<b>ci-cd</b><br/>━━━━━━━━━━━<br/>🔧 Jenkins<br/>Port 8081→8082"]
+        GENAI["<b>gen-ai</b><br/>━━━━━━━━━━━<br/>🔐 Keycloak<br/>🔧 Jenkins"]
     end
     
-    subgraph "🏗️ Perfiles de Infraestructura"
-        SEC["security<br/>🔐 Keycloak + ModSecurity"]
-        INFRA["infrastructure<br/>💾 Redis + HAProxy"]
-        MON["monitoring<br/>📊 Prometheus + Grafana"]
+    subgraph INFRA ["🏗️ Infrastructure Profiles"]
+        direction TB
+        SEC["<b>security</b><br/>━━━━━━━━━━━<br/>🔐 Keycloak<br/>🛡️ ModSecurity<br/>⚙️ keycloak-init"]
+        INFRAP["<b>infrastructure</b><br/>━━━━━━━━━━━<br/>💾 Redis :6379<br/>🌐 HAProxy :80"]
+        MON["<b>monitoring</b><br/>━━━━━━━━━━━<br/>📊 Prometheus :9090<br/>📈 Grafana :3001<br/>🔔 AlertManager :9093<br/>💾 Backup Runner<br/>📡 7 Exporters"]
     end
     
-    subgraph "🛠️ Perfiles de Desarrollo"
-        DEV["dev<br/>💻 Herramientas desarrollo"]
-        TEST["testing<br/>🧪 Test Runner"]
-        DEBUG["debug<br/>🐛 Debug Tools"]
+    subgraph DEV ["🛠️ Development Profiles"]
+        direction TB
+        DEVP["<b>dev</b><br/>━━━━━━━━━━━<br/>💻 Dev Tools<br/>(curl, jq, etc.)"]
+        TEST["<b>testing</b><br/>━━━━━━━━━━━<br/>🧪 Test Runner"]
+        DEBUG["<b>debug</b><br/>━━━━━━━━━━━<br/>🐛 Debug Tools"]
     end
     
-    %% Dependencias de Perfiles de IA
-    CPU -.->|Opcional para| CHATAI
-    CPU -.->|Opcional para| AUTO
-    NVIDIA ==>|Requerido por| CHATAI
-    NVIDIA -.->|Opcional para| AUTO
-    AMD -.->|Alternativa GPU| CHATAI
+    subgraph BASE ["📚 Base Services (Always Available)"]
+        direction LR
+        PG["🗄️ PostgreSQL :5432"]
+        QDRANT["🔮 Qdrant :6333"]
+        PGVEC["📐 pgvector :5433"]
+    end
     
-    %% Dependencias Automáticas (stack-manager.sh)
-    CHATAI ==>|Auto-incluye| SEC
-    CHATAI ==>|Auto-incluye| INFRA
-    CHATAI ==>|Auto-incluye| NVIDIA
+    %% Auto-include dependencies (from stack-manager.sh)
+    CHATAI ==>|"auto-includes"| SEC
+    CHATAI ==>|"auto-includes"| INFRAP
+    CHATAI ==>|"auto-includes"| NVIDIA
     
-    AUTO ==>|Auto-incluye| SEC
+    AUTO ==>|"auto-includes"| SEC
     
-    MON ==>|Auto-incluye| SEC
+    MON ==>|"auto-includes"| SEC
+    MON ==>|"auto-includes"| INFRAP
     
-    CICD ==>|Auto-incluye| SEC
+    CICD ==>|"auto-includes"| SEC
     
-    %% Relaciones de uso
-    CHATAI -.->|Monitorea| MON
-    AUTO -.->|Monitorea| MON
-    POSTGRES -.->|Monitorea| MON
-    QDRANT -.->|Monitorea| MON
+    %% Optional relationships
+    CPU -.->|"alternative"| CHATAI
+    AMD -.->|"alternative"| CHATAI
     
-    AUTO -.->|Puede integrar| CICD
-    AUTO -.->|Usa en dev| TEST
-    AUTO -.->|Usa en dev| DEBUG
-    AUTO -.->|Usa en dev| DEV
+    %% Monitoring connections
+    NVIDIA -.->|"metrics"| MON
+    AUTO -.->|"metrics"| MON
+    CHATAI -.->|"metrics"| MON
     
-    %% Servicios base usan PostgreSQL
-    QDRANT -.->|Usa| POSTGRES
-    PGVECTOR -.->|Extensión de| POSTGRES
+    %% Styling
+    classDef title fill:#1a1a2e,stroke:#6c63ff,stroke-width:0px,color:#fff,font-size:18px,font-weight:bold
+    classDef ai fill:#0d47a1,stroke:#1976d2,stroke-width:2px,color:#fff
+    classDef apps fill:#4a148c,stroke:#7b1fa2,stroke-width:2px,color:#fff
+    classDef infra fill:#1b5e20,stroke:#388e3c,stroke-width:2px,color:#fff
+    classDef dev fill:#e65100,stroke:#f57c00,stroke-width:2px,color:#fff
+    classDef base fill:#37474f,stroke:#607d8b,stroke-width:2px,color:#fff
     
-    %% Estilos profesionales
-    classDef ia fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#1a237e
-    classDef base fill:#f3e5f5,stroke:#7b1fa2,stroke-width:3px,color:#4a148c
-    classDef apps fill:#fff9c4,stroke:#f57f17,stroke-width:3px,color:#e65100
-    classDef infra fill:#e8f5e9,stroke:#388e3c,stroke-width:3px,color:#1b5e20
-    classDef dev fill:#fce4ec,stroke:#d81b60,stroke-width:3px,color:#880e4f
-    
-    class CPU,NVIDIA,AMD ia
-    class QDRANT,PGVECTOR,POSTGRES base
-    class CHATAI,AUTO,CICD apps
-    class SEC,INFRA,MON infra
-    class DEV,TEST,DEBUG dev
-    
-    %% Leyenda
-    Note1["💡 Leyenda:<br/>══► Auto-incluido (stack-manager.sh)<br/>─ ─► Relación opcional/uso"]
-    
-    classDef legend fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100
-    class Note1 legend
+    class T title
+    class CPU,NVIDIA,AMD ai
+    class CHATAI,AUTO,CICD,GENAI apps
+    class SEC,INFRAP,MON infra
+    class DEVP,TEST,DEBUG dev
+    class PG,QDRANT,PGVEC base

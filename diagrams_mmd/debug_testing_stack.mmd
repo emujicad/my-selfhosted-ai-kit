@@ -1,11 +1,66 @@
-flowchart TD
-    CPU["cpu\nOllama (CPU)"] -- cpu --> N8N["n8n"]
-    N8N -- debug --> DEBUG["debug"]
-    N8N -- testing --> TEST["testing"]
-    classDef ia fill:#e0f7fa,stroke:#00796b,stroke-width:2px,color:#222;
-    classDef debug fill:#fce4ec,stroke:#d81b60,stroke-width:2px,color:#222;
-    classDef testing fill:#f0f4c3,stroke:#cddc39,stroke-width:2px,color:#222;
-    class CPU ia;
-    class N8N ia;
-    class DEBUG debug;
-    class TEST testing; 
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#1a1a2e', 'primaryTextColor':'#eaeaea', 'primaryBorderColor':'#4a4a6a', 'lineColor':'#6c63ff', 'fontSize':'14px', 'fontFamily':'Inter, Segoe UI, sans-serif'}}}%%
+graph TB
+    subgraph TITLE ["🐛🧪 DEBUG + TESTING - Development Tools"]
+        direction LR
+        CMD["docker compose --profile debug --profile testing up -d"]
+    end
+    
+    subgraph TESTING ["🧪 testing"]
+        TESTRUN["🧪 Test Runner<br/>━━━━━━━━━━━━<br/>• Service health checks<br/>• API endpoint tests<br/>• Integration tests<br/>• Report generation"]
+    end
+    
+    subgraph DEBUG ["🐛 debug"]
+        DBGTOOLS["🐛 Debug Tools<br/>━━━━━━━━━━━━<br/>• Docker socket access<br/>• Network inspection<br/>• Log analysis<br/>• Container shell"]
+    end
+    
+    subgraph AVAILABLE_TESTS ["📋 Available Test Scripts"]
+        direction LR
+        T1["test-ollama-quick.sh"]
+        T2["test-health-deep.sh"]
+        T3["test-keycloak-claims.sh"]
+        T4["test-integration.sh"]
+        T5["run-all-tests.sh"]
+    end
+    
+    subgraph TARGETS ["🎯 Test Targets"]
+        OLLAMA["🧠 Ollama"]
+        KC["🔐 Keycloak"]
+        PG["🗄️ PostgreSQL"]
+        GRAF["📈 Grafana"]
+        PROM["📊 Prometheus"]
+    end
+    
+    %% Connections
+    TESTRUN -->|"Tests"| OLLAMA
+    TESTRUN -->|"Tests"| KC
+    TESTRUN -->|"Tests"| PG
+    TESTRUN -->|"Tests"| GRAF
+    TESTRUN -->|"Tests"| PROM
+    
+    DBGTOOLS -->|"Inspect"| OLLAMA
+    DBGTOOLS -->|"Inspect"| KC
+    DBGTOOLS -->|"Inspect"| PG
+    
+    T1 -.-> TESTRUN
+    T2 -.-> TESTRUN
+    T3 -.-> TESTRUN
+    T4 -.-> TESTRUN
+    T5 -.-> TESTRUN
+    
+    %% Usage note
+    NOTE["💡 Usage:<br/>━━━━━━━━━━<br/>./scripts/tests/run-all-tests.sh<br/><br/>Or individual tests:<br/>./scripts/tests/test-ollama-quick.sh"]
+    
+    %% Styling
+    classDef title fill:#1a1a2e,stroke:#6c63ff,stroke-width:0px,color:#fff
+    classDef testing fill:#f57f17,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef debug fill:#e65100,stroke:#f57c00,stroke-width:2px,color:#fff
+    classDef tests fill:#fff8e1,stroke:#ffc107,stroke-width:2px,color:#e65100
+    classDef targets fill:#37474f,stroke:#607d8b,stroke-width:2px,color:#fff
+    classDef note fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20
+    
+    class CMD title
+    class TESTRUN testing
+    class DBGTOOLS debug
+    class T1,T2,T3,T4,T5 tests
+    class OLLAMA,KC,PG,GRAF,PROM targets
+    class NOTE note

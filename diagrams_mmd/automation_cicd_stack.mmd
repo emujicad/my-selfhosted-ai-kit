@@ -1,18 +1,60 @@
-flowchart TD
-    CPU["🤖 cpu\nOllama (CPU)"] -- cpu --> N8N["⚙️ n8n"]
-    N8N -- automation --> AUTO["📦 automation"]
-    N8N -- ci-cd --> CICD["🔧 Jenkins"]
-    CICD -- "OIDC Auth" --> KC["🔐 Keycloak"]
-    CICD -- "Automated" --> PLUG["📦 Plugins Install"]
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#1a1a2e', 'primaryTextColor':'#eaeaea', 'primaryBorderColor':'#4a4a6a', 'lineColor':'#6c63ff', 'fontSize':'13px', 'fontFamily':'Inter, Segoe UI, sans-serif'}}}%%
+graph TB
+    subgraph TITLE ["⚙️🔧 AUTOMATION + CI/CD - Workflow & Pipelines"]
+        direction LR
+        CMD["docker compose --profile automation --profile ci-cd up -d"]
+    end
     
-    classDef ia fill:#e0f7fa,stroke:#00796b,stroke-width:2px,color:#222;
-    classDef automation fill:#e0f7fa,stroke:#00bcd4,stroke-width:2px,color:#222;
-    classDef cicd fill:#eceff1,stroke:#455a64,stroke-width:2px,color:#222;
-    classDef security fill:#ffebee,stroke:#e53935,stroke-width:2px,color:#222;
+    subgraph AUTOMATION ["⚙️ automation"]
+        N8N["⚙️ n8n<br/>:5678<br/>━━━━━━━━━━<br/>• Workflow Engine<br/>• 400+ Integrations<br/>• AI Node Support"]
+        WATCH["🔄 Watchtower<br/>━━━━━━━━━━<br/>• Auto-updates<br/>• Schedule: 2 AM<br/>• Email notifications"]
+        SYNC["📂 Sync<br/>━━━━━━━━━━<br/>• Data sync<br/>• Hourly backup<br/>• rsync-based"]
+    end
     
-    class CPU ia;
-    class N8N ia;
-    class AUTO automation;
-    class CICD cicd;
-    class KC security;
-    class PLUG cicd; 
+    subgraph CICD ["🔧 ci-cd"]
+        JENKINS["🔧 Jenkins<br/>:8081→8082<br/>━━━━━━━━━━<br/>• Pipeline as Code<br/>• Groovy DSL<br/>• OIDC Auth"]
+        PLUGINS["📦 Auto-Plugins<br/>━━━━━━━━━━<br/>• oic-auth<br/>• workflow-aggregator<br/>• git"]
+    end
+    
+    subgraph SECURITY ["🔐 security (auto-included)"]
+        KC["🔐 Keycloak<br/>:8080"]
+    end
+    
+    subgraph AI ["🤖 AI Services"]
+        OLLAMA["🧠 Ollama"]
+    end
+    
+    subgraph BASE ["🗄️ Base"]
+        PG["🗄️ PostgreSQL"]
+    end
+    
+    %% Connections
+    N8N -->|"AI Workflows"| OLLAMA
+    N8N -->|"OIDC Auth"| KC
+    N8N -->|"Store Data"| PG
+    
+    JENKINS -->|"OIDC Auth"| KC
+    PLUGINS -->|"Auto-install"| JENKINS
+    
+    WATCH -->|"Updates"| N8N
+    WATCH -->|"Updates"| JENKINS
+    
+    %% Use cases
+    UC["💡 Use Cases:<br/>━━━━━━━━━━<br/>• AI-powered workflows<br/>• Automated deployments<br/>• Scheduled tasks<br/>• Container management"]
+    
+    %% Styling
+    classDef title fill:#1a1a2e,stroke:#6c63ff,stroke-width:0px,color:#fff
+    classDef automation fill:#4a148c,stroke:#7b1fa2,stroke-width:2px,color:#fff
+    classDef cicd fill:#37474f,stroke:#607d8b,stroke-width:2px,color:#fff
+    classDef security fill:#b71c1c,stroke:#d32f2f,stroke-width:2px,color:#fff
+    classDef ai fill:#0d47a1,stroke:#1976d2,stroke-width:2px,color:#fff
+    classDef base fill:#455a64,stroke:#78909c,stroke-width:2px,color:#fff
+    classDef note fill:#ede7f6,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+    
+    class CMD title
+    class N8N,WATCH,SYNC automation
+    class JENKINS,PLUGINS cicd
+    class KC security
+    class OLLAMA ai
+    class PG base
+    class UC note

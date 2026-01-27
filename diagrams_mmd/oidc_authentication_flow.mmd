@@ -1,39 +1,43 @@
-%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#fff3e0', 'primaryTextColor':'#e65100', 'primaryBorderColor':'#f57c00', 'lineColor':'#424242', 'fontSize':'16px'}}}%%
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#1a1a2e', 'primaryTextColor':'#eaeaea', 'primaryBorderColor':'#4a4a6a', 'lineColor':'#6c63ff', 'fontSize':'13px', 'fontFamily':'Inter, Segoe UI, sans-serif', 'actorTextColor':'#fff', 'actorBkg':'#0d47a1', 'signalColor':'#6c63ff', 'signalTextColor':'#1a1a2e'}}}%%
 sequenceDiagram
     autonumber
     
-    participant User as 👤 User<br/>Browser
-    participant Client as �️ OIDC Client<br/>(WebUI, Grafana, Jenkins)
-    participant FakeDisc as 📄 oidc-config.json<br/>(Split DNS Fix)
-    participant Keycloak as 🔐 Keycloak<br/>(Auth Server)
-    participant Data as 🗄️ Backend DB<br/>(User Mapping)
+    participant User as 👤 User Browser
+    participant Client as 🖥️ OIDC Client<br/>(WebUI/Grafana/Jenkins)
+    participant Static as 📄 oidc-config.json<br/>(Split-Horizon DNS)
+    participant Keycloak as 🔐 Keycloak<br/>:8080
+    participant DB as 🗄️ PostgreSQL
     
-    rect rgb(255, 243, 224)
-    Note over User,Data: Phase 1: Discovery (Split-Horizon Solution)
-    User->>Client: 1. Click "Sign in with Keycloak"
-    Client->>FakeDisc: 2. GET /static/oidc-config.json
-    FakeDisc-->>Client: 3. Return internal/external URLs
+    rect rgb(13, 71, 161)
+    Note over User,DB: 🔍 Phase 1: Discovery (Split-Horizon Solution)
+    User->>Client: Click "Sign in with Keycloak"
+    Client->>Static: GET /static/oidc-config.json
+    Note right of Static: Returns:<br/>• Browser URL: localhost:8080<br/>• Backend URL: keycloak:8080
+    Static-->>Client: OIDC Configuration
     end
     
-    rect rgb(232, 245, 233)
-    Note over User,Data: Phase 2: Authorization (Browser Flow)
-    Client->>User: 4. Redirect to auth page
-    User->>Keycloak: 5. Login at localhost:8080
-    Keycloak-->>User: 6. Redirect with Auth Code
+    rect rgb(27, 94, 32)
+    Note over User,DB: 🔑 Phase 2: Authorization (Browser Flow)
+    Client->>User: Redirect to Keycloak login
+    User->>Keycloak: Enter credentials at localhost:8080
+    Keycloak->>DB: Validate user
+    DB-->>Keycloak: User valid
+    Keycloak-->>User: Redirect with authorization code
     end
     
-    rect rgb(227, 242, 253)
-    Note over User,Data: Phase 3: Token Exchange (Backend Flow)
-    User->>Client: 7. Callback with code
-    Client->>Keycloak: 8. POST keycloak:8080/token
-    Keycloak-->>Client: 9. Return Access/ID Tokens
+    rect rgb(74, 20, 140)
+    Note over User,DB: 🎫 Phase 3: Token Exchange (Backend Flow)
+    User->>Client: Callback with auth code
+    Client->>Keycloak: POST keycloak:8080/token
+    Note right of Client: Uses internal hostname<br/>(Docker network)
+    Keycloak-->>Client: Access Token + ID Token + Refresh Token
     end
     
-    rect rgb(243, 229, 245)
-    Note over User,Data: Phase 4: Automated Setup (Jenkins/Admin)
-    Client->>Data: 10. Auto-provision user
-    Data-->>Client: 11. Profile linked
-    Client-->>User: 12. ✅ Login successful
+    rect rgb(230, 81, 0)
+    Note over User,DB: ✅ Phase 4: Session Established
+    Client->>DB: Create/Update user profile
+    DB-->>Client: Profile ready
+    Client-->>User: ✅ Login successful!
     end
     
-    Note over User,Data: 🎯 Result: Unified SSO Suite Complete
+    Note over User,DB: 🎯 Result: SSO across Open WebUI, Grafana, n8n, Jenkins

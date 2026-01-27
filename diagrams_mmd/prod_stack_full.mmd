@@ -1,21 +1,91 @@
-flowchart TD
-    NVIDIA["🤖 gpu-nvidia\nOllama (GPU)"] -- nvidia --> WEBUI["💬 Open WebUI"]
-    WEBUI -- automation --> N8N["⚙️ n8n"]
-    WEBUI -- ci-cd --> JENKINS["🔧 Jenkins"]
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#1a1a2e', 'primaryTextColor':'#eaeaea', 'primaryBorderColor':'#4a4a6a', 'lineColor':'#6c63ff', 'fontSize':'13px', 'fontFamily':'Inter, Segoe UI, sans-serif'}}}%%
+graph TB
+    subgraph TITLE ["🏭 PRODUCTION STACK - Recommended Setup"]
+        direction LR
+        CMD["./stack-manager.sh start production<br/><i>or: ./stack-manager.sh start</i>"]
+    end
     
-    JENKINS -- security --> SEC["🔐 security"]
-    N8N -- security --> SEC
-    WEBUI -- security --> SEC
+    subgraph GPUNVIDIA ["🎮 gpu-nvidia"]
+        OLLAMA["🧠 Ollama GPU<br/>:11434"]
+        NVEXP["📊 nvidia-exporter<br/>:9400"]
+    end
     
-    SEC -- monitoring --> MON["📊 monitoring"]
-    NVIDIA -- monitoring --> MON
+    subgraph CHATAI ["💬 chat-ai"]
+        WEBUI["💬 Open WebUI<br/>:3000"]
+    end
     
-    classDef ia fill:#e0f7fa,stroke:#00796b,stroke-width:2px,color:#222;
-    classDef monitoring fill:#ede7f6,stroke:#8e24aa,stroke-width:2px,color:#222;
-    classDef security fill:#ffebee,stroke:#e53935,stroke-width:2px,color:#222;
-    classDef infra fill:#efebe9,stroke:#6d4c41,stroke-width:2px,color:#222;
+    subgraph AUTOMATION ["⚙️ automation"]
+        N8N["⚙️ n8n<br/>:5678"]
+        WATCH["🔄 Watchtower<br/><i>Auto-updates</i>"]
+        SYNC["📂 Sync<br/><i>Data sync</i>"]
+    end
     
-    class NVIDIA,WEBUI,N8N ia;
-    class JENKINS ia;
-    class MON monitoring;
-    class SEC security; 
+    subgraph SECURITY ["🔐 security"]
+        KC["🔐 Keycloak<br/>:8080"]
+        MODSEC["🛡️ ModSecurity"]
+    end
+    
+    subgraph INFRASTRUCTURE ["🏗️ infrastructure"]
+        REDIS["💾 Redis<br/>:6379"]
+        HAPROXY["🔀 HAProxy<br/>:80/:443"]
+    end
+    
+    subgraph MONITORING ["📊 monitoring"]
+        PROM["📊 Prometheus<br/>:9090"]
+        GRAF["📈 Grafana<br/>:3001"]
+        ALERT["🔔 AlertManager<br/>:9093"]
+        BACKUP["💾 Backup Runner"]
+    end
+    
+    subgraph BASE ["🗄️ Base"]
+        PG["🗄️ PostgreSQL"]
+        QDRANT["🔮 Qdrant"]
+    end
+    
+    %% User Flow
+    USER(["👤 User"]) --> HAPROXY
+    HAPROXY --> WEBUI
+    HAPROXY --> GRAF
+    
+    %% AI Flow
+    WEBUI --> OLLAMA
+    WEBUI --> KC
+    WEBUI --> REDIS
+    WEBUI --> PG
+    WEBUI --> QDRANT
+    
+    %% Automation Flow
+    N8N --> OLLAMA
+    N8N --> KC
+    N8N --> PG
+    
+    %% Monitoring Flow
+    GRAF --> PROM
+    GRAF --> KC
+    NVEXP -.-> PROM
+    
+    %% Note
+    NOTE["📋 Profiles Included:<br/>━━━━━━━━━━━━━━━<br/>✓ gpu-nvidia<br/>✓ chat-ai<br/>✓ automation<br/>✓ security<br/>✓ infrastructure<br/>✓ monitoring"]
+    
+    %% Styling
+    classDef title fill:#1a1a2e,stroke:#6c63ff,stroke-width:0px,color:#fff
+    classDef ai fill:#0d47a1,stroke:#1976d2,stroke-width:2px,color:#fff
+    classDef chatai fill:#1565c0,stroke:#1e88e5,stroke-width:2px,color:#fff
+    classDef automation fill:#4a148c,stroke:#7b1fa2,stroke-width:2px,color:#fff
+    classDef security fill:#b71c1c,stroke:#d32f2f,stroke-width:2px,color:#fff
+    classDef infra fill:#00695c,stroke:#00897b,stroke-width:2px,color:#fff
+    classDef monitoring fill:#1b5e20,stroke:#388e3c,stroke-width:2px,color:#fff
+    classDef base fill:#37474f,stroke:#607d8b,stroke-width:2px,color:#fff
+    classDef user fill:#0d47a1,stroke:#1976d2,stroke-width:2px,color:#fff
+    classDef note fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20
+    
+    class CMD title
+    class OLLAMA,NVEXP ai
+    class WEBUI chatai
+    class N8N,WATCH,SYNC automation
+    class KC,MODSEC security
+    class REDIS,HAPROXY infra
+    class PROM,GRAF,ALERT,BACKUP monitoring
+    class PG,QDRANT base
+    class USER user
+    class NOTE note

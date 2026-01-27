@@ -45,8 +45,11 @@ npx puppeteer browsers install chrome-headless-shell
 ```bash
 cd diagrams_mmd
 
-# Set the browser path (if needed)
-export PUPPETEER_EXECUTABLE_PATH=/home/$USER/.cache/puppeteer/chrome-headless-shell/linux-*/chrome-headless-shell-linux64/chrome-headless-shell
+# Find and set the browser path (required for puppeteer)
+export PUPPETEER_EXECUTABLE_PATH=$(find ~/.cache/puppeteer/chrome-headless-shell -name "chrome-headless-shell" -type f 2>/dev/null | head -1)
+
+# Verify it was found
+echo "Using Chrome: $PUPPETEER_EXECUTABLE_PATH"
 
 # Generate a specific diagram
 npx -y @mermaid-js/mermaid-cli -i architecture_complete.mmd -o ../diagrams_png/architecture_complete.png -w 2400 -H 1800 -s 2
@@ -57,6 +60,8 @@ for f in *.mmd; do
   npx -y @mermaid-js/mermaid-cli -i "$f" -o "../diagrams_png/${name}.png" -w 2400 -H 1800 -s 2
 done
 ```
+
+> **Note**: If you get "Could not find Chrome" error, run `npx puppeteer browsers install chrome-headless-shell` first.
 
 ### Option 3: VS Code Extension
 

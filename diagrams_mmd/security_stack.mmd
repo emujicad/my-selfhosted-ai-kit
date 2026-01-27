@@ -1,11 +1,63 @@
-flowchart TD
-    KC["🔐 Keycloak\nOIDC Provider"] -- SSO --> WEBUI["💬 Open WebUI"]
-    KC -- SSO --> JENKINS["🔧 Jenkins"]
-    KC -- SSO --> N8N["⚙️ n8n"]
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#1a1a2e', 'primaryTextColor':'#eaeaea', 'primaryBorderColor':'#4a4a6a', 'lineColor':'#6c63ff', 'fontSize':'14px', 'fontFamily':'Inter, Segoe UI, sans-serif'}}}%%
+graph TB
+    subgraph TITLE ["🔐 SECURITY STACK - Authentication & Protection"]
+        direction LR
+        CMD["./stack-manager.sh start security"]
+    end
     
-    WAF["🛡️ ModSecurity\nWAF"] -- "Protects" --> KC
-    WAF -- "Protects" --> WEBUI
+    subgraph SECURITY ["🔐 security profile"]
+        KC["🔐 Keycloak<br/>SSO / OIDC Provider<br/>:8080<br/>━━━━━━━━━━<br/>• User Management<br/>• Realm: ai-kit<br/>• Metrics: :9000"]
+        
+        MODSEC["🛡️ ModSecurity<br/>Web Application Firewall<br/>━━━━━━━━━━<br/>• OWASP CRS Rules<br/>• Request Filtering<br/>• Attack Prevention"]
+        
+        KCINIT["⚙️ keycloak-init<br/>Auto Configuration<br/>━━━━━━━━━━<br/>• Create Clients<br/>• Setup OIDC<br/>• Update .env"]
+    end
     
-    classDef security fill:#ffebee,stroke:#e53935,stroke-width:2px,color:#222;
-    class KC,WAF security;
-    class WEBUI,JENKINS,N8N security; 
+    subgraph CLIENTS ["🔗 OIDC Clients (Auto-configured)"]
+        direction LR
+        C1["💬 open-webui"]
+        C2["📈 grafana"]
+        C3["⚙️ n8n"]
+        C4["🔧 jenkins"]
+    end
+    
+    subgraph PROTECTED ["🛡️ Protected Services"]
+        WEBUI["💬 Open WebUI"]
+        GRAF["📈 Grafana"]
+        N8N["⚙️ n8n"]
+        JENKINS["🔧 Jenkins"]
+    end
+    
+    subgraph DATA ["🗄️ Backend"]
+        PG["🗄️ PostgreSQL<br/>Keycloak DB"]
+    end
+    
+    %% Connections
+    KCINIT -->|"Configure"| KC
+    KC -->|"Store"| PG
+    
+    KC -->|"SSO"| C1
+    KC -->|"SSO"| C2
+    KC -->|"SSO"| C3
+    KC -->|"SSO"| C4
+    
+    C1 --> WEBUI
+    C2 --> GRAF
+    C3 --> N8N
+    C4 --> JENKINS
+    
+    MODSEC -->|"Protects"| KC
+    MODSEC -->|"Protects"| WEBUI
+    
+    %% Styling
+    classDef title fill:#1a1a2e,stroke:#6c63ff,stroke-width:0px,color:#fff
+    classDef security fill:#b71c1c,stroke:#d32f2f,stroke-width:2px,color:#fff
+    classDef clients fill:#ff6f00,stroke:#ff8f00,stroke-width:2px,color:#fff
+    classDef protected fill:#1565c0,stroke:#1e88e5,stroke-width:2px,color:#fff
+    classDef data fill:#37474f,stroke:#607d8b,stroke-width:2px,color:#fff
+    
+    class CMD title
+    class KC,MODSEC,KCINIT security
+    class C1,C2,C3,C4 clients
+    class WEBUI,GRAF,N8N,JENKINS protected
+    class PG data
