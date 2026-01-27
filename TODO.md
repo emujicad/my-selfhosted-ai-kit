@@ -19,7 +19,7 @@
 - [ ] Enforce WAF rules for exposed services
 
 ## Features & Improvements
-- [ ] **Infrastructure Fix:** Correct Prometheus Keycloak target from port 9000 to 8080 in `prometheus.yml`.
+
 - [ ] **Script Maintenance:** Remove or restore missing scripts referenced in `stack-manager.sh` (`verify-env-variables.sh`, `validate-config.sh`, `verifica_modelos.sh`).
 - [ ] **Security:** Add critical OIDC secrets to `REQUIRED_VARS` validation in `stack-manager.sh`.
 - [ ] Add Jenkins to the proxy path (`/jenkins`)
