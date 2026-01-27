@@ -3,6 +3,7 @@
 ## Critical Fixes (Blockers)
 - [x] **CRITICAL FIX:** Remove invalid `depends_on: - ollama` in `test-runner` service (causes "undefined service" error preventing startup).
 - [x] **Script Logic:** Fix silent failure in `stack-manager.sh` (trap errors during command substitution or remove `set -e` for eval).
+- [x] **Profile Conflicts:** Resolve collision between `full` and `dev` presets (CPU/GPU port conflict) and fix `dev` preset dependencies.
 
 ## Core Fixes & Infrastructure
 - [x] Configure HAProxy as central entry point (Port 80)
