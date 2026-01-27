@@ -25,9 +25,11 @@
 
 Esto levanta automáticamente:
 - `gpu-nvidia` (Ollama con GPU NVIDIA)
-- `monitoring` (Prometheus, Grafana, AlertManager)
+- `monitoring` (Prometheus, Grafana, AlertManager, exporters)
 - `infrastructure` (Redis, HAProxy)
 - `security` (Keycloak, ModSecurity)
+- `automation` (n8n, Watchtower, Sync)
+- `chat-ai` (Open WebUI)
 
 ### Levantar con perfiles específicos
 
@@ -152,7 +154,7 @@ Muestra la ayuda completa.
 ## 📊 Presets Disponibles
 
 ### `default`
-**Perfiles:** `gpu-nvidia` + `monitoring` + `infrastructure` + `security`
+**Perfiles:** `gpu-nvidia` + `monitoring` + `infrastructure` + `security` + `automation` + `chat-ai`
 
 **Uso:** Configuración recomendada para producción con GPU NVIDIA.
 
@@ -172,25 +174,25 @@ Muestra la ayuda completa.
 ```
 
 ### `dev`
-**Perfiles:** `cpu` + `dev` + `testing`
+**Perfiles:** `cpu` + `dev`
 
-**Uso:** Desarrollo sin GPU, con herramientas de desarrollo y testing.
+**Uso:** Desarrollo sin GPU, con herramientas de desarrollo.
 
 ```bash
 ./scripts/stack-manager.sh start dev
 ```
 
 ### `production`
-**Perfiles:** `gpu-nvidia` + `monitoring` + `infrastructure` + `security` + `automation`
+**Perfiles:** `gpu-nvidia` + `monitoring` + `infrastructure` + `security` + `automation` + `chat-ai`
 
-**Uso:** Producción completa con automatización.
+**Uso:** Producción completa con automatización (igual que default).
 
 ```bash
 ./scripts/stack-manager.sh start production
 ```
 
 ### `full`
-**Perfiles:** Todos los perfiles disponibles
+**Perfiles:** `gpu-nvidia` + `monitoring` + `infrastructure` + `security` + `automation` + `chat-ai` + `ci-cd` + `testing` + `debug`
 
 **Uso:** Stack completo con todos los servicios (¡cuidado con recursos!).
 

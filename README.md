@@ -203,17 +203,18 @@ docker compose --profile gpu-nvidia --profile monitoring --profile infrastructur
 | Profile           | What does it include?                                                                 | When to use it?                                                                                   | Can it be combined?         |
 |------------------|-------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|----------------------------------|
 | **cpu**          | Ollama (CPU)                                                                  | You don't have a GPU or want to save resources.                                                         | Yes, with other services.         |
-| **gpu-nvidia**   | Ollama (NVIDIA GPU)                                                           | You have an NVIDIA GPU and want maximum AI performance.                                             | Yes, with other services.         |
+| **gpu-nvidia**   | Ollama (NVIDIA GPU), model puller, nvidia-exporter                            | You have an NVIDIA GPU and want maximum AI performance.                                             | Yes, with other services.         |
 | **gpu-amd**      | Ollama (AMD GPU)                                                              | You have a compatible AMD GPU.                                                                        | Yes, with other services.         |
 | **chat-ai**      | Open WebUI                                                                    | Full AI chat interface with Keycloak authentication.                                              | Auto-includes: security, infrastructure, gpu-nvidia |
-| **monitoring**   | Prometheus, Grafana, AlertManager, automatic backup                          | You want monitoring, dashboards and automatic backups.                                            | Yes, with any profile.        |
+| **monitoring**   | Prometheus, Grafana, AlertManager, backup, exporters (node, cAdvisor, postgres, redis, ollama, n8n, openwebui) | You want monitoring, dashboards and automatic backups.                                            | Auto-includes: security, infrastructure |
 | **infrastructure**| Redis, HAProxy                                                               | You need caching or load balancing.                                                              | Yes, with any profile.        |
-| **security**     | Keycloak (authentication), ModSecurity (WAF)                                   | You want centralized authentication and web application firewall.                                | Yes, with any profile.        |
-| **automation**   | Watchtower (auto-updates), Sync                                         | You want automation of updates and data synchronization.                              | Yes, with any profile.        |
-| **ci-cd**        | Jenkins (port 8081→8082)                                                      | You need continuous integration and deployment pipelines.                                         | Yes, with any profile.        |
-| **testing**      | Test Runner                                                                   | You want automatic service health monitoring.                                               | Yes, with any profile.        |
-| **debug**        | Debug Tools                                                                   | You need advanced debugging tools.                                                    | Yes, with any profile.        |
-| **dev**          | Development tools (curl, jq, etc.)                                   | You are developing or debugging the stack.                                                         | Yes, with any profile.        |
+| **security**     | Keycloak, keycloak-init, ModSecurity (WAF)                                    | You want centralized authentication and web application firewall.                                | Yes, with any profile.        |
+| **automation**   | n8n, Watchtower (auto-updates), Sync                                          | You want workflow automation and container updates.                                               | Auto-includes: security        |
+| **ci-cd**        | Jenkins (port 8081→8082)                                                      | You need continuous integration and deployment pipelines.                                         | Auto-includes: security        |
+| **gen-ai**       | Keycloak, Jenkins                                                             | Combined AI services with authentication.                                                         | Alias for security + ci-cd     |
+| **testing**      | Test Runner                                                                   | You want automatic service health monitoring.                                                     | Yes, with any profile.        |
+| **debug**        | Debug Tools                                                                   | You need advanced debugging tools.                                                                | Yes, with any profile.        |
+| **dev**          | Development tools (curl, jq, etc.)                                            | You are developing or debugging the stack.                                                        | Yes, with any profile.        |
 
 ---
 
@@ -349,11 +350,11 @@ Once the services are running, you can access:
 | Service | Via HAProxy (recommended) | Direct Port | Description |
 |----------|---------------------------|-------------|-------------|
 | **Open WebUI** | http://localhost/chat | http://localhost:3000 | Web interface for AI chat |
-| **n8n** | http://localhost/n8n | http://localhost:5678 | Workflow automation |
+| **n8n** | ⏳ Pending | http://localhost:5678 | Workflow automation |
 | **Grafana** | http://localhost/grafana | http://localhost:3001 | Monitoring dashboards (Auth via Keycloak) |
 | **Prometheus** | http://localhost/prometheus | http://localhost:9090 | System metrics |
 | **AlertManager** | http://localhost/alertmanager | http://localhost:9093 | Alert management |
-| **Keycloak** | http://localhost/keycloak | http://localhost:8080 | Centralized authentication |
+| **Keycloak** | ⏳ Pending | http://localhost:8080 | Centralized authentication |
 | **Jenkins** | - | http://localhost:8081 | CI/CD Pipeline |
 | **Qdrant** | - | http://localhost:6333 | Vector database |
 | **pgvector** | - | localhost:5433 | PostgreSQL with vectors |
@@ -361,7 +362,9 @@ Once the services are running, you can access:
 | **Node Exporter** | - | http://localhost:9100 | Host metrics |
 | **Redis** | - | localhost:6379 | Cache and sessions |
 
-> **Note**: HAProxy (port 80) provides load balancing, rate limiting, and unified access. Direct ports bypass these features but work for development/debugging.
+<!-- TODO: Configure HAProxy paths for n8n (/n8n) and Keycloak (/keycloak) in haproxy/haproxy.cfg -->
+
+> **Note**: HAProxy (port 80) provides load balancing, rate limiting, and unified access. Direct ports bypass these features but work for development/debugging. Items marked "⏳ Pending" require HAProxy configuration.
 
 ## 📚 Service usage guide
 

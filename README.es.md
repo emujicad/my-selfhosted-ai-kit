@@ -201,14 +201,15 @@ docker compose --profile gpu-nvidia --profile monitoring --profile infrastructur
 | Perfil           | ¿Qué incluye?                                                                 | ¿Cuándo usarlo?                                                                                   | ¿Se recomienda combinar?         |
 |------------------|-------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|----------------------------------|
 | **cpu**          | Ollama (CPU)                                                                  | No tienes GPU o quieres ahorrar recursos.                                                         | Sí, con otros servicios.         |
-| **gpu-nvidia**   | Ollama (GPU NVIDIA)                                                           | Tienes GPU NVIDIA y quieres máximo rendimiento en IA.                                             | Sí, con otros servicios.         |
+| **gpu-nvidia**   | Ollama (GPU NVIDIA), model puller, nvidia-exporter                            | Tienes GPU NVIDIA y quieres máximo rendimiento en IA.                                             | Sí, con otros servicios.         |
 | **gpu-amd**      | Ollama (GPU AMD)                                                              | Tienes GPU AMD compatible.                                                                        | Sí, con otros servicios.         |
 | **chat-ai**      | Open WebUI                                                                    | Interfaz de chat IA con autenticación Keycloak.                                                   | Auto-incluye: security, infrastructure, gpu-nvidia |
-| **monitoring**   | Prometheus, Grafana, AlertManager, backup automático                          | Quieres monitoreo, dashboards y respaldos automáticos.                                            | Sí, con cualquier perfil.        |
+| **monitoring**   | Prometheus, Grafana, AlertManager, backup, exporters (node, cAdvisor, postgres, redis, ollama, n8n, openwebui) | Quieres monitoreo, dashboards y respaldos automáticos.                                            | Auto-incluye: security, infrastructure |
 | **infrastructure**| Redis, HAProxy                                                               | Necesitas cache o balanceo de carga.                                                              | Sí, con cualquier perfil.        |
-| **security**     | Keycloak (autenticación), ModSecurity (WAF)                                   | Quieres autenticación centralizada y firewall de aplicaciones web.                                | Sí, con cualquier perfil.        |
-| **automation**   | Watchtower (auto-actualización), Sync                                         | Quieres automatización de actualizaciones y sincronización de datos.                              | Sí, con cualquier perfil.        |
-| **ci-cd**        | Jenkins (puerto 8081→8082)                                                    | Necesitas pipelines de integración y despliegue continuo.                                         | Sí, con cualquier perfil.        |
+| **security**     | Keycloak, keycloak-init, ModSecurity (WAF)                                    | Quieres autenticación centralizada y firewall de aplicaciones web.                                | Sí, con cualquier perfil.        |
+| **automation**   | n8n, Watchtower (auto-actualización), Sync                                    | Quieres automatización de workflows y actualizaciones de contenedores.                            | Auto-incluye: security           |
+| **ci-cd**        | Jenkins (puerto 8081→8082)                                                    | Necesitas pipelines de integración y despliegue continuo.                                         | Auto-incluye: security           |
+| **gen-ai**       | Keycloak, Jenkins                                                             | Servicios de IA combinados con autenticación.                                                     | Alias para security + ci-cd      |
 | **testing**      | Test Runner                                                                   | Quieres monitoreo automático de salud de servicios.                                               | Sí, con cualquier perfil.        |
 | **debug**        | Debug Tools                                                                   | Necesitas herramientas avanzadas de debugging.                                                    | Sí, con cualquier perfil.        |
 | **dev**          | Herramientas de desarrollo (curl, jq, etc.)                                   | Estás desarrollando o depurando el stack.                                                         | Sí, con cualquier perfil.        |
@@ -347,11 +348,11 @@ Una vez que los servicios estén corriendo, puedes acceder a:
 | Servicio | Via HAProxy (recomendado) | Puerto Directo | Descripción |
 |----------|---------------------------|----------------|-------------|
 | **Open WebUI** | http://localhost/chat | http://localhost:3000 | Interfaz web para chat con IA |
-| **n8n** | http://localhost/n8n | http://localhost:5678 | Automatización de flujos de trabajo |
+| **n8n** | ⏳ Pendiente | http://localhost:5678 | Automatización de flujos de trabajo |
 | **Grafana** | http://localhost/grafana | http://localhost:3001 | Dashboards de monitoreo (Auth via Keycloak) |
 | **Prometheus** | http://localhost/prometheus | http://localhost:9090 | Métricas del sistema |
 | **AlertManager** | http://localhost/alertmanager | http://localhost:9093 | Gestión de alertas |
-| **Keycloak** | http://localhost/keycloak | http://localhost:8080 | Autenticación centralizada |
+| **Keycloak** | ⏳ Pendiente | http://localhost:8080 | Autenticación centralizada |
 | **Jenkins** | - | http://localhost:8081 | CI/CD Pipeline |
 | **Qdrant** | - | http://localhost:6333 | Base de datos vectorial |
 | **pgvector** | - | localhost:5433 | PostgreSQL con vectores |
@@ -359,7 +360,9 @@ Una vez que los servicios estén corriendo, puedes acceder a:
 | **Node Exporter** | - | http://localhost:9100 | Métricas del host |
 | **Redis** | - | localhost:6379 | Cache y sesiones |
 
-> **Nota**: HAProxy (puerto 80) proporciona balanceo de carga, rate limiting y acceso unificado. Los puertos directos omiten estas características pero funcionan para desarrollo/debugging.
+<!-- TODO: Configurar paths de HAProxy para n8n (/n8n) y Keycloak (/keycloak) en haproxy/haproxy.cfg -->
+
+> **Nota**: HAProxy (puerto 80) proporciona balanceo de carga, rate limiting y acceso unificado. Los puertos directos omiten estas características pero funcionan para desarrollo/debugging. Los elementos marcados "⏳ Pendiente" requieren configuración de HAProxy.
 
 ## 📚 Guía de uso por servicio
 

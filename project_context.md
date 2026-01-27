@@ -207,7 +207,7 @@ my-selfhosted-ai-kit/
 ### Starting Services
 ```bash
 ./scripts/stack-manager.sh start [profile]
-# Profiles: chat-ai, automation, gpu-nvidia, monitoring, security, infrastructure
+# Profiles: cpu, gpu-nvidia, gpu-amd, chat-ai, monitoring, infrastructure, security, automation, ci-cd, gen-ai, testing, debug, dev
 ```
 
 ### Creating Backups
@@ -223,8 +223,10 @@ docker compose logs -f [service]
 ### Accessing UIs
 - Open WebUI: http://localhost:3000
 - Keycloak: http://localhost:8080
-- Grafana: http://localhost:4000 (admin/admin)
+- Grafana: http://localhost:3001 (via Keycloak OAuth)
 - n8n: http://localhost:5678
+- Prometheus: http://localhost:9090
+- Jenkins: http://localhost:8081
 
 ## Documentation Entry Points
 
