@@ -291,7 +291,7 @@ flowchart TD
 
 ### 🖼️ Versión en imagen
 
-![Diagrama de perfiles y dependencias](perfiles.png)
+![Diagrama de perfiles y dependencias](diagrams_png/perfiles.png)
 
 ### 🗒️ Leyenda de colores del diagrama
 

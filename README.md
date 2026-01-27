@@ -293,7 +293,7 @@ flowchart TD
 
 ### 🖼️ Image version
 
-![Profile and dependencies diagram](perfiles.png)
+![Profile and dependencies diagram](diagrams_png/perfiles.png)
 
 ### 🗒️ Diagram color legend
 
@@ -796,4 +796,4 @@ Below are visual examples of profile combinations for different usage scenarios.
 ---
 
 **Want to create your own diagrams or modify the existing ones?**
-See [`DIAGRAMS_INSTRUCTIONS.md`](DIAGRAMS_INSTRUCTIONS.md) for how to generate PNGs from `.mmd` files using Mermaid CLI. 
+See [`docs/DIAGRAMS_INSTRUCTIONS.md`](docs/DIAGRAMS_INSTRUCTIONS.md) for how to generate PNGs from `.mmd` files using Mermaid CLI. 
