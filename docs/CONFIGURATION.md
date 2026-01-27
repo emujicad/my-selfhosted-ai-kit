@@ -51,6 +51,28 @@ OPEN_WEBUI_OIDC_USER_FAMILY_NAME=YourLastName
 
 ---
 
+## 🔐 OIDC Client Secrets (Automated Provisioning)
+
+### How It Works
+
+This stack uses a **"Push Configuration"** model for authentication secrets. You do **not** need to manually generate client secrets in Keycloak.
+
+1.  **You Define**: You provide the secrets in your `.env` file (e.g., `GRAFANA_OAUTH_CLIENT_SECRET`).
+2.  **System Provisioning**: On startup, the `keycloak-init` service blindly takes your secrets from `.env` and **forces Keycloak to use them** by creating/updating the clients via the Keycloak API.
+3.  **Result**: Services (Grafana, n8n) and Keycloak are instantly synchronized with the credentials you provided.
+
+### Configuration Example
+In your `.env`:
+```bash
+# You can generate these strings randomly (e.g., openssl rand -hex 16)
+GRAFANA_OAUTH_CLIENT_SECRET=my_secure_random_string_123
+OPEN_WEBUI_OAUTH_CLIENT_SECRET=another_secure_string_456
+```
+
+> **Note**: If you share this project, the recipient simply generates their own random strings in their `.env`, and the system adapts automatically.
+
+---
+
 ## 🔧 Automatic .env Fixing
 
 ### Overview
