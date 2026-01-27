@@ -172,6 +172,7 @@ my-selfhosted-ai-kit/
 - **Profile Decoupling**: Fixed `full` preset to avoid recursive `dev` profile activation, preventing CPU/GPU Ollama conflicts.
 - **HAProxy Resilience**: Enabled `resolvers docker` for Grafana and n8n backends to fix startup race conditions (`<NOSRV>` errors).
 - **Security Validation**: Enforced strict existence checks for OIDC Client Secrets in `stack-manager.sh`.
+- **Prometheus Sync**: Updated Grafana datasource URL to include `/prometheus` sub-path, resolving "No Data" caused by HAProxy routing prefix.
 - **Cleanup**: Removed dead code references to legacy verification scripts.
 
 ### 2026-01-22: Stack Manager Enhancement
