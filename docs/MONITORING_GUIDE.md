@@ -30,8 +30,12 @@ The stack includes a complete monitoring system based on Prometheus and Grafana 
 - **node-exporter**: Operating system metrics
 - **cAdvisor**: Docker container metrics
 - **postgres-exporter**: PostgreSQL metrics
-- **nvidia-exporter**: NVIDIA GPU metrics ⭐ **NEW**
-- **ollama-exporter**: Ollama-specific metrics ⭐ **NEW**
+- **redis-exporter**: Redis cache metrics
+- **qdrant-metrics**: Vector database metrics (native)
+- **nvidia-exporter**: NVIDIA GPU metrics
+- **ollama-exporter**: Ollama-specific metrics
+- **n8n-exporter**: n8n workflow metrics
+- **openwebui-exporter**: Open WebUI metrics
 
 ---
 
@@ -112,6 +116,34 @@ The stack includes a complete monitoring system based on Prometheus and Grafana 
 
 **Current status**: ⚠️ Has connection problems (see [Troubleshooting](#troubleshooting))
 
+### redis-exporter
+
+**Port**: `9121`
+
+**Function**: Exposes Redis metrics.
+
+**Included metrics**:
+- Connected clients
+- Memory usage
+- Commands processed
+- Cache hit/miss ratio
+
+**Note**: Requires `infrastructure` profile (Redis must be running).
+
+### qdrant-metrics
+
+**Port**: `6333` (native Prometheus endpoint)
+
+**Function**: Exposes Qdrant vector database metrics.
+
+**Included metrics**:
+- Collections count
+- Points count per collection
+- Search latency
+- Memory usage
+
+**Note**: Qdrant exposes metrics natively at `/metrics` endpoint.
+
 ### nvidia-exporter
 
 **Port**: `9400`
@@ -128,7 +160,7 @@ The stack includes a complete monitoring system based on Prometheus and Grafana 
 
 ### ollama-exporter
 
-**Port**: `9099`
+**Port**: `9888`
 
 **Function**: Exposes Ollama-specific metrics via API.
 
@@ -137,6 +169,20 @@ The stack includes a complete monitoring system based on Prometheus and Grafana 
 - `ollama_models_total`: Number of available models
 - `ollama_total_size_bytes`: Total size of all models
 - `ollama_model_size_bytes{model="..."}`: Size per individual model
+
+**Source**: `scripts/utils/exporters/ollama-exporter.py`
+
+### Custom Python Exporters
+
+The stack includes custom Python exporters located in `scripts/utils/exporters/`:
+
+| Exporter | Port | Function |
+|----------|------|----------|
+| `ollama-exporter.py` | 9888 | Ollama model metrics (size, count, status) |
+| `n8n-exporter.py` | 9889 | n8n workflow metrics (executions, status) |
+| `openwebui-exporter.py` | 9890 | Open WebUI metrics (users, chats, models) |
+
+These exporters query the respective service APIs and expose metrics in Prometheus format.
 
 ---
 
@@ -514,6 +560,8 @@ curl -X POST http://localhost:9090/-/reload
 #### 2. Improve AlertManager
 
 **Status**: AlertManager configured, notification configuration pending
+
+> ⚠️ **Note**: The current `monitoring/alertmanager.yml` contains a placeholder webhook (`http://127.0.0.1:5001/`) that doesn't exist. This must be configured with a real endpoint for alerts to be delivered.
 
 **Tasks**:
 - [ ] Review current configuration: `monitoring/alertmanager.yml`

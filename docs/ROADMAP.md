@@ -36,7 +36,7 @@ Este documento combina el plan de acción general con los próximos pasos detall
 5. **Scripts Consolidados** ✅
    - `stack-manager.sh` - Gestión completa del stack con **resolución automática de dependencias**
    - `backup-manager.sh` - Gestión de backups
-   - `keycloak-manager.sh` - Gestión de Keycloak
+   - `auth-manager.sh` - Gestión de autenticación Keycloak
    - Scripts de validación integrados
 
 6. **Actualización de n8n** ✅
@@ -116,7 +116,7 @@ Este documento combina el plan de acción general con los próximos pasos detall
 
 **Documentación de referencia:**
 - `docs/KEYCLOAK_GUIDE.md` - Guía completa
-- `scripts/keycloak-manager.sh help` - Comandos disponibles
+- `scripts/auth-manager.sh --help` - Comandos disponibles
 
 ##### 1.2 Probar Integración Jenkins con Keycloak
 **Objetivo**: Validar que Jenkins puede autenticarse con Keycloak usando OIDC
@@ -137,19 +137,13 @@ Este documento combina el plan de acción general con los próximos pasos detall
    grep JENKINS_OIDC_CLIENT_SECRET .env
    ```
 
-4. Ejecutar script de inicialización (configura plugin OIDC):
-   ```bash
-   ./scripts/init-jenkins-oidc.sh
-   ```
-
-5. Probar login en Jenkins:
+4. Probar login en Jenkins:
    - Acceder a http://localhost:8081
-   - Intentar login con OIDC
+   - Intentar login con OIDC (click "Log in with Keycloak")
    - Verificar que redirige a Keycloak
    - Completar autenticación y verificar que regresa a Jenkins
 
-**Archivos relevantes:**
-- `scripts/init-jenkins-oidc.sh` - Script de inicialización de Jenkins OIDC
+**Nota:** La configuración de Jenkins OIDC es automática via `config/jenkins/init.groovy.d/02-auth-oidc.groovy`.
 
 ##### 1.3 Configurar Roles y Permisos Básicos en Keycloak
 **Objetivo**: Establecer un sistema de roles y permisos básico para control de acceso
@@ -605,9 +599,8 @@ frontend https_frontend
 ### Scripts Disponibles
 - `./scripts/stack-manager.sh` - Gestión completa del stack
 - `./scripts/backup-manager.sh` - Gestión de backups
-- `./scripts/keycloak-manager.sh` - Gestión de Keycloak
-- `./scripts/validate-config.sh` - Validación de configuración
-- `./scripts/init-jenkins-oidc.sh` - Inicialización de Jenkins OIDC
+- `./scripts/auth-manager.sh` - Gestión de autenticación Keycloak
+- `./scripts/validate-system.sh` - Validación del sistema
 
 ---
 

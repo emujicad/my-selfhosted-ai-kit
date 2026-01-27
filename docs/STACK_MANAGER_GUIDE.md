@@ -136,7 +136,7 @@ Inicializa volúmenes de configuración copiando archivos iniciales a los volúm
 ```
 
 ### `monitor`
-Monitorea la descarga de modelos Ollama (usa `scripts/verifica_modelos.sh`).
+Monitorea la descarga de modelos Ollama (funcionalidad integrada en stack-manager.sh).
 
 ```bash
 ./scripts/stack-manager.sh monitor
@@ -202,25 +202,25 @@ Muestra la ayuda completa.
 
 ### 🔄 Integración con Scripts (Estado Actual)
 
-El script maestro intenta integrar funcionalidades de scripts externos. **Nota de Auditoría (2026-01-27):** Se detectaron discrepancias entre el código y los archivos disponibles.
+El script maestro integra varias funcionalidades que antes eran scripts separados.
 
-1. **`verify-env-variables.sh`** (⚠️ No encontrado):
-   - El script intenta ejecutarlo en `validate`, pero el archivo no existe.
-   - **Estado Real**: La validación recae únicamente en la función interna `check_required_vars` de `stack-manager.sh`.
+**Funcionalidades integradas en `stack-manager.sh`:**
 
-2. **`validate-config.sh`** (⚠️ No encontrado):
-   - El script intenta ejecutarlo en `validate`, pero el archivo no existe.
-   - **Estado Real**: No se realizan validaciones estáticas de archivos de configuración (Prometheus, etc.) actualmente.
+| Funcionalidad | Estado | Notas |
+|--------------|--------|-------|
+| Validación de variables `.env` | ✅ Integrada | Función `check_required_vars()` |
+| Monitoreo de modelos Ollama | ✅ Integrada | Comando `monitor` |
+| Inicialización de volúmenes | ✅ Disponible | `scripts/utils/init/init-config-volumes.sh` |
 
-3. **`scripts/verifica_modelos.sh`** (⚠️ No encontrado):
-   - El comando `monitor` intenta llamar a este script.
-   - **Estado Real**: El comando `monitor` probablemente fallará al no encontrar el archivo.
+**Scripts externos disponibles:**
 
-4. **`auto-validate.sh`** (⚠️ No encontrado)
-5. **`test-changes.sh`** (⚠️ No encontrado)
-6. **`init-config-volumes.sh`** (⚠️ No encontrado)
+| Script | Descripción |
+|--------|-------------|
+| `auth-manager.sh` | Gestión de autenticación Keycloak (roles, usuarios, clientes) |
+| `backup-manager.sh` | Gestión de backups (crear, restaurar, listar) |
+| `validate-system.sh` | Validación completa del sistema |
 
-**Nota sobre volúmenes:** Docker Compose crea volúmenes automáticamente cuando levantas servicios. El comando `init-volumes` esta marcado como obsoleto debido a la falta del script auxiliar.
+**Nota sobre volúmenes:** Docker Compose crea volúmenes automáticamente cuando levantas servicios. El comando `init-volumes` es opcional y usa `scripts/utils/init/init-config-volumes.sh`.
 
 ### 📦 Mantenidos Separados
 
@@ -326,5 +326,5 @@ Para más información sobre funcionalidades específicas:
 - **Backups**: Ver `docs/BACKUP_GUIDE.md`
 - **Validación**: Ver `docs/VALIDATION_GUIDE.md`
 - **Keycloak**: Ver `docs/KEYCLOAK_GUIDE.md`
-- **Monitoreo**: Ver `docs/GRAFANA_MONITORING_GUIDE.md`
+- **Monitoreo**: Ver `docs/MONITORING_GUIDE.md`
 ```

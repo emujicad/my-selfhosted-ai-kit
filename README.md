@@ -12,12 +12,14 @@ A complete stack of self-hosted Artificial Intelligence tools using Docker Compo
 
 ### Main services:
 - **Ollama**: Local language model server (LLMs)
-- **Open WebUI**: Modern web interface for AI chat
-- **n8n**: Workflow automation platform
-- **PostgreSQL**: Database for n8n
+- **Open WebUI** (v0.7.2): Modern web interface for AI chat
+- **n8n** (v1.122.5): Workflow automation platform
+- **PostgreSQL**: Database for n8n and Keycloak
 - **Qdrant**: Vector database for embeddings
 - **Redis**: Caching and session management
 - **pgvector**: PostgreSQL extension for vectors
+
+> **Note**: Service versions are pinned for stability. See `docker-compose.yml` for exact versions.
 
 ### Optional services:
 - **Automatic Backup Runner**: Automated, self-contained daily backup (profile `monitoring`)
@@ -51,9 +53,9 @@ sudo apt-get update && sudo apt-get install -y git jq curl
 ```
 
 ### Recommended hardware:
-- **RAM**: Minimum 8GB, recommended 16GB+ (optimized for 96GB)
-- **GPU**: NVIDIA with proprietary drivers (optimized for RTX 5060 Ti)
-- **CPU**: Minimum 4 cores, recommended 8+ cores (optimized for Ryzen 7 7700)
+- **RAM**: Minimum 8GB, recommended 16GB+
+- **GPU**: NVIDIA with proprietary drivers (recommended: GPU with 8GB+ VRAM)
+- **CPU**: Minimum 4 cores, recommended 8+ cores
 - **Storage**: At least 50GB free (AI models are large)
 
 ## 🛠️ Installation
@@ -132,7 +134,7 @@ The stack includes different profiles to optimize according to your needs:
 docker compose --profile cpu up -d
 ```
 
-#### NVIDIA GPU profile (recommended for your RTX 5060 Ti):
+#### NVIDIA GPU profile (recommended if you have an NVIDIA GPU):
 ```bash
 docker compose --profile gpu-nvidia up -d
 ```
@@ -203,11 +205,12 @@ docker compose --profile gpu-nvidia --profile monitoring --profile infrastructur
 | **cpu**          | Ollama (CPU)                                                                  | You don't have a GPU or want to save resources.                                                         | Yes, with other services.         |
 | **gpu-nvidia**   | Ollama (NVIDIA GPU)                                                           | You have an NVIDIA GPU and want maximum AI performance.                                             | Yes, with other services.         |
 | **gpu-amd**      | Ollama (AMD GPU)                                                              | You have a compatible AMD GPU.                                                                        | Yes, with other services.         |
+| **chat-ai**      | Open WebUI                                                                    | Full AI chat interface with Keycloak authentication.                                              | Auto-includes: security, infrastructure, gpu-nvidia |
 | **monitoring**   | Prometheus, Grafana, AlertManager, automatic backup                          | You want monitoring, dashboards and automatic backups.                                            | Yes, with any profile.        |
 | **infrastructure**| Redis, HAProxy                                                               | You need caching or load balancing.                                                              | Yes, with any profile.        |
 | **security**     | Keycloak (authentication), ModSecurity (WAF)                                   | You want centralized authentication and web application firewall.                                | Yes, with any profile.        |
 | **automation**   | Watchtower (auto-updates), Sync                                         | You want automation of updates and data synchronization.                              | Yes, with any profile.        |
-| **ci-cd**        | Jenkins                                                                       | You need continuous integration and deployment pipelines.                                         | Yes, with any profile.        |
+| **ci-cd**        | Jenkins (port 8081→8082)                                                      | You need continuous integration and deployment pipelines.                                         | Yes, with any profile.        |
 | **testing**      | Test Runner                                                                   | You want automatic service health monitoring.                                               | Yes, with any profile.        |
 | **debug**        | Debug Tools                                                                   | You need advanced debugging tools.                                                    | Yes, with any profile.        |
 | **dev**          | Development tools (curl, jq, etc.)                                   | You are developing or debugging the stack.                                                         | Yes, with any profile.        |
@@ -330,8 +333,6 @@ docker compose logs -f
 ### Monitor model downloads:
 ```bash
 ./scripts/stack-manager.sh monitor
-# Or directly:
-./scripts/verifica_modelos.sh
 ```
 
 ### Stop all services:
@@ -345,21 +346,22 @@ docker compose down
 
 Once the services are running, you can access:
 
-| Service | URL | Description |
-|----------|-----|-------------|
-| **Open WebUI** | http://localhost:3000 | Web interface for AI chat |
-| **n8n** | http://localhost:5678 | Workflow automation |
-| **Qdrant** | http://localhost:6333 | Vector database |
-| **pgvector** | localhost:5433 | PostgreSQL with vectors |
-| **Grafana** | [http://localhost/grafana](http://localhost/grafana) | Monitoring dashboards (Auth via Keycloak) |
-| **Prometheus** | [http://localhost/prometheus](http://localhost/prometheus) | System metrics |
-| **AlertManager** | [http://localhost/alertmanager](http://localhost/alertmanager) | Alert management |
-| **cAdvisor** | http://localhost:8082 | Container metrics (monitoring profile) |
-| **Node Exporter** | http://localhost:9100 | Host metrics (monitoring profile) |
-| **HAProxy** | http://localhost:80 | Load balancer (infrastructure profile) |
-| **Redis** | localhost:6379 | Cache and sessions for Open WebUI (infrastructure profile) |
-| **Keycloak** | http://localhost:8080 | Centralized authentication (security profile) |
-| **Jenkins** | http://localhost:8081 | CI/CD Pipeline (ci-cd profile) |
+| Service | Via HAProxy (recommended) | Direct Port | Description |
+|----------|---------------------------|-------------|-------------|
+| **Open WebUI** | http://localhost/chat | http://localhost:3000 | Web interface for AI chat |
+| **n8n** | http://localhost/n8n | http://localhost:5678 | Workflow automation |
+| **Grafana** | http://localhost/grafana | http://localhost:3001 | Monitoring dashboards (Auth via Keycloak) |
+| **Prometheus** | http://localhost/prometheus | http://localhost:9090 | System metrics |
+| **AlertManager** | http://localhost/alertmanager | http://localhost:9093 | Alert management |
+| **Keycloak** | http://localhost/keycloak | http://localhost:8080 | Centralized authentication |
+| **Jenkins** | - | http://localhost:8081 | CI/CD Pipeline |
+| **Qdrant** | - | http://localhost:6333 | Vector database |
+| **pgvector** | - | localhost:5433 | PostgreSQL with vectors |
+| **cAdvisor** | - | http://localhost:8082 | Container metrics |
+| **Node Exporter** | - | http://localhost:9100 | Host metrics |
+| **Redis** | - | localhost:6379 | Cache and sessions |
+
+> **Note**: HAProxy (port 80) provides load balancing, rate limiting, and unified access. Direct ports bypass these features but work for development/debugging.
 
 ## 📚 Service usage guide
 
@@ -384,7 +386,7 @@ Once the services are running, you can access:
 - **Purpose**: Local language model server
 - **API**: http://localhost:11434
 - **Available models**: Run `docker exec ollama ollama list`
-- **Optimized for**: Your RTX 5060 Ti with 16GB VRAM
+- **Optimized for**: NVIDIA GPUs with 8GB+ VRAM
 
 ## 🔧 Useful commands
 
@@ -439,25 +441,20 @@ docker system prune -a
 
 ### Keycloak management:
 ```bash
-# Setup Keycloak for a service
-./scripts/keycloak-manager.sh setup grafana
-./scripts/keycloak-manager.sh setup n8n
-./scripts/keycloak-manager.sh setup openwebui
+# Setup roles (skips existing ones automatically)
+./scripts/auth-manager.sh --setup-roles
 
-# Show credentials
-./scripts/keycloak-manager.sh credentials
+# Create admin user
+./scripts/auth-manager.sh --create-admin
 
-# Create user
-./scripts/keycloak-manager.sh create-user
-
-# Create Permanent Admin (Recommended)
-./scripts/keycloak-create-permanent-admin.sh
+# Fix OIDC clients
+./scripts/auth-manager.sh --fix-clients
 
 # View status
-./scripts/keycloak-manager.sh status
+./scripts/auth-manager.sh --status
 
 # View help
-./scripts/keycloak-manager.sh help
+./scripts/auth-manager.sh --help
 ```
 
 ## 📁 Volume structure
@@ -516,10 +513,10 @@ All data is stored in persistent Docker volumes:
 
 ## 🚀 Hardware optimization
 
-Your system has excellent specifications:
-- **CPU**: AMD Ryzen 7 7700 (8 cores, 16 threads)
-- **RAM**: 96GB DDR5
-- **GPU**: NVIDIA RTX 5060 Ti
+Example of tested specifications:
+- **CPU**: AMD Ryzen 7 7700 (8 cores, 16 threads) or equivalent
+- **RAM**: 32GB+ DDR5 (tested with 96GB)
+- **GPU**: NVIDIA RTX 40/50 series with 16GB VRAM
 
 ### Recommended configurations:
 
@@ -677,19 +674,19 @@ docker compose logs -f
 The `monitoring` profile adds a complete monitoring and observability stack:
 
 #### Prometheus - Metrics collector
-- **URL**: http://localhost:9090
+- **URL**: http://localhost/prometheus (via HAProxy) or http://localhost:9090 (direct)
 - **Function**: Collects metrics from all stack services
 - **Included metrics**: CPU, memory, health status, error logs
 
 #### Grafana - Dashboards and visualization
-- **URL**: http://localhost:3001
-- **User**: admin
-- **Password**: admin
+- **URL**: http://localhost/grafana (via HAProxy) or http://localhost:3001 (direct)
+- **Authentication**: Via Keycloak OAuth - click "Sign in with Keycloak"
+- **Note**: Local login is disabled. Use your Keycloak credentials.
 - **Function**: Visual dashboards to monitor performance
 - **Included dashboards**: Service metrics, resource usage, health status
 
 #### AlertManager - Alert management
-- **URL**: http://localhost:9093
+- **URL**: http://localhost/alertmanager (via HAProxy) or http://localhost:9093 (direct)
 - **Function**: Manages alerts when services have problems
 - **Configured alerts**: Services down, high resource usage, critical errors
 
@@ -714,17 +711,17 @@ The `monitoring` profile adds a complete monitoring and observability stack:
 docker compose --profile gpu-nvidia --profile monitoring up -d
 
 # Access Grafana
-# 1. Go to http://localhost:3001
-# 2. User: admin, Password: admin
+# 1. Go to http://localhost/grafana (or http://localhost:3001 direct)
+# 2. Click "Sign in with Keycloak" and use your Keycloak credentials
 # 3. Explore available dashboards
 
 # Access Prometheus
-# 1. Go to http://localhost:9090
+# 1. Go to http://localhost/prometheus (or http://localhost:9090 direct)
 # 2. Go to Status > Targets to see monitored services
 # 3. Use the Graph tab to query metrics
 
 # View alerts
-# 1. Go to http://localhost:9093
+# 1. Go to http://localhost/alertmanager (or http://localhost:9093 direct)
 # 2. Review active alerts and configuration
 ```
 

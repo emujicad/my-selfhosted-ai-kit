@@ -598,7 +598,7 @@ docker compose --profile monitoring ps
 
 # Check specific exporter
 curl http://localhost:9100/metrics  # node-exporter
-curl http://localhost:9099/metrics  # ollama-exporter
+curl http://localhost:9888/metrics  # ollama-exporter
 curl http://localhost:9400/metrics  # nvidia-exporter (if GPU)
 ```
 
@@ -729,7 +729,7 @@ source .env
 nano .env
 
 # 3. If Keycloak doesn't start
-./scripts/keycloak-manager.sh fix-db
+./scripts/stack-manager.sh diagnose keycloak-db
 
 # 4. Finally start
 ./scripts/stack-manager.sh start
@@ -761,7 +761,7 @@ nano .env
 
 **Only for detailed diagnosis**:
 - `stack-manager.sh diagnose keycloak-db` - Detailed Keycloak database diagnosis
-- `keycloak-manager.sh fix-db` - Wrapper that uses `stack-manager.sh diagnose keycloak-db`
+- `auth-manager.sh --status` - View Keycloak authentication status
 
 **Note**: .env variable fixing is completely integrated and automatic. There's no manual script for this - just edit `.env` directly if you need to make manual changes.
 

@@ -12,12 +12,14 @@ Un stack completo de herramientas de Inteligencia Artificial auto-hospedadas usa
 
 ### Servicios principales:
 - **Ollama**: Servidor de modelos de lenguaje local (LLMs)
-- **Open WebUI**: Interfaz web moderna para chat con IA
-- **n8n**: Plataforma de automatización de flujos de trabajo
-- **PostgreSQL**: Base de datos para n8n
+- **Open WebUI** (v0.7.2): Interfaz web moderna para chat con IA
+- **n8n** (v1.122.5): Plataforma de automatización de flujos de trabajo
+- **PostgreSQL**: Base de datos para n8n y Keycloak
 - **Qdrant**: Base de datos vectorial para embeddings
 - **Redis**: Caché y gestión de sesiones
 - **pgvector**: Extensión de PostgreSQL para vectores
+
+> **Nota**: Las versiones de los servicios están fijadas para estabilidad. Ver `docker-compose.yml` para versiones exactas.
 
 ### Servicios opcionales:
 - **Automatic Backup Runner**: Respaldo diario automatizado y auto-contenido (perfil `monitoring`)
@@ -51,9 +53,9 @@ sudo apt-get update && sudo apt-get install -y git jq curl
 ```
 
 ### Hardware recomendado:
-- **RAM**: Mínimo 8GB, recomendado 16GB+ (optimizado para 96GB)
-- **GPU**: NVIDIA con drivers propietarios (optimizado para RTX 5060 Ti)
-- **CPU**: Mínimo 4 cores, recomendado 8+ cores (optimizado para Ryzen 7 7700)
+- **RAM**: Mínimo 8GB, recomendado 16GB+
+- **GPU**: NVIDIA con drivers propietarios (recomendado: GPU con 8GB+ VRAM)
+- **CPU**: Mínimo 4 cores, recomendado 8+ cores
 - **Almacenamiento**: Al menos 50GB libres (los modelos de IA son grandes)
 
 ## 🛠️ Instalación
@@ -97,6 +99,32 @@ sudo docker run --rm --gpus all nvidia/cuda:12.0.0-base-ubuntu22.04 nvidia-smi
 
 ## 🚀 Uso
 
+### Recomendado: Usar el Script Stack Manager
+
+El proyecto incluye un script mejorado `stack-manager.sh` con **resolución automática de dependencias**. Cuando inicias un perfil, automáticamente incluye todas las dependencias requeridas:
+
+```bash
+# Iniciar Open WebUI con todas sus dependencias (Keycloak, Redis, Ollama)
+./scripts/stack-manager.sh start chat-ai
+# Auto-incluye: security infrastructure gpu-nvidia
+
+# Iniciar automatización con autenticación
+./scripts/stack-manager.sh start automation
+# Auto-incluye: security
+
+# Iniciar el preset por defecto (recomendado para producción)
+./scripts/stack-manager.sh start
+
+# Detener todos los servicios
+./scripts/stack-manager.sh stop
+
+# Ver presets y perfiles disponibles
+./scripts/stack-manager.sh list
+
+# Modo debug (ver resolución de perfiles)
+DEBUG_PROFILES=true ./scripts/stack-manager.sh start chat-ai
+```
+
 ### Perfiles disponibles
 
 El stack incluye diferentes perfiles para optimizar según tus necesidades:
@@ -106,7 +134,7 @@ El stack incluye diferentes perfiles para optimizar según tus necesidades:
 docker compose --profile cpu up -d
 ```
 
-#### Perfil GPU NVIDIA (recomendado para tu RTX 5060 Ti):
+#### Perfil GPU NVIDIA (recomendado si tienes GPU NVIDIA):
 ```bash
 docker compose --profile gpu-nvidia up -d
 ```
@@ -175,11 +203,12 @@ docker compose --profile gpu-nvidia --profile monitoring --profile infrastructur
 | **cpu**          | Ollama (CPU)                                                                  | No tienes GPU o quieres ahorrar recursos.                                                         | Sí, con otros servicios.         |
 | **gpu-nvidia**   | Ollama (GPU NVIDIA)                                                           | Tienes GPU NVIDIA y quieres máximo rendimiento en IA.                                             | Sí, con otros servicios.         |
 | **gpu-amd**      | Ollama (GPU AMD)                                                              | Tienes GPU AMD compatible.                                                                        | Sí, con otros servicios.         |
+| **chat-ai**      | Open WebUI                                                                    | Interfaz de chat IA con autenticación Keycloak.                                                   | Auto-incluye: security, infrastructure, gpu-nvidia |
 | **monitoring**   | Prometheus, Grafana, AlertManager, backup automático                          | Quieres monitoreo, dashboards y respaldos automáticos.                                            | Sí, con cualquier perfil.        |
 | **infrastructure**| Redis, HAProxy                                                               | Necesitas cache o balanceo de carga.                                                              | Sí, con cualquier perfil.        |
 | **security**     | Keycloak (autenticación), ModSecurity (WAF)                                   | Quieres autenticación centralizada y firewall de aplicaciones web.                                | Sí, con cualquier perfil.        |
 | **automation**   | Watchtower (auto-actualización), Sync                                         | Quieres automatización de actualizaciones y sincronización de datos.                              | Sí, con cualquier perfil.        |
-| **ci-cd**        | Jenkins                                                                       | Necesitas pipelines de integración y despliegue continuo.                                         | Sí, con cualquier perfil.        |
+| **ci-cd**        | Jenkins (puerto 8081→8082)                                                    | Necesitas pipelines de integración y despliegue continuo.                                         | Sí, con cualquier perfil.        |
 | **testing**      | Test Runner                                                                   | Quieres monitoreo automático de salud de servicios.                                               | Sí, con cualquier perfil.        |
 | **debug**        | Debug Tools                                                                   | Necesitas herramientas avanzadas de debugging.                                                    | Sí, con cualquier perfil.        |
 | **dev**          | Herramientas de desarrollo (curl, jq, etc.)                                   | Estás desarrollando o depurando el stack.                                                         | Sí, con cualquier perfil.        |
@@ -302,8 +331,6 @@ docker compose logs -f
 ### Monitorear descarga de modelos:
 ```bash
 ./scripts/stack-manager.sh monitor
-# O directamente:
-./scripts/verifica_modelos.sh
 ```
 
 ### Detener todos los servicios:
@@ -317,21 +344,22 @@ docker compose down
 
 Una vez que los servicios estén corriendo, puedes acceder a:
 
-| Servicio | URL | Descripción |
-|----------|-----|-------------|
-| **Open WebUI** | http://localhost:3000 | Interfaz web para chat con IA |
-| **n8n** | http://localhost:5678 | Automatización de flujos de trabajo |
-| **Qdrant** | http://localhost:6333 | Base de datos vectorial |
-| **pgvector** | localhost:5433 | PostgreSQL con vectores |
-| **Grafana** | http://localhost:3001 | Dashboards de monitoreo (perfil monitoring) |
-| **Prometheus** | http://localhost:9090 | Métricas del sistema (perfil monitoring) |
-| **AlertManager** | http://localhost:9093 | Gestión de alertas (perfil monitoring) |
-| **cAdvisor** | http://localhost:8082 | Métricas de contenedores (perfil monitoring) |
-| **Node Exporter** | http://localhost:9100 | Métricas del host (perfil monitoring) |
-| **HAProxy** | http://localhost:80 | Load balancer (perfil infrastructure) |
-| **Redis** | localhost:6379 | Cache y sesiones (perfil infrastructure) |
-| **Keycloak** | http://localhost:8080 | Autenticación centralizada (perfil security) |
-| **Jenkins** | http://localhost:8081 | CI/CD Pipeline (perfil ci-cd) |
+| Servicio | Via HAProxy (recomendado) | Puerto Directo | Descripción |
+|----------|---------------------------|----------------|-------------|
+| **Open WebUI** | http://localhost/chat | http://localhost:3000 | Interfaz web para chat con IA |
+| **n8n** | http://localhost/n8n | http://localhost:5678 | Automatización de flujos de trabajo |
+| **Grafana** | http://localhost/grafana | http://localhost:3001 | Dashboards de monitoreo (Auth via Keycloak) |
+| **Prometheus** | http://localhost/prometheus | http://localhost:9090 | Métricas del sistema |
+| **AlertManager** | http://localhost/alertmanager | http://localhost:9093 | Gestión de alertas |
+| **Keycloak** | http://localhost/keycloak | http://localhost:8080 | Autenticación centralizada |
+| **Jenkins** | - | http://localhost:8081 | CI/CD Pipeline |
+| **Qdrant** | - | http://localhost:6333 | Base de datos vectorial |
+| **pgvector** | - | localhost:5433 | PostgreSQL con vectores |
+| **cAdvisor** | - | http://localhost:8082 | Métricas de contenedores |
+| **Node Exporter** | - | http://localhost:9100 | Métricas del host |
+| **Redis** | - | localhost:6379 | Cache y sesiones |
+
+> **Nota**: HAProxy (puerto 80) proporciona balanceo de carga, rate limiting y acceso unificado. Los puertos directos omiten estas características pero funcionan para desarrollo/debugging.
 
 ## 📚 Guía de uso por servicio
 
@@ -355,7 +383,7 @@ Una vez que los servicios estén corriendo, puedes acceder a:
 - **Propósito**: Servidor de modelos de lenguaje local
 - **API**: http://localhost:11434
 - **Modelos disponibles**: Ejecuta `docker exec ollama ollama list`
-- **Optimizado para**: Tu RTX 5060 Ti con 16GB VRAM
+- **Optimizado para**: GPUs NVIDIA con 8GB+ VRAM
 
 ## 🔧 Comandos útiles
 
@@ -408,9 +436,7 @@ docker stats
 docker system prune -a
 ```
 
-### 🔐 Gestión de Keycloak
-Usa el script unificado `auth-manager.sh`:
-
+### 🔐 Gestión de Keycloak:
 ```bash
 # Configurar roles (salta automáticamente los existentes)
 ./scripts/auth-manager.sh --setup-roles
@@ -418,11 +444,14 @@ Usa el script unificado `auth-manager.sh`:
 # Crear usuario administrador
 ./scripts/auth-manager.sh --create-admin
 
-# Corregir redirecciones de clientes
+# Corregir clientes OIDC
 ./scripts/auth-manager.sh --fix-clients
 
-# Verificar estado
+# Ver estado
 ./scripts/auth-manager.sh --status
+
+# Ver ayuda
+./scripts/auth-manager.sh --help
 ```
 
 ## 📁 Estructura de volúmenes
@@ -480,10 +509,10 @@ Todos los datos se almacenan en volúmenes persistentes de Docker:
 
 ## 🚀 Optimización para tu hardware
 
-Tu sistema tiene especificaciones excelentes:
-- **CPU**: AMD Ryzen 7 7700 (8 cores, 16 threads)
-- **RAM**: 96GB DDR5
-- **GPU**: NVIDIA RTX 5060 Ti
+Ejemplo de especificaciones probadas:
+- **CPU**: AMD Ryzen 7 7700 (8 cores, 16 threads) o equivalente
+- **RAM**: 32GB+ DDR5 (probado con 96GB)
+- **GPU**: NVIDIA RTX serie 40/50 con 16GB VRAM
 
 ### Configuraciones recomendadas:
 
@@ -553,6 +582,37 @@ sudo netstat -tulpn | grep :3000
 # Cambiar puerto en docker-compose.yml
 ```
 
+### Problema: Keycloak Login Fallido ("Failed to get token")
+Esto usualmente significa que los secretos del cliente Keycloak no coinciden.
+```bash
+# Forzar actualización de secretos de clientes (keycloak-init se ejecuta automáticamente al iniciar)
+# Si necesitas ejecutarlo manualmente:
+docker compose --profile security up -d keycloak-init
+
+# O simplemente reinicia el perfil security (keycloak-init se ejecutará automáticamente)
+./scripts/stack-manager.sh restart security
+```
+
+### Problema: Grafana Login Fallido ("InternalError")
+Esto usualmente ocurre si el usuario de Keycloak no tiene dirección de email.
+```bash
+# Establecer email para el usuario admin
+docker exec keycloak /opt/keycloak/bin/kcadm.sh update users/$(docker exec keycloak /opt/keycloak/bin/kcadm.sh get users -r master -q username=admin --fields id --format csv --noquotes) -r master -s email=admin@example.com -s emailVerified=true
+```
+
+### Problema: Grafana Login Fallido ("User sync failed")
+Esto ocurre si Grafana no puede mapear el usuario de Keycloak a un usuario local existente.
+**Asegúrate de que el email del admin de Grafana coincida con el email del admin de Keycloak.**
+1. Verifica el email en Keycloak (ej: `admin@example.com`).
+2. Actualiza `.env` para que coincida:
+   ```bash
+   GRAFANA_ADMIN_EMAIL=admin@example.com
+   ```
+3. Reinicia Grafana:
+   ```bash
+   ./scripts/stack-manager.sh start
+   ```
+
 ### Problema: Logs muy grandes
 ```bash
 # Los logs están configurados para rotar automáticamente
@@ -606,19 +666,19 @@ docker compose logs -f
 El perfil `monitoring` agrega un stack completo de monitoreo y observabilidad:
 
 #### Prometheus - Recolector de métricas
-- **URL**: http://localhost:9090
+- **URL**: http://localhost/prometheus (via HAProxy) o http://localhost:9090 (directo)
 - **Función**: Recolecta métricas de todos los servicios del stack
 - **Métricas incluidas**: CPU, memoria, estado de salud, logs de errores
 
 #### Grafana - Dashboards y visualización
-- **URL**: http://localhost:3001
-- **Usuario**: admin
-- **Contraseña**: admin
+- **URL**: http://localhost/grafana (via HAProxy) o http://localhost:3001 (directo)
+- **Autenticación**: Via Keycloak OAuth - clic en "Sign in with Keycloak"
+- **Nota**: El login local está deshabilitado. Usa tus credenciales de Keycloak.
 - **Función**: Dashboards visuales para monitorear el rendimiento
 - **Dashboards incluidos**: Métricas de servicios, uso de recursos, estado de salud
 
 #### AlertManager - Gestión de alertas
-- **URL**: http://localhost:9093
+- **URL**: http://localhost/alertmanager (via HAProxy) o http://localhost:9093 (directo)
 - **Función**: Gestiona alertas cuando los servicios tienen problemas
 - **Alertas configuradas**: Servicios caídos, alto uso de recursos, errores críticos
 
@@ -639,17 +699,17 @@ El perfil `monitoring` agrega un stack completo de monitoreo y observabilidad:
 docker compose --profile gpu-nvidia --profile monitoring up -d
 
 # Acceder a Grafana
-# 1. Ve a http://localhost:3001
-# 2. Usuario: admin, Contraseña: admin
+# 1. Ve a http://localhost/grafana (o http://localhost:3001 directo)
+# 2. Clic en "Sign in with Keycloak" y usa tus credenciales de Keycloak
 # 3. Explora los dashboards disponibles
 
 # Acceder a Prometheus
-# 1. Ve a http://localhost:9090
+# 1. Ve a http://localhost/prometheus (o http://localhost:9090 directo)
 # 2. Ve a Status > Targets para ver servicios monitoreados
 # 3. Usa la pestaña Graph para consultar métricas
 
 # Ver alertas
-# 1. Ve a http://localhost:9093
+# 1. Ve a http://localhost/alertmanager (o http://localhost:9093 directo)
 # 2. Revisa alertas activas y configuración
 ```
 

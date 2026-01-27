@@ -231,8 +231,8 @@ Information has been consolidated into 6 main files to avoid redundancy and impr
    - TESTING_OLLAMA_OPTIMIZATIONS.md
 
 5. **MONITORING_GUIDE.md** - Consolidates:
-   - GRAFANA_MONITORING_GUIDE.md
-   - MONITORING_NEXT_STEPS.md
+   - Previous Grafana monitoring documentation
+   - Monitoring next steps and configuration
 
 6. **CONFIGURATION.md** - Consolidates:
    - ENV_AUTO_FIX.md

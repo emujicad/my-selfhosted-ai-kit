@@ -246,7 +246,7 @@ While dashboard shows visual alerts, you can configure automatic alerts in Grafa
 Run quick tests script:
 
 ```bash
-./scripts/test-ollama-quick.sh
+./scripts/tests/test-ollama-quick.sh
 ```
 
 This script verifies:
@@ -261,7 +261,7 @@ This script verifies:
 For more detailed testing:
 
 ```bash
-./scripts/test-ollama-performance.sh
+./scripts/tests/test-ollama-performance.sh
 ```
 
 **Note**: This test may take several minutes as it loads large models.

@@ -21,10 +21,10 @@
 - **Security**: HAProxy + ModSecurity WAF
 - **CI/CD**: Jenkins (optional)
 
-### Hardware Profile
-- **GPU**: NVIDIA RTX 5060 Ti (16GB VRAM)
-- **CPU**: Ryzen 7 7700 (8 cores)
-- **RAM**: 96GB
+### Hardware Profile (Tested Configuration)
+- **GPU**: NVIDIA RTX series with 16GB VRAM (e.g., RTX 4080, RTX 5060 Ti)
+- **CPU**: 8+ cores (e.g., AMD Ryzen 7, Intel i7)
+- **RAM**: 32GB+ (tested with 96GB)
 - **OS**: Linux with Docker Engine
 
 ## Key Technical Decisions

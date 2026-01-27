@@ -64,9 +64,9 @@ This stack uses a **"Push Configuration"** model for authentication secrets. You
 ### Configuration Example
 In your `.env`:
 ```bash
-# You can generate these strings randomly (e.g., openssl rand -hex 16)
-GRAFANA_OAUTH_CLIENT_SECRET=my_secure_random_string_123
-OPEN_WEBUI_OAUTH_CLIENT_SECRET=another_secure_string_456
+# Generate these strings randomly (e.g., openssl rand -hex 16)
+GRAFANA_OAUTH_CLIENT_SECRET=<your-generated-secret-here>
+OPEN_WEBUI_OAUTH_CLIENT_SECRET=<your-generated-secret-here>
 ```
 
 > **Note**: If you share this project, the recipient simply generates their own random strings in their `.env`, and the system adapts automatically.
@@ -629,6 +629,10 @@ n8n:
 ### Overview
 
 Redis is used to improve the performance of Open WebUI and n8n.
+
+> **Profile Requirement**: Redis requires the `infrastructure` profile.
+> 
+> **Dependency Note**: If using the `monitoring` profile, `redis-exporter` depends on Redis being healthy. Ensure you include `infrastructure` profile when using monitoring with Redis metrics.
 
 ### Open WebUI Optimization
 

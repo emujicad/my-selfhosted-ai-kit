@@ -94,14 +94,14 @@ OIDC clients and secrets are configured automatically. You only need to run manu
 
 ## 🔐 Credentials and Access
 
-### Default Credentials
+### Credentials Configuration
 
 **Keycloak Admin Console:**
 - URL: http://localhost:8080/admin
-- Username: `admin`
-- Password: `admin`
+- Username: Configured in `.env` as `KEYCLOAK_ADMIN_USER`
+- Password: Configured in `.env` as `KEYCLOAK_ADMIN_PASSWORD`
 
-⚠️ **IMPORTANT**: These are default credentials and **must be changed in production**.
+⚠️ **IMPORTANT**: Never use default credentials. Configure secure values in your `.env` file before starting services.
 
 ### How to Access Keycloak
 
@@ -114,9 +114,9 @@ OIDC clients and secrets are configured automatically. You only need to run manu
    - URL: http://localhost:8080/admin
    - Or directly: http://localhost:8080
 
-3. **Log in with default credentials**:
-   - Username: `admin`
-   - Password: `admin`
+3. **Log in with your configured credentials**:
+   - Username: Value of `KEYCLOAK_ADMIN_USER` from your `.env`
+   - Password: Value of `KEYCLOAK_ADMIN_PASSWORD` from your `.env`
 
 ### Changing Credentials
 
@@ -134,7 +134,7 @@ OIDC clients and secrets are configured automatically. You only need to run manu
 
 **Option 2: Change from Keycloak UI**
 1. Access http://localhost:8080/admin
-2. Login with admin/admin
+2. Login with your configured credentials (from `.env`)
 3. Go to: **Administration Console** → **User** (top right)
 4. Select `admin` user
 5. Go to **Credentials** tab
@@ -161,7 +161,7 @@ docker volume rm my-selfhosted-ai-kit_keycloak_data
 # Start Keycloak again
 docker compose --profile security up -d keycloak
 
-# Wait 30-60 seconds and access with admin/admin
+# Wait 30-60 seconds and access with credentials from .env
 ```
 
 ---
@@ -220,12 +220,7 @@ environment:
    ```
    The `keycloak-init` service will automatically create OIDC clients and update secrets in `.env`.
 
-2. **Or use script**:
-   ```bash
-   ./scripts/recreate-keycloak-clients.sh
-   ```
-
-3. **Recreate Grafana** (if manual changes):
+2. **Recreate Grafana** (if manual changes):
    ```bash
    docker compose --profile monitoring up -d --force-recreate grafana
    ```
@@ -234,7 +229,7 @@ environment:
 
 1. Open Grafana: http://localhost:3001
 2. Click "Sign in with Keycloak"
-3. Enter Keycloak credentials (e.g., admin/admin)
+3. Enter your Keycloak credentials (configured in `.env`)
 4. You'll be redirected back to Grafana authenticated
 
 ⚠️ **IMPORTANT**: Use **Keycloak** credentials, not Grafana. Grafana doesn't accept direct credentials when OAuth is enabled.
@@ -337,16 +332,9 @@ Jenkins is configured to use Keycloak as OIDC provider via the "OpenId Connect A
 
 ### Automatic Configuration
 
-**Initialization script:**
-```bash
-./scripts/init-jenkins-oidc.sh
-```
-
-This script:
-1. ✅ Verifies Jenkins and Keycloak are running
-2. ✅ Installs "OpenId Connect Authentication" plugin if not installed
-3. ✅ Configures OIDC with Keycloak automatically
-4. ✅ Restarts Jenkins if necessary
+Jenkins OIDC is configured **automatically** via Groovy init scripts:
+- `config/jenkins/init.groovy.d/02-auth-oidc.groovy` - Configures OIDC authentication
+- `keycloak-init` service creates the Jenkins client in Keycloak
 
 ### Setup Steps
 
@@ -357,10 +345,7 @@ This script:
 
 # 2. Verify clients were created in Keycloak admin console
 
-# 3. Run initialization script (configures OIDC plugin):
-./scripts/init-jenkins-oidc.sh
-
-# 4. Test login at http://localhost:8081
+# 3. Test login at http://localhost:8081 - click "Log in with Keycloak"
 ```
 
 **Client in Keycloak:**
@@ -370,6 +355,12 @@ This script:
 - Valid redirect URIs: `http://localhost:8081/securityRealm/finishLogin`
 - Web origins: `http://localhost:8081`
 - fullScopeAllowed: false
+
+> ⚠️ **Important**: The redirect URI (`/securityRealm/finishLogin`) is a callback endpoint that should NOT be accessed directly. The correct flow is:
+> 1. Go to `http://localhost:8081`
+> 2. Click "Log in with Keycloak"
+> 3. Authenticate in Keycloak
+> 4. Keycloak automatically redirects to the callback URL with the required `state` parameter
 
 ---
 
@@ -391,7 +382,12 @@ This script:
 - Verify application is in same Docker network as Keycloak
 - Verify token/userinfo URLs use `keycloak:8080` (not `localhost:8080`)
 
-**4. Error: "ERR_CONNECTION_REFUSED" in browser**
+**4. Error: "State cannot be determined" (Jenkins)**
+- This error occurs when navigating directly to `/securityRealm/finishLogin`
+- The callback URL requires a `state` parameter from the OIDC flow
+- **Solution**: Start the login flow from `http://localhost:8081` → click "Log in with Keycloak"
+
+**5. Error: "ERR_CONNECTION_REFUSED" in browser**
 - Verify Keycloak is running
 - Verify authorization/logout URLs use `localhost:8080` (not `keycloak:8080`)
 
@@ -583,6 +579,6 @@ Jenkins integration is now **100% automated** in this stack.
 
 ### Access
 1.  **URL**: http://localhost:8081
-2.  **Login**: Click **"Log in with Keycloak"** (or use fallback `admin`/`admin` if needed).
+2.  **Login**: Click **"Log in with Keycloak"** (uses your Keycloak credentials from `.env`).
 3.  **Role**: The first user logged in via OIDC usually gets Create permission, or Admin if configured strategies allow. The `02-auth-oidc.groovy` script sets `FullControlOnceLoggedInAuthorizationStrategy`, meaning **any valid Keycloak user becomes an Admin**.
     *   *Security Note*: For production, you should refine the `AuthorizationStrategy` in `config/jenkins/init.groovy.d/02-auth-oidc.groovy`.
