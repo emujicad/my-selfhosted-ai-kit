@@ -37,10 +37,11 @@
 - **Status**: Production-ready, fully functional
 
 ### 2. Automatic Dependency Resolution in stack-manager.sh
-**Challenge**: Starting profiles failed due to undefined service dependencies  
-**Solution**: Recursive dependency resolution based on profile hierarchy
+**Challenge**: Starting profiles failed due to undefined service dependencies and profile conflicts (CPU vs GPU)
+**Solution**: Recursive dependency resolution with strict profile separation in presets.
 - `get_profile_dependencies()`: Maps profile dependencies
 - `resolve_dependencies()`: Recursively resolves all required profiles
+- **Optimization (2026-01-27)**: Decoupled `dev` (CPU-bound) from `full` preset to prevent port conflicts with `gpu-nvidia`.
 - **Status**: Implemented and tested
 
 ### 3. Documentation & Script Consolidation (2026-01-24)

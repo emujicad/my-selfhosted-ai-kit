@@ -200,34 +200,27 @@ Muestra la ayuda completa.
 
 ## 🔄 Integración con Scripts Existentes
 
-El script integra las siguientes funcionalidades de scripts existentes:
+### 🔄 Integración con Scripts (Estado Actual)
 
-### ✅ Integrados
+El script maestro intenta integrar funcionalidades de scripts externos. **Nota de Auditoría (2026-01-27):** Se detectaron discrepancias entre el código y los archivos disponibles.
 
-1. **`verify-env-variables.sh`**
-   - Se ejecuta automáticamente en `validate` y antes de `start`
-   - Verifica que las variables críticas de `.env` estén configuradas
+1. **`verify-env-variables.sh`** (⚠️ No encontrado):
+   - El script intenta ejecutarlo en `validate`, pero el archivo no existe.
+   - **Estado Real**: La validación recae únicamente en la función interna `check_required_vars` de `stack-manager.sh`.
 
-2. **`validate-config.sh`**
-   - Se ejecuta automáticamente en `validate` y antes de `start`
-   - Valida la configuración de archivos (ModSecurity, Prometheus, etc.)
+2. **`validate-config.sh`** (⚠️ No encontrado):
+   - El script intenta ejecutarlo en `validate`, pero el archivo no existe.
+   - **Estado Real**: No se realizan validaciones estáticas de archivos de configuración (Prometheus, etc.) actualmente.
 
-3. **`scripts/verifica_modelos.sh`**
-   - Se ejecuta con el comando `monitor`
-   - Monitorea la descarga de modelos Ollama
+3. **`scripts/verifica_modelos.sh`** (⚠️ No encontrado):
+   - El comando `monitor` intenta llamar a este script.
+   - **Estado Real**: El comando `monitor` probablemente fallará al no encontrar el archivo.
 
-### ✅ Integrados en stack-manager.sh
+4. **`auto-validate.sh`** (⚠️ No encontrado)
+5. **`test-changes.sh`** (⚠️ No encontrado)
+6. **`init-config-volumes.sh`** (⚠️ No encontrado)
 
-Los siguientes scripts están integrados como comandos en `stack-manager.sh`:
-
-- **`verify-env-variables.sh`** → `validate` (verificación de variables críticas)
-- **`validate-config.sh`** → `validate` (validación estática de configuración)
-- **`verifica_modelos.sh`** → `monitor` (monitoreo de descarga de modelos)
-- **`auto-validate.sh`** → `auto-validate` (validación completa automática)
-- **`test-changes.sh`** → `test` (prueba de cambios recientes)
-- **`init-config-volumes.sh`** → `init-volumes` (inicialización de volúmenes)
-
-**Nota sobre volúmenes:** Docker Compose crea volúmenes automáticamente cuando levantas servicios. El comando `init-volumes` es **opcional** y solo se usa para copiar configuraciones iniciales a los volúmenes (útil para primera vez o cuando necesitas resetear configuraciones).
+**Nota sobre volúmenes:** Docker Compose crea volúmenes automáticamente cuando levantas servicios. El comando `init-volumes` esta marcado como obsoleto debido a la falta del script auxiliar.
 
 ### 📦 Mantenidos Separados
 

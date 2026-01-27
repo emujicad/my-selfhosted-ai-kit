@@ -415,6 +415,15 @@ docker compose exec prometheus cat /etc/prometheus/prometheus.yml
 curl -X POST http://localhost:9090/-/reload
 ```
 
+### Problem: Keycloak Metrics Missing
+
+**Cause**: Prometheus configuration points to port 9000, but Keycloak uses 8080.
+
+**Status**: ⚠️ Known Issue.
+
+**Workaround**: Update `prometheus.yml` to use port 8080 for the Keycloak job.
+
+
 ---
 
 ## 📊 Available Metrics

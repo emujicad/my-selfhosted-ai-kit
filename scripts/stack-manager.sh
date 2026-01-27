@@ -450,7 +450,7 @@ expand_preset() {
             echo "gpu-nvidia monitoring infrastructure security automation chat-ai"
             ;;
         full)
-            echo "gpu-nvidia monitoring infrastructure security automation chat-ai ci-cd testing debug dev"
+            echo "gpu-nvidia monitoring infrastructure security automation chat-ai ci-cd testing debug"
             ;;
         *)
             echo "$preset"  # Si no es un preset, devolverlo tal cual

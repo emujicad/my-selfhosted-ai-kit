@@ -1752,7 +1752,6 @@ services:
     depends_on:
       - open-webui
       - n8n
-      - ollama
       - qdrant
     logging:
       driver: "json-file"
