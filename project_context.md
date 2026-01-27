@@ -162,9 +162,17 @@ my-selfhosted-ai-kit/
 
 ### 2026-01-25: Monitoring & Proxy Stability Fixes
 - **Prometheus Scrape Path**: Standardized `metrics_path: /prometheus/metrics` to align with the new base path, resolving false "Down" alerts.
+- **Keycloak Metrics**: Confirmed usage of internal port `9000` (management interface) for Prometheus scraping, separate from public traffic (`8080`).
 - **AlertManager Stability**: Fixed startup crash by correcting `web.external-url` scheme (`http://localhost/` prefix).
 - **HAProxy DNS Resilience**: Implemented dynamic `resolvers docker` block and added `init-addr last,libc,none` to AlertManager server to ensure resolution persists across container restarts.
 - **Healthcheck Standardization**: Updated all `docker-compose.yml` healthcheck URLs to include the respective sub-path prefixes.
+
+### 2026-01-27: Validation & Hardening
+- **Stack Manager Fixed**: Resolved silent failures in `stack-manager.sh` during `start full`.
+- **Profile Decoupling**: Fixed `full` preset to avoid recursive `dev` profile activation, preventing CPU/GPU Ollama conflicts.
+- **HAProxy Resilience**: Enabled `resolvers docker` for Grafana and n8n backends to fix startup race conditions (`<NOSRV>` errors).
+- **Security Validation**: Enforced strict existence checks for OIDC Client Secrets in `stack-manager.sh`.
+- **Cleanup**: Removed dead code references to legacy verification scripts.
 
 ### 2026-01-22: Stack Manager Enhancement
 - Implemented automatic dependency resolution
