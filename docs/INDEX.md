@@ -24,9 +24,9 @@
   - Key concepts (URLs, OAuth flows)
   - Credentials and access
   - Grafana + Keycloak ✅ (complete configuration and troubleshooting)
-  - Open WebUI + Keycloak ✅ **COMPLETE** (Emulated OIDC  Environment)
-  - n8n + Keycloak ⏳ (configuration ready)
-  - Jenkins + Keycloak ⏳ (pending)
+  - Open WebUI + Keycloak ✅ **COMPLETE** (Emulated OIDC Environment)
+  - n8n + Keycloak ⏳ (requires Enterprise License)
+  - Jenkins + Keycloak ✅ **COMPLETE** (Automated via init scripts)
   - Database troubleshooting
   - Automatic fixes
   - Complete troubleshooting
@@ -87,6 +87,7 @@
 ### Main Documentation (Root)
 - **README.md** - Main project documentation (English)
 - **README.es.md** - Main project documentation (Spanish)
+- **project_context.md** - Technical context and quick reference for AI assistants
 
 ### Detailed Documentation (`docs/`)
 
@@ -254,6 +255,7 @@ Information has been consolidated into 6 main files to avoid redundancy and impr
 
 **General Documentation:**
 - README.md / README.es.md
+- project_context.md - Technical context for AI assistants
 - docs/PROJECT_STATUS.md - ⭐ Status + pending tasks
 - docs/ROADMAP.md - ⭐ Action plan
 
@@ -278,5 +280,5 @@ Information has been consolidated into 6 main files to avoid redundancy and impr
 
 ---
 
-**Last updated**: 2026-01-25
+**Last updated**: 2026-01-28
 
