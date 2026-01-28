@@ -1693,8 +1693,8 @@ services:
       - JENKINS_OPTS=--httpPort=8082
       # Variables para script de inicialización OIDC
       - JENKINS_URL_PUBLIC=${JENKINS_URL_PUBLIC:-http://localhost:8081}
-      - JENKINS_ADMIN_USER=${JENKINS_ADMIN_USER?Variable not set}
-      - JENKINS_ADMIN_PASSWORD=${JENKINS_ADMIN_PASSWORD?Variable not set}
+      - JENKINS_ADMIN_USER=${JENKINS_ADMIN_USER:-admin}
+      - JENKINS_ADMIN_PASSWORD=${JENKINS_ADMIN_PASSWORD:-admin}
       - JENKINS_OIDC_CLIENT_ID=${JENKINS_OIDC_CLIENT_ID:-jenkins}
       - JENKINS_OIDC_CLIENT_SECRET=${JENKINS_OIDC_CLIENT_SECRET?Variable not set}
       - JENKINS_OIDC_SCOPES=${JENKINS_OIDC_SCOPES:-openid email profile}
