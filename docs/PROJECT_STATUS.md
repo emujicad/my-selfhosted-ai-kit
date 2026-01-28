@@ -122,8 +122,7 @@ This document combines the current project status with the TODO list to provide 
 #### 🐳 Docker Image Updates (See version audit table below)
 - [ ] **URGENT**: Update n8n `1.122.5` → `2.4.6` (major version, review [migration guide](https://docs.n8n.io/release-notes/))
 - [ ] **HIGH**: Pin critical images to specific versions instead of `latest` tag
-- [ ] **HIGH**: Update Watchtower (2+ years old, security risk)
-- [ ] **MEDIUM**: Evaluate Prometheus 3.x migration (current `latest` tag points to 2.x branch)
+- [ ] **MEDIUM**: Pin cAdvisor to `v0.56.2` (Docker `latest` tag is behind GitHub)
 
 #### 🔐 Infrastructure
 - [ ] Add certificate management (Certbot/Let's Encrypt).
@@ -205,24 +204,28 @@ This document combines the current project status with the TODO list to provide 
 
 > **CRITICAL**: Several images use `:latest` tag which is risky for production stability.
 > 
-> **NOTE**: "Downloaded" = version verified from local images. "Latest Stable" = newest recommended version available.
+> **Column definitions:**
+> - **Tag in Compose** = tag specified in docker-compose.yml (with resolved version in parentheses)
+> - **Tag Release** = build date of the Docker image that the tag currently points to
+> - **Downloaded** = actual version present in local Docker images (verified with `docker run --version`)
+> - **Latest Stable** = newest version available on GitHub releases
 
 | Service | Tag in Compose | Tag Release | Downloaded | Build Date | Latest Stable | Latest Release | Gap | Risk |
 |---------|---------------|-------------|------------|------------|---------------|----------------|-----|------|
 | **n8n** | `1.122.5` | 2025-12-04 | 1.122.5 | 2025-12-04 | `2.4.6` | 2026-01-23 | 🔴 **1 major** | HIGH |
 | **Open WebUI** | `v0.7.2` | 2026-01-10 | 0.7.2 | 2026-01-10 | `0.7.2` | 2026-01-10 | ✅ Up to date | LOW |
-| **Keycloak** | `latest` ⚠️ (→26.5.2) | 2026-01-20 | 26.4.7 | 2025-12-01 | `26.5.2` | 2026-01-20 | 🟡 Minor behind | MEDIUM |
-| **Grafana** | `latest` ⚠️ (→12.3.2) | 2026-01-27 | 12.3.2 | 2026-01-27 | `12.3.2` | 2026-01-27 | ✅ Up to date | LOW |
-| **Prometheus** | `latest` ⚠️ (→2.53.5) | 2025-06-30 | 2.53.5 | 2025-06-30 | `3.9.1` | 2026-01-07 | 🔴 **`latest`=2.x, not 3.x** | MEDIUM |
-| **AlertManager** | `latest` ⚠️ (→0.28.1) | 2025-03-07 | 0.28.1 | 2025-03-07 | `0.30.1` | 2026-01-12 | 🟡 Minor behind | MEDIUM |
-| **HAProxy** | `latest` ⚠️ (→3.3.0) | 2025-12-01 | 3.3.0 | 2025-12-01 | `3.2.10` LTS | 2025-12-18 | ✅ Newer than LTS | LOW |
-| **Redis** | `alpine` ⚠️ (→8.4.0) | 2025-11-18 | 8.4.0 | 2025-11-18 | `8.4.0` | 2026-01-15 | ✅ Up to date | LOW |
+| **Keycloak** | `latest` ⚠️ (→26.5.2) | 2026-01-23 | 26.5.2 | 2026-01-23 | `26.5.2` | 2026-01-23 | ✅ Up to date | LOW |
+| **Grafana** | `latest` ⚠️ (→12.3.2) | 2026-01-27 | 12.3.2 | 2026-01-27 | `12.3.2` | 2025-12-16 | ✅ Up to date | LOW |
+| **Prometheus** | `latest` ⚠️ (→3.9.1) | 2026-01-07 | 3.9.1 | 2026-01-07 | `3.9.1` | 2026-01-07 | ✅ Up to date | LOW |
+| **AlertManager** | `latest` ⚠️ (→0.30.1) | 2026-01-13 | 0.30.1 | 2026-01-13 | `0.30.1` | 2026-01-12 | ✅ Up to date | LOW |
+| **HAProxy** | `latest` ⚠️ (→3.3.1) | 2026-01-13 | 3.3.1 | 2026-01-13 | `3.3.1` | 2025-12-19 | ✅ Up to date | LOW |
+| **Redis** | `alpine` ⚠️ (→8.4.0) | 2025-11-18 | 8.4.0 | 2025-11-18 | `8.4.0` | 2025-11-18 | ✅ Up to date | LOW |
 | **PostgreSQL** | `16-alpine` (→16.11) | 2025-12-18 | 16.11 | 2025-12-18 | `16.11` | 2025-12-18 | ✅ Up to date | LOW |
 | **Qdrant** | `latest` ⚠️ (→1.16.3) | 2025-12-19 | 1.16.3 | 2025-12-19 | `1.16.3` | 2025-12-19 | ✅ Up to date | LOW |
 | **ModSecurity** | `nginx` (→1.28.0) | 2025-12-07 | 1.28.0 | 2025-12-07 | `1.28.0` | 2025-12-07 | ✅ Up to date | LOW |
-| **Watchtower** | `latest` ⚠️ (→1.7.1) | 2024-01-22 | ~1.5.3 | 2023-11-11 | `1.7.1` | 2024-01-22 | 🔴 **2+ years old!** | HIGH |
-| **cAdvisor** | `latest` ⚠️ (→0.51.0) | 2024-11-08 | ~0.49.1 | 2024-03-02 | `0.51.0` | 2024-11-08 | 🟡 Minor behind | LOW |
-| **Node Exporter** | `latest` ⚠️ (→1.9.1) | 2025-02-14 | 1.9.1 | 2025-04-01 | `1.9.1` | 2025-02-14 | ✅ Up to date | LOW |
+| **Watchtower** | `latest` ⚠️ (→1.7.1) | 2023-11-11 | 1.7.1 | 2023-11-11 | `1.7.1` | 2023-11-11 | ✅ Up to date (project inactive) | LOW |
+| **cAdvisor** | `latest` ⚠️ (→0.52.x) | 2025-12-25 | ~0.52.x | 2025-12-25 | `0.56.2` | 2026-01-16 | 🟡 Docker behind GitHub | MEDIUM |
+| **Node Exporter** | `latest` ⚠️ (→1.10.2) | 2025-10-25 | 1.10.2 | 2025-10-25 | `1.10.2` | 2025-10-25 | ✅ Up to date | LOW |
 
 **Legend:**
 - 🔴 **Major gap**: Breaking changes possible, requires migration planning
@@ -233,7 +236,9 @@ This document combines the current project status with the TODO list to provide 
 **Recommended Actions:**
 1. **URGENT**: Update n8n from 1.122.5 → 2.4.6 (review migration guide first)
 2. **HIGH**: Pin all `latest` tags to specific versions for reproducibility
-3. **MEDIUM**: Update PostgreSQL 16-alpine → 16.3-alpine
+3. **MEDIUM**: cAdvisor Docker `latest` is behind GitHub (0.52.x vs 0.56.2) - consider pinning to `v0.56.2`
+
+> **Verified**: 2026-01-28 02:11 UTC - Data obtained via `docker pull` + `docker run --version` + GitHub API
 
 ---
 
