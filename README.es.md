@@ -726,7 +726,7 @@ docker compose --profile gpu-nvidia --profile monitoring up -d
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+Este proyecto está bajo la Licencia Apache 2.0. Ver el archivo `LICENSE` para más detalles.
 
 ## 🆘 Soporte
 

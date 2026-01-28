@@ -2,7 +2,7 @@
 
 Complete guide for monitoring the entire stack with Prometheus, Grafana, exporters, and alerting.
 
-**Last updated**: 2026-01-25
+**Last updated**: 2026-01-28
 
 ---
 
@@ -50,7 +50,7 @@ The stack includes a complete monitoring system based on Prometheus and Grafana 
 
 **Configuration**:
 - Configuration file: `monitoring/prometheus.yml`
-- Alert rules: `monitoring/ prometheus/alerts.yml`
+- Alert rules: `monitoring/prometheus/alerts.yml`
 - Custom rules: Volume `prometheus_rules_data`
 
 **Collected metrics**:
@@ -463,11 +463,11 @@ curl -X POST http://localhost:9090/-/reload
 
 ### Problem: Keycloak Metrics Missing
 
-**Cause**: Prometheus configuration points to port 9000, but Keycloak uses 8080.
+**Cause**: Keycloak metrics are exposed on the management interface (port 9000), not the main HTTP port (8080).
 
-**Status**: ⚠️ Known Issue.
+**Status**: ✅ Fixed - Prometheus correctly scrapes port 9000.
 
-**Workaround**: Update `prometheus.yml` to use port 8080 for the Keycloak job.
+**Note**: Port 9000 is the correct port for Keycloak metrics. If metrics are missing, verify Keycloak has `KC_HEALTH_ENABLED=true` and the container is healthy.
 
 
 ---
@@ -555,8 +555,6 @@ curl -X POST http://localhost:9090/-/reload
 - [Grafana Alerting Documentation](https://grafana.com/docs/grafana/latest/alerting/)
 - Configuration file: `monitoring/grafana/config/grafana.ini`
 
-**Estimated time**: 2-3 hours
-
 #### 2. Improve AlertManager
 
 **Status**: AlertManager configured, notification configuration pending
@@ -588,8 +586,6 @@ curl -X POST http://localhost:9090/-/reload
 **Resources**:
 - [AlertManager Documentation](https://prometheus.io/docs/alerting/latest/alertmanager/)
 - Configuration file: `monitoring/alertmanager.yml`
-
-**Estimated time**: 2-3 hours
 
 ### ⚡ Medium Priority
 
@@ -626,8 +622,6 @@ curl -X POST http://localhost:9090/-/reload
 - [Loki Documentation](https://grafana.com/docs/loki/latest/)
 - [Promtail Documentation](https://grafana.com/docs/loki/latest/clients/promtail/)
 
-**Estimated time**: 4-5 hours
-
 #### 4. Additional Service Metrics
 
 **Status**: Basic metrics configured
@@ -656,8 +650,6 @@ curl -X POST http://localhost:9090/-/reload
 
 **Benefit**: Complete stack visibility
 
-**Estimated time**: 3-4 hours per service
-
 ---
 
 ## 🔄 Dashboard Updates
@@ -671,6 +663,7 @@ Dashboards are automatically provisioned from:
 - `monitoring/grafana/provisioning/dashboards/ai-models-performance.json`
 - `monitoring/grafana/provisioning/dashboards/executive-summary.json`
 - `monitoring/grafana/provisioning/dashboards/ollama-optimization-monitoring.json`
+- `monitoring/grafana/provisioning/dashboards/additional-services.json`
 
 **To apply changes**:
 1. Edit dashboard JSON files
@@ -697,4 +690,4 @@ Dashboards are automatically provisioned from:
 
 ---
 
-*Last updated: 2026-01-24*
+*Last updated: 2026-01-28*

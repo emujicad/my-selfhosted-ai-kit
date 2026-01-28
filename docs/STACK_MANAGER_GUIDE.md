@@ -1,6 +1,6 @@
 # 🚀 Guía del Stack Manager
 
-**Última actualización**: 2026-01-25
+**Última actualización**: 2026-01-28
 
 ## 📋 Descripción
 
@@ -329,4 +329,3 @@ Para más información sobre funcionalidades específicas:
 - **Validación**: Ver `docs/VALIDATION_GUIDE.md`
 - **Keycloak**: Ver `docs/KEYCLOAK_GUIDE.md`
 - **Monitoreo**: Ver `docs/MONITORING_GUIDE.md`
-```

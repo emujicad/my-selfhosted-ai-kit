@@ -1,6 +1,6 @@
 # 🚀 Roadmap - My Self-Hosted AI Kit
 
-**Última actualización**: 2026-01-25
+**Última actualización**: 2026-01-28
 
 Este documento combina el plan de acción general con los próximos pasos detallados para el proyecto. Está organizado por prioridades y proporciona una guía completa para implementar todas las funcionalidades pendientes.
 
@@ -55,12 +55,12 @@ Este documento combina el plan de acción general con los próximos pasos detall
    - Executive Summary Dashboard
    - Ollama Optimization Monitoring Dashboard
 
-9. **Optimizaciones de Ollama** ✅ **PARCIALMENTE COMPLETADO**
+9. **Optimizaciones de Ollama** ✅ **COMPLETADO**
    - Variables de optimización configuradas
    - Shared memory configurado (shm_size=2g)
    - Límites de recursos configurados
    - Dashboard de monitoreo creado
-   - ⏳ Queue de requests (pendiente)
+   - ✅ Queue de requests (HAProxy `maxconn 1` per backend)
 
 10. **Redis & Cache Optimization** ✅
    - Redis para n8n (prep for Queue Mode)
@@ -71,7 +71,7 @@ Este documento combina el plan de acción general con los próximos pasos detall
 11. **Keycloak Permanent Admin** ✅
    - Script automatizado de migración de admin
    - Eliminación de usuario temporal
-   - Documentación en `docs/KEYCLOAK_PERMANENT_ADMIN.md`
+   - Documentación en `docs/KEYCLOAK_GUIDE.md`
 
 ---
 
@@ -84,8 +84,8 @@ Este documento combina el plan de acción general con los próximos pasos detall
 **Estado actual:**
 - ✅ Grafana: Completado y funcionando
 - ✅ Open WebUI: Completado (Emulated OIDC Environment)
-- ✅ n8n: Configuración lista, clientes OIDC creados automáticamente
-- ✅ Jenkins: Script de inicialización listo, OIDC automatizado y plugins instalados
+- ⚠️ n8n: Configuración lista, pero **requiere Enterprise License** para OIDC
+- ✅ Jenkins: Completado, OIDC automatizado via init scripts
 
 **Tareas pendientes:**
 
@@ -327,7 +327,10 @@ frontend https_frontend
 
 **Estado actual:**
 - ✅ Redis disponible en el perfil `infrastructure`
-- ⏳ Configuración e integración pendiente
+- ✅ Redis integrado con n8n (Queue Mode readiness)
+- ✅ Redis KV Cache para Open WebUI (RAG System Context)
+- ✅ Embeddings Cache habilitado (`OPEN_WEBUI_USE_EMBEDDING_CACHE=true`)
+- ⏳ Persistencia avanzada y políticas de evicción pendientes
 
 **Tareas:**
 
@@ -446,25 +449,24 @@ frontend https_frontend
 
 ### 🎯 PRIORIDAD BAJA (Semanas 7+)
 
-#### 7. ⚡ Completar Optimizaciones de Ollama
+#### 7. ⚡ Optimizaciones Adicionales de Ollama
 
 **Estado actual:**
 - ✅ Variables de optimización configuradas
 - ✅ Shared memory configurado (shm_size=2g)
 - ✅ Límites de recursos configurados
 - ✅ Dashboard de monitoreo creado
-- ⏳ Queue de requests pendiente
+- ✅ Queue de requests (HAProxy `maxconn 1` por backend)
 
-**Tareas pendientes:**
+**Tareas opcionales:**
 
-##### 7.1 Implementar Queue de Requests
-**Objetivo**: Gestionar mejor la carga de requests concurrentes a Ollama
+##### 7.1 Mejoras Avanzadas de Queue
+**Objetivo**: Implementar priorización y monitoreo más granular
 
 **Tareas:**
-1. Implementar sistema de cola para requests
-2. Configurar límites de requests concurrentes
-3. Implementar priorización de requests
-4. Monitorear cola de requests
+1. Agregar priorización de requests por usuario/tipo
+2. Dashboard específico de cola de requests
+3. Alertas cuando la cola exceda umbral
 
 **Recursos:**
 - `docs/OLLAMA_GUIDE.md` - Optimización y monitoreo de Ollama
@@ -604,5 +606,5 @@ frontend https_frontend
 
 ---
 
-**Última actualización**: 2026-01-24  
+**Última actualización**: 2026-01-28  
 **Próxima revisión**: Después de completar tareas de Prioridad Alta

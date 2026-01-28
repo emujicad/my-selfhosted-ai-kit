@@ -195,7 +195,7 @@ This document combines the current project status with the TODO list to provide 
   - [x] Optimize GPU configuration (shm_size=2g, resource limits configured)
   - [x] Optimize CPU threads (OLLAMA_NUM_THREAD=8)
   - [x] Monitor memory usage per model (optimization dashboard created)
-  - [ ] Implement request queue (pending)
+  - [x] Implement request queue (HAProxy `maxconn 1` per backend) ✅
 
 - [ ] **Implement Redis for Cache**
   - [x] User session cache (Open WebUI)

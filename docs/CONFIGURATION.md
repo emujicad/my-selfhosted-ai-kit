@@ -2,7 +2,7 @@
 
 Complete guide for managing environment variables, dynamic configuration, and update strategies for all services.
 
-**Last updated**: 2026-01-25
+**Last updated**: 2026-01-28
 
 ---
 
@@ -649,4 +649,4 @@ Redis is configured for n8n to enable:
 
 ---
 
-*Last updated: 2026-01-24*
+*Last updated: 2026-01-28*

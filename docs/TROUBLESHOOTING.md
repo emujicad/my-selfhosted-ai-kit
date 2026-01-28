@@ -2,7 +2,7 @@
 
 Comprehensive troubleshooting guide for all services in the stack.
 
-**Last updated**: 2026-01-25
+**Last updated**: 2026-01-28
 
 ---
 
@@ -237,7 +237,7 @@ docker compose --profile monitoring up -d node-exporter cadvisor postgres-export
 
 **Solutions**:
 1. Verify password in `.env` matches PostgreSQL's
-2. Ver ify postgres-exporter is in same network as postgres (`genai-network`)
+2. Verify postgres-exporter is in same network as postgres (`genai-network`)
 3. Check PostgreSQL authentication configuration
 
 **Problem: Panels show container IDs instead of names**
@@ -581,7 +581,7 @@ docker system prune -a --volumes
 
 **Exclude from backups**:
 - `ollama_storage` volume (models - very large)
--Temporary caches
+- Temporary caches
 
 **See**: [`BACKUP_GUIDE.md`](BACKUP_GUIDE.md) for backup optimization
 
@@ -667,7 +667,7 @@ docker volume rm $(docker volume ls -q | grep my-selfhosted-ai-kit)
 
 ---
 
-## � Automatic Fixes
+## 🔧 Automatic Fixes
 
 ### Overview
 
@@ -893,7 +893,7 @@ With `--force-recreate`: Container uses `DEBUG=true`
 
 ---
 
-## �📚 Additional Resources
+## 📚 Additional Resources
 
 ### Service-Specific Guides
 
@@ -937,4 +937,4 @@ When seeking help, provide:
 
 ---
 
-*Last updated: 2026-01-24*
+*Last updated: 2026-01-28*

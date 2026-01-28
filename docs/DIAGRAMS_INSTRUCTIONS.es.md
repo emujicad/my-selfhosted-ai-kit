@@ -10,7 +10,7 @@ Todos los diagramas fuente están en la carpeta `../diagrams_mmd/` y los PNGs ge
 
 ## Diagramas Actuales
 
-**Diagramas Profesionales Nuevos (2026-01-24):**
+**Diagramas Profesionales Nuevos (2026-01-28):**
 - `architecture_complete.mmd` - Arquitectura completa del sistema con todos los servicios
 - `oidc_authentication_flow.mmd` - Diagrama de secuencia de autenticación OIDC detallado
 - `profile_dependencies.mmd` - Diagrama de resolución automática de dependencias del stack-manager

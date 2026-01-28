@@ -10,7 +10,7 @@ All source diagrams are in the `../diagrams_mmd/` folder and the generated PNGs 
 
 ## Current Diagrams
 
-**New Professional Diagrams (2026-01-24):**
+**New Professional Diagrams (2026-01-28):**
 - `architecture_complete.mmd` - Complete system architecture with all services
 - `oidc_authentication_flow.mmd` - Detailed OIDC authentication sequence diagram
 - `profile_dependencies.mmd` - Stack-manager auto-dependency resolution diagram
