@@ -214,6 +214,7 @@ my-selfhosted-ai-kit/
 3. **Single-node deployment**: No clustering or high availability
 4. **n8n OIDC requires Enterprise License**: Community Edition does not support SSO
 5. **HAProxy paths pending**: `/keycloak` and `/n8n` routes not yet configured
+6. **Open WebUI model filtering**: Must be configured via Admin Panel UI (Settings → Models). Arena Model cannot be hidden in v0.7.2
 
 ## Development Workflow
 
