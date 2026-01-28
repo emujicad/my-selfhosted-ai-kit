@@ -224,7 +224,7 @@ Information has been consolidated into 6 main files to avoid redundancy and impr
 
 3. **PROJECT_STATUS.md** - Consolidates:
    - ESTADO_PROYECTO.md
-   - TODO.md
+   - TODO list (previously in TODO.md at root)
 
 4. **OLLAMA_GUIDE.md** - Consolidates:
    - OLLAMA_OPTIMIZATION_MONITORING.md

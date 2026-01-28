@@ -1,6 +1,6 @@
 # 📊 Project Status - My Self-Hosted AI Kit
 
-**Last updated**: 2026-01-25
+**Last updated**: 2026-01-28
 
 This document combines the current project status with the TODO list to provide a complete view of what's been accomplished and what remains to be done.
 
@@ -121,6 +121,9 @@ This document combines the current project status with the TODO list to provide 
 - [ ] Add certificate management (Certbot/Let's Encrypt).
 - [ ] Integrate more LLM models (DeepSeek-R1 full version).
 - [ ] Improve Grafana default dashboards.
+- [ ] Configure Keycloak relative path for sub-directory access (`/keycloak`).
+- [ ] Add Jenkins to HAProxy proxy path (`/jenkins`).
+- [ ] Enforce WAF rules for all exposed services.
 
 #### 🔐 Security
 
@@ -241,6 +244,7 @@ This document combines the current project status with the TODO list to provide 
   - [ ] SSL certificate rotation
   - [ ] Automatic container updates
   - [ ] Automatic health checks
+  - [ ] Add auto-healing for crashed containers (Watchtower handles updates, not restarts)
   - [ ] **Pin Critical Docker Images**: Keycloak, HAProxy, Redis currently on `latest` (High Risk)
 
 ---
@@ -381,5 +385,5 @@ This document combines the current project status with the TODO list to provide 
 
 ---
 
-*Last updated: 2026-01-25*  
+*Last updated: 2026-01-28*  
 *Project status: In active development*
