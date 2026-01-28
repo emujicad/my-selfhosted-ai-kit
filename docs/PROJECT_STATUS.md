@@ -203,23 +203,25 @@ This document combines the current project status with the TODO list to provide 
 ### 🐳 Docker Image Version Audit (2026-01-28)
 
 > **CRITICAL**: Several images use `:latest` tag which is risky for production stability.
+> 
+> **WARNING**: The "Downloaded" column shows the actual version on this system. Many `latest` images are outdated because `docker pull` hasn't been run recently!
 
-| Service | Current Version | Current Release | Latest Stable | Latest Release | Gap | Risk |
-|---------|----------------|-----------------|---------------|----------------|-----|------|
-| **n8n** | `1.122.5` | 2025-12-04 | `2.4.6` | 2026-01-23 | 🔴 **1 major** | HIGH |
-| **Open WebUI** | `v0.7.2` | 2026-01-10 | `v0.7.2` | 2026-01-10 | ✅ Up to date | LOW |
-| **Keycloak** | `latest` ⚠️ | - | `26.5.2` | 2026-01-20 | ⚠️ Unpinned | MEDIUM |
-| **Grafana** | `latest` ⚠️ | - | `12.3.1` | 2025-12-16 | ⚠️ Unpinned | MEDIUM |
-| **Prometheus** | `latest` ⚠️ | - | `3.9.1` | 2026-01-07 | ⚠️ Unpinned | MEDIUM |
-| **AlertManager** | `latest` ⚠️ | - | `0.30.1` | 2026-01-12 | ⚠️ Unpinned | MEDIUM |
-| **HAProxy** | `latest` ⚠️ | - | `3.2.10` LTS | 2025-12-18 | ⚠️ Unpinned | MEDIUM |
-| **Redis** | `alpine` ⚠️ | - | `8.4.0-alpine` | 2026-01 | ⚠️ Unpinned | MEDIUM |
-| **PostgreSQL** | `16-alpine` | 2023-09 | `16.3-alpine` | 2025-04 | 🟡 Minor | LOW |
-| **Qdrant** | `latest` ⚠️ | - | `1.16.3` | 2025-12-19 | ⚠️ Unpinned | MEDIUM |
-| **ModSecurity** | `nginx` | - | `nginx` | - | ✅ Tag stable | LOW |
-| **Watchtower** | `latest` ⚠️ | - | - | - | ⚠️ Unpinned | LOW |
-| **cAdvisor** | `latest` ⚠️ | - | - | - | ⚠️ Unpinned | LOW |
-| **Node Exporter** | `latest` ⚠️ | - | - | - | ⚠️ Unpinned | LOW |
+| Service | Tag in Compose | Downloaded | Downloaded Date | Latest Stable | Latest Release | Gap | Risk |
+|---------|---------------|------------|-----------------|---------------|----------------|-----|------|
+| **n8n** | `1.122.5` | 1.122.5 | 2025-12-04 | `2.4.6` | 2026-01-23 | 🔴 **1 major** | HIGH |
+| **Open WebUI** | `v0.7.2` | v0.7.2 | 2026-01-10 | `v0.7.2` | 2026-01-10 | ✅ Up to date | LOW |
+| **Keycloak** | `latest` ⚠️ | 26.4.7 | 2025-12-01 | `26.5.2` | 2026-01-20 | 🟡 Minor behind | MEDIUM |
+| **Grafana** | `latest` ⚠️ | **12.0.2** | 2025-06-13 | `12.3.1` | 2025-12-16 | 🔴 **7 months old!** | HIGH |
+| **Prometheus** | `latest` ⚠️ | **2.53.5** | 2025-06-30 | `3.9.1` | 2026-01-07 | 🔴 **1 major behind!** | HIGH |
+| **AlertManager** | `latest` ⚠️ | **~0.27.x** | 2025-03-07 | `0.30.1` | 2026-01-12 | 🔴 **10 months old!** | HIGH |
+| **HAProxy** | `latest` ⚠️ | 3.3.0 | 2025-12-01 | `3.2.10` LTS | 2025-12-18 | 🟡 Newer than LTS | LOW |
+| **Redis** | `alpine` ⚠️ | ~7.4.x | 2025-11-18 | `8.4.0-alpine` | 2026-01-15 | 🔴 **1 major behind** | MEDIUM |
+| **PostgreSQL** | `16-alpine` | 16.x | 2025-12-18 | `16.6-alpine` | 2024-11-14 | ✅ Up to date | LOW |
+| **Qdrant** | `latest` ⚠️ | 1.16.3 | 2025-12-19 | `1.16.3` | 2025-12-19 | ✅ Up to date | LOW |
+| **ModSecurity** | `nginx` | 4.x | 2025-12-07 | `4.8.0-nginx` | 2024-11-01 | ✅ Up to date | LOW |
+| **Watchtower** | `latest` ⚠️ | **~1.5.x** | **2023-11-11** | `1.7.1` | 2024-01-22 | 🔴 **2+ years old!** | HIGH |
+| **cAdvisor** | `latest` ⚠️ | **~0.49.x** | **2024-03-02** | `0.51.0` | 2024-11-08 | 🔴 **11 months old!** | MEDIUM |
+| **Node Exporter** | `latest` ⚠️ | ~1.8.x | 2025-04-01 | `1.9.0` | 2025-02-14 | 🟡 Minor behind | LOW |
 
 **Legend:**
 - 🔴 **Major gap**: Breaking changes possible, requires migration planning
