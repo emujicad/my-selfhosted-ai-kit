@@ -275,7 +275,69 @@ These exporters query the respective service APIs and expose metrics in Promethe
 - **Estimated Monthly Cost**: Estimated monthly cost
 - **Resource Usage Summary**: Resource usage summary table by service
 
-**Note**: Prices are estimates and can be adjusted according to your infrastructure.
+---
+
+#### 📊 Cost Calculation Methodology
+
+> **Important**: The costs shown are **theoretical estimates** based on cloud computing pricing models. They do NOT reflect actual electricity costs for self-hosted infrastructure.
+
+##### Data Sources
+
+All metrics come from **cAdvisor** (Container Advisor), which collects:
+- `container_cpu_usage_seconds_total`: Total CPU time consumed by each container
+- `container_memory_usage_bytes`: Current memory usage by each container
+
+##### Calculation Formulas
+
+| Metric | Prometheus Query | Explanation |
+|--------|------------------|-------------|
+| **CPU Cost/hr** | `rate(container_cpu_usage_seconds_total[5m]) × $0.10` | CPU cores used × price per CPU-hour |
+| **Memory Cost/hr** | `container_memory_usage_bytes / 1GB × $0.05` | GB of RAM used × price per GB-hour |
+| **Total Cost/hr** | CPU Cost + Memory Cost | Sum of both components |
+| **Daily Cost** | Total/hr × 24 | Projected for 24 hours |
+| **Monthly Cost** | Total/hr × 24 × 30 | Projected for 30 days |
+
+##### Reference Prices (Hardcoded)
+
+| Resource | Price | Based On |
+|----------|-------|----------|
+| **CPU** | $0.10/CPU-hour | ~AWS EC2 on-demand pricing |
+| **Memory** | $0.05/GB-hour | ~AWS EC2 memory pricing |
+
+##### Example Calculation
+
+If your stack is using:
+- **2.5 CPU cores** average
+- **8 GB RAM** average
+
+```
+Hourly Cost = (2.5 × $0.10) + (8 × $0.05)
+            = $0.25 + $0.40
+            = $0.65/hour
+
+Daily Cost  = $0.65 × 24 = $15.60/day
+Monthly Cost = $15.60 × 30 = $468/month
+```
+
+##### Limitations
+
+1. **Not real costs**: For self-hosted, you pay electricity, not cloud prices
+2. **Fixed prices**: The $0.10 and $0.05 values are hardcoded in the JSON
+3. **No GPU costs**: GPU usage is not factored into the cost calculation
+4. **Ignores idle time**: Some resources are reserved but not actively used
+
+##### Customizing Prices
+
+To adjust prices to your local electricity costs, edit:
+```
+monitoring/grafana/provisioning/dashboards/cost-estimation.json
+```
+
+Search for `0.10` (CPU price) and `0.05` (memory price) and replace with your values.
+
+> **Future improvement**: See PROJECT_STATUS.md for planned features including configurable variables and a dedicated "Electricity Cost Dashboard" for self-hosted setups.
+
+---
 
 ### AI Models Performance Dashboard ⭐ **UPDATED**
 

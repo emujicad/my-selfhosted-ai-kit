@@ -166,6 +166,13 @@ This document combines the current project status with the TODO list to provide 
   - [x] Fix Keycloak Metrics (Port 9000 & Enabled Flag) ✅
   - [x] Fix Ollama Metrics (Model Size Corrected) ✅
 
+- [ ] **Improve Cost Estimation Dashboard**
+  - [ ] Add Grafana variables for configurable prices (CPU $/hr, Memory $/GB-hr)
+  - [ ] Create "Electricity Cost Dashboard" for self-hosted (kWh × price/kWh model)
+  - [ ] Add GPU cost estimation (based on TDP wattage)
+  - [ ] Document how to calculate real electricity costs
+  - [ ] Add cost comparison: Cloud vs Self-hosted
+
 - [ ] **Intelligent Grafana Alerts**
   - [ ] Configure visual alerts
   - [ ] Configure notification channels (Email, Slack, Webhooks)
@@ -197,22 +204,22 @@ This document combines the current project status with the TODO list to provide 
 
 > **CRITICAL**: Several images use `:latest` tag which is risky for production stability.
 
-| Service | Current Version | Latest Stable | Gap | Risk | Release Date |
-|---------|----------------|---------------|-----|------|--------------|
-| **n8n** | `1.122.5` | `2.4.6` | 🔴 **1 major** | HIGH | 2026-01-23 |
-| **Open WebUI** | `v0.7.2` | `v0.7.2` | ✅ Up to date | LOW | 2026-01-10 |
-| **Keycloak** | `latest` ⚠️ | `26.5.2` | ⚠️ Unpinned | MEDIUM | 2026-01-20 |
-| **Grafana** | `latest` ⚠️ | `12.3.1` | ⚠️ Unpinned | MEDIUM | 2025-12-16 |
-| **Prometheus** | `latest` ⚠️ | `3.9.1` | ⚠️ Unpinned | MEDIUM | 2026-01-07 |
-| **AlertManager** | `latest` ⚠️ | `0.30.1` | ⚠️ Unpinned | MEDIUM | 2026-01-12 |
-| **HAProxy** | `latest` ⚠️ | `3.2.10` LTS | ⚠️ Unpinned | MEDIUM | 2025-12-18 |
-| **Redis** | `alpine` ⚠️ | `8.4.0-alpine` | ⚠️ Unpinned | MEDIUM | 2026-01 |
-| **PostgreSQL** | `16-alpine` | `16.3-alpine` | 🟡 Minor | LOW | 2025-04 |
-| **Qdrant** | `latest` ⚠️ | `1.16.3` | ⚠️ Unpinned | MEDIUM | 2025-12-19 |
-| **ModSecurity** | `nginx` | `nginx` | ✅ Tag stable | LOW | - |
-| **Watchtower** | `latest` ⚠️ | - | ⚠️ Unpinned | LOW | - |
-| **cAdvisor** | `latest` ⚠️ | - | ⚠️ Unpinned | LOW | - |
-| **Node Exporter** | `latest` ⚠️ | - | ⚠️ Unpinned | LOW | - |
+| Service | Current Version | Current Release | Latest Stable | Latest Release | Gap | Risk |
+|---------|----------------|-----------------|---------------|----------------|-----|------|
+| **n8n** | `1.122.5` | 2025-12-04 | `2.4.6` | 2026-01-23 | 🔴 **1 major** | HIGH |
+| **Open WebUI** | `v0.7.2` | 2026-01-10 | `v0.7.2` | 2026-01-10 | ✅ Up to date | LOW |
+| **Keycloak** | `latest` ⚠️ | - | `26.5.2` | 2026-01-20 | ⚠️ Unpinned | MEDIUM |
+| **Grafana** | `latest` ⚠️ | - | `12.3.1` | 2025-12-16 | ⚠️ Unpinned | MEDIUM |
+| **Prometheus** | `latest` ⚠️ | - | `3.9.1` | 2026-01-07 | ⚠️ Unpinned | MEDIUM |
+| **AlertManager** | `latest` ⚠️ | - | `0.30.1` | 2026-01-12 | ⚠️ Unpinned | MEDIUM |
+| **HAProxy** | `latest` ⚠️ | - | `3.2.10` LTS | 2025-12-18 | ⚠️ Unpinned | MEDIUM |
+| **Redis** | `alpine` ⚠️ | - | `8.4.0-alpine` | 2026-01 | ⚠️ Unpinned | MEDIUM |
+| **PostgreSQL** | `16-alpine` | 2023-09 | `16.3-alpine` | 2025-04 | 🟡 Minor | LOW |
+| **Qdrant** | `latest` ⚠️ | - | `1.16.3` | 2025-12-19 | ⚠️ Unpinned | MEDIUM |
+| **ModSecurity** | `nginx` | - | `nginx` | - | ✅ Tag stable | LOW |
+| **Watchtower** | `latest` ⚠️ | - | - | - | ⚠️ Unpinned | LOW |
+| **cAdvisor** | `latest` ⚠️ | - | - | - | ⚠️ Unpinned | LOW |
+| **Node Exporter** | `latest` ⚠️ | - | - | - | ⚠️ Unpinned | LOW |
 
 **Legend:**
 - 🔴 **Major gap**: Breaking changes possible, requires migration planning
