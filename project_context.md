@@ -7,7 +7,7 @@
 **Name**: My Self-Hosted AI Kit  
 **Type**: Docker Compose Stack  
 **Purpose**: Complete self-hosted AI infrastructure with monitoring, automation, and security  
-**Version**: Production-ready (2026-01-24)  
+**Version**: Production-ready (2026-01-28)  
 **License**: Apache 2.0
 
 ## Architecture Summary
@@ -62,42 +62,59 @@
 ```
 my-selfhosted-ai-kit/
 ├── config/                    # Configuration files
+│   ├── jenkins/               # Jenkins Dockerfile, plugins, init scripts
+│   │   ├── Dockerfile
+│   │   ├── plugins.txt
+│   │   └── init.groovy.d/     # OIDC and admin automation scripts
 │   └── open-webui-oidc/       # OIDC static config files
 ├── docker-compose.yml         # Service orchestration
-├── .env                       # Environment variables
-├── docs/                      # Documentation (15 files, ~5,700 lines)
-├── scripts/                   # Management scripts (20 total: 4 core, 10 tests, 6 utils)
+├── .env                       # Environment variables (from .env.example)
+├── docs/                      # Documentation (13 files)
+├── scripts/                   # Management scripts
 │   ├── stack-manager.sh       # Main orchestration script
 │   ├── auth-manager.sh        # Identity & Security manager
 │   ├── backup-manager.sh      # Backup/restore manager
-│   └── validate-system.sh     # System validation tool
+│   ├── validate-system.sh     # System validation tool
+│   ├── tests/                 # Test suite (17 test scripts)
+│   └── utils/                 # Utility scripts (exporters, init, sql)
 ├── monitoring/                # Prometheus + Grafana configs
-│   ├── grafana/dashboards/    # JSON dashboard definitions
-│   └── prometheus/            # Rules and alerts
+│   ├── grafana/
+│   │   ├── config/grafana.ini
+│   │   └── provisioning/      # Dashboards and datasources
+│   ├── prometheus.yml
+│   └── alertmanager.yml
 ├── haproxy/                   # Reverse proxy configuration
 ├── modsecurity/               # WAF rules
-├── diagrams_mmd/              # Mermaid diagram sources
-└── diagrams_png/              # Generated PNG diagrams
+├── diagrams_mmd/              # Mermaid diagram sources (11 diagrams)
+└── diagrams_png/              # Generated PNG diagrams (11 images)
 ```
 
 ## Important Environment Variables
+
+> See `.env.example` for comprehensive documentation of all variables.
 
 ### PostgreSQL
 - `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
 
 ### Keycloak
-- `KEYCLOAK_ADMIN`, `KEYCLOAK_ADMIN_PASSWORD`
-- `KC_DB_URL`, `KC_DB_USERNAME`, `KC_DB_PASSWORD`
+- `KEYCLOAK_ADMIN_USER`, `KEYCLOAK_ADMIN_PASSWORD` (temporary admin)
+- `KEYCLOAK_PERMANENT_ADMIN_*` (permanent admin credentials)
+- `KEYCLOAK_REALM`, `KEYCLOAK_DB_NAME`
 
 ### Open WebUI (OIDC)
-- `OPENID_PROVIDER_URL`: Points to static `oidc-config.json`
-- `OPENID_REDIRECT_URI`: OAuth callback URL
-- `ENABLE_OAUTH_SIGNUP`: Auto-registration
-- `OAUTH_MERGE_ACCOUNTS_BY_EMAIL`: Email-based account linking
+- `OPEN_WEBUI_OAUTH_CLIENT_ID`, `OPEN_WEBUI_OAUTH_CLIENT_SECRET`
+- `OPEN_WEBUI_ENABLE_OAUTH_SSO`: Enable Keycloak SSO
+- `OPEN_WEBUI_OAUTH_SCOPES`: OpenID scopes
 
 ### Ollama
-- `OLLAMA_NUM_PARALLEL`, `OLLAMA_FLASH_ATTENTION`
-- `OLLAMA_MAX_LOADED_MODELS`, `OLLAMA_KEEP_ALIVE`
+- `OLLAMA_MAX_LOADED_MODELS`: Models in memory (default: 2)
+- `OLLAMA_NUM_THREAD`: CPU threads
+- `OLLAMA_KEEP_ALIVE`: Model retention time
+- `OLLAMA_SHM_SIZE`: Shared memory size
+
+### Jenkins (OIDC - Primary Auth)
+- `JENKINS_OIDC_CLIENT_ID`, `JENKINS_OIDC_CLIENT_SECRET`
+- `JENKINS_ADMIN_USER`, `JENKINS_ADMIN_PASSWORD` (fallback only)
 
 ## Excluded from Backups (Intentional)
 
@@ -108,6 +125,13 @@ my-selfhosted-ai-kit/
 5. **`grafana_provisioning_data`**: Derived from `monitoring/grafana/` (regenerable)
 
 ## Recent Major Changes (Last 7 Days)
+
+### 2026-01-28: Documentation & Diagrams Overhaul
+- **Diagrams**: Redesigned all 11 `.mmd` diagrams for accuracy and professionalism
+- **PNG Generation**: Regenerated all diagrams with high-resolution parameters (2400x1800, scale 2)
+- **`.env.example`**: Complete rewrite with bilingual documentation (ES/EN), 18 organized sections
+- **TODO Consolidation**: Merged `TODO.md` into `docs/PROJECT_STATUS.md`
+- **Jenkins Auth Clarification**: Documented OIDC as primary auth, local credentials as fallback only
 
 ### 2026-01-24: Documentation Consolidation & Backup Enhancement
 - Consolidated 18 documentation files into 7 guides
@@ -154,12 +178,6 @@ my-selfhosted-ai-kit/
 - **Documentation**: Added `docs/KEYCLOAK_PERMANENT_ADMIN.md` guide
 - **Config**: Updated `.env.example` with permanent admin section
 
-### 2026-01-23: Diagram Improvements
-- Created architecture_complete.mmd (full system architecture)
-- Created oidc_authentication_flow.mmd (SSO sequence)
-- Created profile_dependencies.mmd (stack-manager dependencies)
-- Updated perfiles.mmd with current architecture
-
 ### 2026-01-25: Monitoring & Proxy Stability Fixes
 - **Prometheus Scrape Path**: Standardized `metrics_path: /prometheus/metrics` to align with the new base path, resolving false "Down" alerts.
 - **Keycloak Metrics**: Confirmed usage of internal port `9000` (management interface) for Prometheus scraping, separate from public traffic (`8080`).
@@ -174,11 +192,6 @@ my-selfhosted-ai-kit/
 - **Security Validation**: Enforced strict existence checks for OIDC Client Secrets in `stack-manager.sh`.
 - **Prometheus Sync**: Updated Grafana datasource URL to include `/prometheus` sub-path, resolving "No Data" caused by HAProxy routing prefix.
 - **Cleanup**: Removed dead code references to legacy verification scripts.
-
-### 2026-01-22: Stack Manager Enhancement
-- Implemented automatic dependency resolution
-- Added recursive dependency tracking
-- Improved error handling for undefined services
 
 ### 2026-01-25: Comprehensive Security Hardening & Zero Defaults
 - **Secrets Management**: Removed ALL default credentials from `docker-compose.yml`, `auth-manager.sh`, `stack-manager.sh`, and `backup-manager.sh`.
@@ -199,8 +212,8 @@ my-selfhosted-ai-kit/
 1. **No HTTPS/SSL by default**: HAProxy is configured but requires manual SSL setup
 2. **Ollama models not backed up**: Intentional to save space, but requires re-download on restore
 3. **Single-node deployment**: No clustering or high availability
-4. **Manual Keycloak realm config**: Requires one-time setup via UI
-5. **Open WebUI model filtering**: Must be configured via Admin Panel UI (Settings → Models). Arena Model cannot be hidden in v0.7.2
+4. **n8n OIDC requires Enterprise License**: Community Edition does not support SSO
+5. **HAProxy paths pending**: `/keycloak` and `/n8n` routes not yet configured
 
 ## Development Workflow
 
@@ -245,6 +258,4 @@ docker compose logs -f [service]
 
 ---
 
-**Last Updated**: 2026-01-25  
-**Maintained By**: admin-user  
-**AI Assistant**: Antigravity (Google DeepMind)
+**Last Updated**: 2026-01-28
